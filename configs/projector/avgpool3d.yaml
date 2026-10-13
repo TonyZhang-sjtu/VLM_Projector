@@ -1,0 +1,7 @@
+projector:
+  name: avgpool3d
+  hidden_size: 4096
+  bias: true
+  params:
+    budget_policy: nearest
+    head_type: mlp

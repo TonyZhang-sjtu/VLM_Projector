@@ -1,0 +1,11 @@
+projector:
+  name: convpool3d
+  hidden_size: 4096
+  bias: true
+  params:
+    budget_policy: nearest
+    head_type: mlp
+    inner_dim: null
+    depth: 2
+    kernel_size: 3
+    ffn_expansion: 4

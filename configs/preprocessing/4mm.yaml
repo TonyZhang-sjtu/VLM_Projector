@@ -1,0 +1,3 @@
+preprocessing:
+  spacing_policy: 4mm
+  boundary_policy: minimal_pad

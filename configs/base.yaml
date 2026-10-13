@@ -1,0 +1,110 @@
+project_root: null  # null resolves to the source checkout; saved configs use an absolute path
+seed: 42
+data:
+  root: assets/data
+  annotation_root: assets/data/RadGenome-Brain
+  manifest_dir: assets/data/RadGenome-Brain/training_manifests/single_sequence_findings_coref_v2
+  target_version: single_sequence_findings_coref_v2
+  datasets: [brats]
+  review_policy: include_with_flag
+  sampling: uniform_sequence
+preprocessing:
+  name: neurovfm
+  spacing_policy: native_grid
+  inplane_mm: 1.0
+  throughplane_mm: 4.0
+  boundary_policy: minimal_pad
+  orientation: RPI
+  slice_axis_policy: official
+  image_interpolation: bspline
+  patch_size_dhw: [4, 16, 16]
+  intensity_percentiles: [0.5, 99.5]
+  mri_mean: 0.3141
+  mri_std: 0.2623
+  token_filter_policy: none
+  # Stable shared, content-addressed patch cache. Use --no-use-cache to bypass it.
+  cache_dir: assets/preprocessing
+  cache_enabled: true
+  params: {}
+encoder:
+  name: neurovfm
+  path: assets/models/neurovfm-encoder
+  attention: flash
+  batch_mode: independent
+  params: {}
+projector:
+  name: mlp2x_gelu
+  target_compression_ratio: null
+  resolved_budget: {}
+  hidden_size: 4096
+  bias: true
+  params: {}
+decoder:
+  name: llama
+  path: assets/models/llama3.1-8b-instruct
+  weight_dtype: bfloat16
+  quantization: none
+  frozen: true
+  attention: sdpa
+  gradient_checkpointing: true
+  ce_chunk_size: 64
+task:
+  name: single_sequence_findings
+  prompt_version: single_sequence_findings_v2
+  truncate_inputs: false
+training:
+  required_visual_tokens: null
+  deterministic: false
+  stage: a
+  # Index within CUDA_VISIBLE_DEVICES; select physical GPUs outside the program.
+  device: cuda:0
+  distributed: none
+  microbatch_per_device: 1
+  effective_batch_size: 16
+  mixed_precision: bf16
+  projector_lr: 1.0e-5
+  encoder_lr: 0.0
+  weight_decay: 0.01
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
+  warmup_ratio: 0.05
+  warmup_steps: null
+  projector_warmup_steps: null
+  joint_warmup_steps: null
+  projector_warmup_ratio: 0.0625
+  joint_warmup_ratio: 0.0625
+  max_epochs: 10
+  early_stopping_patience: 3
+  early_stopping_min_delta: 0.0
+  grad_clip_norm: 1.0
+  feature_cache: true
+  feature_cache_dir: cache/features
+  num_workers: 0
+  init_checkpoint: null
+  resume: null
+  run_dir: runs/default
+  max_steps: null
+  train_limit: null
+  val_limit: null
+  train_ids_file: null
+  val_ids_file: null
+  validation_generation_samples: 14
+  save_every_steps: 0
+  lora:
+    rank: 8
+    alpha: 16
+    dropout: 0.05
+    bias: none
+generation:
+  batch_mode: independent
+  do_sample: false
+  num_beams: 1
+  max_new_tokens: 192
+evaluation:
+  split: val
+  datasets: null
+  batch_size: 1
+  bootstrap_repeats: 1000
+  review_exclusion_file: null
+  checkpoint: null
+  output_dir: null

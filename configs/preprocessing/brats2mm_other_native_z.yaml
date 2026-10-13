@@ -1,0 +1,3 @@
+preprocessing:
+  spacing_policy: brats2mm_other_native_z
+  throughplane_mm: 2.0

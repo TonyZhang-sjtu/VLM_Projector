@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neurovlm-projector-research"
+version = "0.1.0"
+requires-python = ">=3.10"
+description = "Modular full-volume MRI projector research"
+dependencies = ["torch==2.5.0", "transformers==4.51.3", "peft==0.15.2", "accelerate==1.7.0", "omegaconf==2.3.0", "SimpleITK==2.4.0", "nibabel==5.3.2", "einops==0.8.0", "sacrebleu==2.5.1", "rouge-score==0.1.2", "nltk==3.9.2", "tqdm==4.66.5"]
+
+[project.scripts]
+projector-config = "src.cli.config:main"
+projector-preprocess = "src.cli.preprocess:main"
+projector-cache-features = "src.cli.cache_features:main"
+projector-train = "src.cli.train:main"
+projector-evaluate = "src.cli.evaluate:main"
+projector-evaluate-checkpoint = "src.cli.evaluate_checkpoint:main"
+projector-score-reports = "src.cli.score_reports:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src", "src.*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

@@ -1,0 +1,6 @@
+from typing import Protocol
+
+
+class TaskAdapter(Protocol):
+    def messages(self, sample) -> list: ...
+    def target(self, sample) -> str: ...

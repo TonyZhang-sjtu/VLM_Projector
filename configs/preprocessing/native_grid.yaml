@@ -1,0 +1,3 @@
+preprocessing:
+  spacing_policy: native_grid
+  boundary_policy: minimal_pad

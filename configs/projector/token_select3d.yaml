@@ -1,0 +1,8 @@
+projector:
+  name: token_select3d
+  hidden_size: 4096
+  bias: true
+  params:
+    strategy: diversity
+    selection_seed: null
+    head_type: mlp

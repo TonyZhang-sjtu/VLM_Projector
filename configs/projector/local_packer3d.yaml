@@ -1,0 +1,13 @@
+projector:
+  name: local_packer3d
+  hidden_size: 4096
+  bias: true
+  params:
+    inner_dim: null
+    num_heads: 8
+    ffn_expansion: 4
+    dropout: 0.0
+    checkpoint_blocks: false
+    head_type: mlp
+    budget_policy: nearest
+    depth: 1

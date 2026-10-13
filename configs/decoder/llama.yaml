@@ -1,0 +1,9 @@
+decoder:
+  name: llama
+  path: assets/models/llama3.1-8b-instruct
+  weight_dtype: bfloat16
+  quantization: none
+  frozen: true
+  attention: sdpa
+  gradient_checkpointing: true
+  ce_chunk_size: 64

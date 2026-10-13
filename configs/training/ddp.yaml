@@ -1,0 +1,5 @@
+training:
+  distributed: ddp
+  microbatch_per_device: 1
+  effective_batch_size: 16
+  save_every_steps: 34

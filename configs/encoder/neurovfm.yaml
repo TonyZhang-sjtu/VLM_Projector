@@ -1,0 +1,5 @@
+encoder:
+  name: neurovfm
+  path: assets/models/neurovfm-encoder
+  attention: flash
+  batch_mode: independent

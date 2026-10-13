@@ -1,0 +1,4 @@
+preprocessing:
+  spacing_policy: official_4mm
+  throughplane_mm: 4.0
+  boundary_policy: official_crop

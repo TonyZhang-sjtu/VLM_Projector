@@ -1,0 +1,16 @@
+projector:
+  name: mixer3d
+  hidden_size: 4096
+  bias: true
+  params:
+    budget_policy: nearest
+    head_type: mlp
+    inner_dim: null
+    depth: 2
+    window_size:
+    - 2
+    - 2
+    - 2
+    shift_windows: true
+    ffn_expansion: 4
+    token_expansion: 2

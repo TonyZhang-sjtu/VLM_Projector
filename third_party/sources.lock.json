@@ -1,0 +1,40 @@
+{
+  "repositories": [
+    {
+      "name": "neurovfm",
+      "path": "third_party/neurovfm",
+      "url": "https://github.com/MLNeurosurg/neurovfm.git",
+      "commit": "eb41760f200e3a542fd7bce627513d9a625f0997"
+    },
+    {
+      "name": "3dino",
+      "path": "third_party/3DINO",
+      "url": "https://github.com/AICONSlab/3DINO.git",
+      "commit": "85bd4435c1b2ada41cd34cd15cad17c4d3c88d89"
+    },
+    {
+      "name": "flash-attention",
+      "path": "third_party/flash-attention",
+      "url": "https://github.com/Dao-AILab/flash-attention.git",
+      "commit": "5231d95fe13733fb534c01895f7ea88c6a6c7793"
+    },
+    {
+      "name": "green",
+      "path": "third_party/evaluation/GREEN",
+      "url": "https://github.com/Stanford-AIMI/GREEN.git",
+      "commit": "29567040fba813e1d62503954ec234e056807d05"
+    },
+    {
+      "name": "radgraph",
+      "path": "third_party/evaluation/radgraph",
+      "url": "https://github.com/Stanford-AIMI/radgraph.git",
+      "commit": "87f11a1ff4d2046a838be5f0243857d93780ddec"
+    },
+    {
+      "name": "ratescore",
+      "path": "third_party/evaluation/RaTEScore",
+      "url": "https://github.com/MAGIC-AI4Med/RaTEScore.git",
+      "commit": "a970406b6f4155f7c7a9cb0d29b4fe94437e3361"
+    }
+  ]
+}

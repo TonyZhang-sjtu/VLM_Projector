@@ -1,0 +1,6 @@
+data:
+  manifest_dir: assets/data/RadGenome-Brain/training_manifests/single_sequence_findings_coref_v2
+  target_version: single_sequence_findings_coref_v2
+  datasets: [brats]
+  review_policy: include_with_flag
+  sampling: uniform_sequence

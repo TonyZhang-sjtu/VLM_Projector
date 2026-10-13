@@ -1,0 +1,24 @@
+data:
+  datasets: [brats]
+training:
+  stage: joint_lora
+  deterministic: true
+  projector_lr: 1.0e-5
+  encoder_lr: 1.0e-5
+  projector_warmup_steps: null
+  joint_warmup_steps: null
+  projector_warmup_ratio: 0.0625
+  joint_warmup_ratio: 0.0625
+  # Legacy single-stage warm-up is not used by joint_lora.
+  warmup_ratio: 0.0
+  warmup_steps: null
+  max_epochs: 10
+  early_stopping_patience: 3
+  early_stopping_min_delta: 0.005
+  feature_cache: false
+  init_checkpoint: null
+  lora:
+    rank: 16
+    alpha: 32
+    dropout: 0.05
+    bias: none

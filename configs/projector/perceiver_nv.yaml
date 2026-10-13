@@ -1,0 +1,13 @@
+projector:
+  name: perceiver_nv
+  hidden_size: 4096
+  bias: true
+  params:
+    inner_dim: null
+    num_heads: 8
+    ffn_expansion: 4
+    dropout: 0.0
+    # Full BraTS 8775-token deterministic attention needs recomputation on 24 GiB GPUs.
+    checkpoint_blocks: true
+    head_type: mlp
+    depth: 6

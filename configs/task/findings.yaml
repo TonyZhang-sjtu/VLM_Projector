@@ -1,0 +1,4 @@
+task:
+  name: single_sequence_findings
+  prompt_version: single_sequence_findings_v2
+  truncate_inputs: false

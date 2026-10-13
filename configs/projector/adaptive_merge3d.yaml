@@ -1,0 +1,9 @@
+projector:
+  name: adaptive_merge3d
+  hidden_size: 4096
+  bias: true
+  params:
+    normalize_scores: true
+    cache_assignments: true
+    assignment_cache_dir: cache/projector_assignments
+    head_type: mlp

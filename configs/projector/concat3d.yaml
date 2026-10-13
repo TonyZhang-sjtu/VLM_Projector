@@ -1,0 +1,6 @@
+projector:
+  name: concat3d
+  hidden_size: 4096
+  bias: true
+  params:
+    head_type: mlp

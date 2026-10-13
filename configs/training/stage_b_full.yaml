@@ -1,0 +1,7 @@
+training:
+  stage: b_full
+  projector_lr: 5.0e-5
+  encoder_lr: 3.0e-6
+  warmup_steps: null
+  max_epochs: 5
+  feature_cache: false

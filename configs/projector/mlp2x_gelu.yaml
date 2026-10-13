@@ -1,0 +1,4 @@
+projector:
+  name: mlp2x_gelu
+  hidden_size: 4096
+  bias: true
