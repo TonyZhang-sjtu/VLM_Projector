@@ -11,14 +11,15 @@ def failure(status, details):
     return {'status': status, 'values': {}, 'details': details}
 
 
-def green_structure_error(text):
+def green_structure_error(text, require_all_categories=False):
     """Official parser maps absent/malformed fields to zero; do not silently accept that."""
-    for category in ('Clinically Significant Errors', 'Matched Findings'):
+    for category in ('Clinically Significant Errors', 'Clinically Insignificant Errors',
+                     'Matched Findings'):
         matches = re.findall(rf'\[{category}\]:\s*(.*?)(?:\n\s*\n|\Z)', text, re.DOTALL)
         if len(matches) != 1:
             return f'Missing/duplicate {category} section'
         section = matches[0].strip()
-        if section.startswith('No'):
+        if section.startswith('No') and not require_all_categories:
             continue
         if category == 'Matched Findings':
             if not re.match(r'\d+\.', section):
@@ -27,9 +28,49 @@ def green_structure_error(text):
             lines = re.findall(r'\(([a-f1-6])\) .*', section)
             if not lines or len(lines) != len(set(lines)):
                 return 'Missing/duplicate error category counts'
+            if require_all_categories and set(lines) not in (set('abcdef'), set('123456')):
+                return 'Missing/duplicate error category counts'
             if len(re.findall(r'\([a-f1-6]\) .*?: \d+\.', section)) != len(lines):
                 return 'Malformed error count'
     return None
+
+
+GREEN_FORMAT_REPAIR_VERSION = 'canonical-six-categories-v1'
+
+
+def green_format_repair_prompt(analysis):
+    """Ask GREEN to repair structure without re-scoring the report pair."""
+    categories = (
+        '(a) False report of a finding in the candidate',
+        '(b) Missing a finding present in the reference',
+        "(c) Misidentification of a finding's anatomic location/position",
+        '(d) Misassessment of the severity of a finding',
+        "(e) Mentioning a comparison that isn't in the reference",
+        '(f) Omitting a comparison detailing a change from a prior study',
+    )
+    lines = '\n'.join(f'{item}: <integer>. <existing details or None>' for item in categories)
+    return f"""Reformat the assessment below. Do not re-evaluate the reports, add new errors, or change
+the stated clinical judgments. Resolve mislabeled duplicate categories by matching their prose to the
+canonical category names. Use zero only when the assessment contains no error for that category.
+
+Return exactly these four sections. In each error section, output each canonical line (a) through (f)
+exactly once, with an integer count followed by a period. Do not omit or duplicate a category.
+
+[Explanation]:
+<preserve the existing explanation>
+
+[Clinically Significant Errors]:
+{lines}
+
+[Clinically Insignificant Errors]:
+{lines}
+
+[Matched Findings]:
+<integer>. <existing matched findings or None>
+
+Assessment to reformat:
+{analysis}
+"""
 
 
 class BaseScorer:
@@ -67,29 +108,58 @@ class GreenScorer(BaseScorer):
         self.impl.model.to(self.device)
         self.max_length = max_length
 
-    def score(self, reference, prediction):
+    def generate(self, prompt):
         import torch
-        from green_score.utils import make_prompt, clean_responses
         tok = self.impl.tokenizer
-        prompt = make_prompt(reference, prediction)
         chat = [{'from': 'human', 'value': prompt}, {'from': 'gpt', 'value': ''}]
         text = tok.apply_chat_template(chat, tokenize=False, add_generation_prompt=True)
         batch = tok([text], return_tensors='pt', padding=True, truncation=False).to(self.device)
         length = batch['input_ids'].shape[1]
         if length >= self.max_length:
-            return failure('input_too_long', {'input_tokens': length, 'max_length': self.max_length})
+            return None, {'input_tokens': length, 'max_length': self.max_length,
+                          'error': 'input_too_long'}
         with torch.inference_mode():
             outputs = self.impl.model.generate(
                 **batch, max_length=self.max_length, do_sample=False, temperature=None, top_p=None,
                 eos_token_id=tok.eos_token_id, pad_token_id=tok.pad_token_id)
-        analysis = clean_responses(tok.batch_decode(outputs, skip_special_tokens=True)[0])
-        details = {'analysis': analysis, 'input_tokens': length,
-                   'generated_tokens': outputs.shape[1] - length, **self.memory()}
+        analysis = self.clean_response(tok.batch_decode(outputs, skip_special_tokens=True)[0])
+        details = {'input_tokens': length, 'generated_tokens': outputs.shape[1] - length}
         if outputs.shape[1] >= self.max_length and outputs[0, -1].item() != tok.eos_token_id:
-            return failure('output_truncated', details)
+            details['error'] = 'output_truncated'
+            return None, details
+        return analysis, details
+
+    @staticmethod
+    def clean_response(text):
+        from green_score.utils import clean_responses
+        return clean_responses(text)
+
+    def score(self, reference, prediction):
+        from green_score.utils import make_prompt
+        prompt = make_prompt(reference, prediction)
+        analysis, generation = self.generate(prompt)
+        details = {'analysis': analysis, **generation, **self.memory()}
+        if analysis is None:
+            return failure(generation['error'], details)
         problem = green_structure_error(analysis)
         if problem:
-            return failure('parse_error', dict(details, error=problem))
+            repair, repair_generation = self.generate(green_format_repair_prompt(analysis))
+            repair_details = {
+                'version': GREEN_FORMAT_REPAIR_VERSION,
+                'initial_error': problem,
+                'analysis': repair,
+                **repair_generation,
+            }
+            details.update(initial_analysis=analysis, format_repair=repair_details)
+            if repair is None:
+                return failure('format_repair_failed', details)
+            repair_problem = green_structure_error(repair, require_all_categories=True)
+            if repair_problem:
+                repair_details['error'] = repair_problem
+                return failure('format_repair_failed', details)
+            analysis = repair
+            details['analysis'] = analysis
+            details.update(self.memory())
         counts = self.impl.compute_error_count(analysis)
         value = self.impl.compute_green(analysis)
         details.update(matched_findings=counts[-1], significant_errors=counts[:6],

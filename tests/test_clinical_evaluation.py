@@ -6,7 +6,7 @@ from src.evaluation.clinical import (
     aggregate_clinical, clinical_bootstrap, digest, read_jsonl, score_predictions,
     validate_pair, validate_rows,
 )
-from src.evaluation.clinical_scorers import green_structure_error
+from src.evaluation.clinical_scorers import green_format_repair_prompt, green_structure_error
 
 
 def rows():
@@ -96,7 +96,28 @@ def test_unicode_reports_round_trip_to_utf8_scored_jsonl(tmp_path):
 
 
 def test_green_parser_rejects_silent_zero_and_invalid_counts():
+    insignificant = '\n\n[Clinically Insignificant Errors]:\nNo errors.'
     assert green_structure_error('Unstructured output')
-    assert green_structure_error('[Clinically Significant Errors]:\nNo errors.\n\n[Matched Findings]:\n1. Normal brain.') is None
-    assert green_structure_error('[Clinically Significant Errors]:\n(a) False finding: two.\n\n[Matched Findings]:\n1. Normal brain.')
-    assert green_structure_error('[Clinically Significant Errors]:\n(a) False finding: 2. Lesions.\n\n[Matched Findings]:\n0. None.') is None
+    assert green_structure_error('[Clinically Significant Errors]:\nNo errors.' + insignificant +
+                                 '\n\n[Matched Findings]:\n1. Normal brain.') is None
+    assert green_structure_error('[Clinically Significant Errors]:\n(a) False finding: two.' +
+                                 insignificant + '\n\n[Matched Findings]:\n1. Normal brain.')
+    assert green_structure_error('[Clinically Significant Errors]:\n(a) False finding: 2. Lesions.' +
+                                 insignificant + '\n\n[Matched Findings]:\n0. None.') is None
+    duplicate = ('[Clinically Significant Errors]:\n(a) False finding: 1. Lesion.\n'
+                 '(a) False finding: 0. None.' + insignificant +
+                 '\n\n[Matched Findings]:\n0. None.')
+    assert green_structure_error(duplicate)
+    one_category = ('[Clinically Significant Errors]:\n(a) False finding: 1. Lesion.\n\n'
+                    '[Clinically Insignificant Errors]:\nNo errors.\n\n'
+                    '[Matched Findings]:\n0. None.')
+    assert green_structure_error(one_category) is None
+    assert green_structure_error(one_category, require_all_categories=True)
+
+
+def test_green_format_repair_prompt_is_canonical_and_non_reinterpretive():
+    prompt = green_format_repair_prompt('original assessment')
+    assert 'Do not re-evaluate' in prompt and 'original assessment' in prompt
+    for label in 'abcdef':
+        assert prompt.count(f'({label})') >= 2
+    assert 'exactly once' in prompt

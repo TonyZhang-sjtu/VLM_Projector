@@ -104,7 +104,12 @@ def make_commands(args, config_path, ids_path):
 
 
 def combine_metrics(generated, scored, metrics):
+    if generated['status'] != 'complete':
+        raise ValueError('Generation metrics are incomplete')
+    if scored is not None and scored['status'] not in ('complete', 'partial'):
+        raise ValueError('Clinical scoring did not produce a publishable result')
     overall = {}
+    skipped = {}
     for metric in metrics:
         if metric in ('bleu4', 'rougeL'):
             overall[metric] = generated['overall'][metric]
@@ -112,13 +117,44 @@ def combine_metrics(generated, scored, metrics):
             overall[metric] = generated['answer_ce']['answer_ce']
         else:
             from src.evaluation.clinical import METRIC_KEYS
+            summaries = {key: scored['clinical']['overall'][key] for key in METRIC_KEYS[metric]}
+            if any(item['status'] != 'complete' or item['mean'] is None
+                   for item in summaries.values()):
+                skipped[metric] = {
+                    'reason': 'incomplete',
+                    'summaries': summaries,
+                }
+                continue
             for key in METRIC_KEYS[metric]:
-                overall[key] = scored['clinical']['overall'][key]['mean']
-    if generated['status'] != 'complete' or (scored is not None and scored['status'] != 'complete'):
-        raise ValueError('Cannot publish complete metrics from a failed evaluation stage')
+                overall[key] = summaries[key]['mean']
     if any(v is None for v in overall.values()):
         raise ValueError('Selected metric missing')
-    return overall
+    return overall, skipped
+
+
+def validate_saved_generation(output_dir, checkpoint_sha256, samples):
+    """Validate that an interrupted evaluation's generation can be reused."""
+    expected_ids = [sample.id for sample in samples]
+    ids_path = output_dir / 'expected_ids.json'
+    predictions_path = output_dir / 'generation/predictions.jsonl'
+    metrics_path = output_dir / 'generation/metrics.json'
+    if not all(path.is_file() for path in (ids_path, predictions_path, metrics_path)):
+        return False
+    if json.loads(ids_path.read_text()) != expected_ids:
+        raise ValueError('Existing evaluation uses a different sample selection')
+    generated = json.loads(metrics_path.read_text())
+    if generated.get('status') != 'complete':
+        return False
+    rows = read_jsonl(predictions_path)
+    validate_rows(rows, expected_ids)
+    lookup = {sample.id: sample for sample in samples}
+    for row in rows:
+        sample = lookup[row['id']]
+        if (row['reference'] != sample.finding or row['checkpoint_id'] != checkpoint_sha256
+                or any(row[key] != getattr(sample, key)
+                       for key in ('patient_id', 'case_id', 'cohort', 'sequence', 'split'))):
+            raise ValueError('Existing prediction metadata does not match checkpoint/manifest')
+    return True
 
 
 def main():
@@ -140,6 +176,8 @@ def main():
     cli.add_argument('--sample-seed', type=int,
                      help='Override the checkpoint seed used for --sample-fraction')
     cli.add_argument('--ids-file', type=Path, help='Optional JSON array of IDs in the requested split')
+    cli.add_argument('--resume', action='store_true',
+                     help='Reuse validated generation files in an existing output directory and rerun scoring')
     cli.add_argument('--dry-run', action='store_true', help='Check checkpoint metadata/manifests and display plan without loading VLM/scorers')
     args = cli.parse_args()
     try:
@@ -159,18 +197,27 @@ def main():
         cli.error('--sample-fraction must be greater than 0 and at most 1')
     args.checkpoint = args.checkpoint.resolve(strict=True)
     args.output_dir = args.output_dir.resolve()
-    if args.output_dir.exists():
+    if args.output_dir.exists() and not args.resume:
         raise FileExistsError(f'Use a new output directory: {args.output_dir}')
+    if args.resume and not args.output_dir.is_dir():
+        raise FileNotFoundError(f'Cannot resume missing evaluation directory: {args.output_dir}')
     checkpoint = args.checkpoint
     if not args.dry_run:
-        args.output_dir.mkdir(parents=True)
-        checkpoint = args.output_dir / 'checkpoint.pt'
-        # Training writes best/last atomically. A hard link preserves the selected
-        # inode if training subsequently replaces it, without duplicating storage.
-        try:
-            os.link(args.checkpoint, checkpoint)
-        except OSError:
-            shutil.copy2(args.checkpoint, checkpoint)
+        if args.resume:
+            checkpoint = args.output_dir / 'checkpoint.pt'
+            if not checkpoint.is_file():
+                raise FileNotFoundError(f'Resume checkpoint copy is missing: {checkpoint}')
+            if file_digest(checkpoint) != file_digest(args.checkpoint):
+                raise ValueError('Existing evaluation belongs to a different checkpoint')
+        else:
+            args.output_dir.mkdir(parents=True)
+            checkpoint = args.output_dir / 'checkpoint.pt'
+            # Training writes best/last atomically. A hard link preserves the selected
+            # inode if training subsequently replaces it, without duplicating storage.
+            try:
+                os.link(args.checkpoint, checkpoint)
+            except OSError:
+                shutil.copy2(args.checkpoint, checkpoint)
     try:
         config = checkpoint_config(checkpoint, args)
         from src.config import save_config
@@ -204,6 +251,8 @@ def main():
             print(shlex.join(command), flush=True)
         if args.dry_run:
             return
+        reuse_generation = args.resume and validate_saved_generation(
+            args.output_dir, plan['checkpoint_sha256'], samples)
         write_json(args.output_dir / 'pipeline.json', dict(plan, status='running'))
         save_config(config, config_path)
         write_json(ids_path, [s.id for s in samples])
@@ -213,6 +262,9 @@ def main():
         env.setdefault('PYTORCH_CUDA_ALLOC_CONF', 'expandable_segments:True')
         for name, command in zip(('generation', 'scoring'), commands):
             if command is None:
+                continue
+            if name == 'generation' and reuse_generation:
+                print('Reusing validated generation predictions; proceeding to scoring.', flush=True)
                 continue
             print(f'Running {name}; GPU memory is released before the next stage.', flush=True)
             subprocess.run(command, check=True, env=env)
@@ -229,7 +281,9 @@ def main():
                         raise ValueError('Generated prediction metadata does not match checkpoint/manifest')
         generated = json.loads((args.output_dir / 'generation/metrics.json').read_text())
         scored = json.loads((args.output_dir / 'scoring/metrics.json').read_text()) if commands[1] else None
-        result = dict(plan, status='complete', overall=combine_metrics(generated, scored, args.metrics))
+        overall, skipped = combine_metrics(generated, scored, args.metrics)
+        status = 'partial' if skipped else 'complete'
+        result = dict(plan, status=status, overall=overall, skipped_metrics=skipped)
         result.pop('commands')
         result['details'] = {'generation': 'generation/metrics.json',
                              'scoring': 'scoring/metrics.json' if scored else None,
@@ -237,8 +291,10 @@ def main():
         result['bootstrap'] = {'lexical': (scored or generated)['bootstrap'],
                                'clinical': scored['clinical']['bootstrap'] if scored else None}
         write_json(args.output_dir / 'metric.json', result)
-        write_json(args.output_dir / 'pipeline.json', dict(plan, status='complete'))
-        print(json.dumps({'status': 'complete', 'overall': result['overall'],
+        write_json(args.output_dir / 'pipeline.json', dict(plan, status=status,
+                   skipped_metrics=skipped))
+        print(json.dumps({'status': status, 'overall': result['overall'],
+                          'skipped_metrics': skipped,
                           'output': str(args.output_dir / 'metric.json')}, indent=2))
     except Exception as exc:
         if not args.dry_run and args.output_dir.exists():

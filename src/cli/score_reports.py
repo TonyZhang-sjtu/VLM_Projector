@@ -85,16 +85,16 @@ def main():
                 if metric in args.metrics:
                     lexical['semantic_metrics'].pop(label, None)
             lexical['semantic_metrics'].update(clinical['overall'])
+            published_status = ('complete' if clinical['status'] == 'complete' else 'partial')
             lexical['clinical'] = clinical
-            lexical['status'] = clinical['status'] if lexical['status'] == 'complete' else lexical['status']
+            lexical['status'] = published_status if lexical['status'] == 'complete' else lexical['status']
             lexical['coverage_scope'] = provenance['coverage_scope']
             write_json(args.output_dir / 'metrics.json', lexical)
-            provenance.update(status=clinical['status'], execution=execution)
+            provenance.update(status=published_status, clinical_status=clinical['status'], execution=execution)
             write_json(provenance_path, provenance)
-            print(json.dumps({'status': clinical['status'], 'overall': clinical['overall'],
+            print(json.dumps({'status': published_status, 'clinical_status': clinical['status'],
+                              'overall': clinical['overall'],
                               'execution': execution}, indent=2))
-            if clinical['status'] != 'complete':
-                raise RuntimeError('Clinical scoring incomplete; inspect saved statuses and retry after resolving errors')
         except Exception as exc:
             provenance.update(status='failed', error_type=type(exc).__name__, error=str(exc))
             write_json(provenance_path, provenance)

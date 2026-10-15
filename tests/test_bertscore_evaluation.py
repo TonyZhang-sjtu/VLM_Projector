@@ -43,10 +43,12 @@ def test_selected_and_all_routes_and_combined_output(tmp_path):
     gen, scoring = make_commands(args, tmp_path/'config.yaml', tmp_path/'ids.json')
     assert '--skip-answer-ce' not in gen
     assert scoring[scoring.index('--metrics')+1:] == ['green', 'radgraph', 'rate', 'bertscore']
-    scores = {key: {'mean': .8} for key in METRIC_KEYS['bertscore']}
-    merged = combine_metrics({'status': 'complete'}, {'status': 'complete', 'clinical': {'overall': scores}},
-                             ['bertscore'])
+    scores = {key: {'mean': .8, 'status': 'complete'} for key in METRIC_KEYS['bertscore']}
+    merged, skipped = combine_metrics(
+        {'status': 'complete'}, {'status': 'complete', 'clinical': {'overall': scores}},
+        ['bertscore'])
     assert merged == {key: .8 for key in METRIC_KEYS['bertscore']}
+    assert skipped == {}
 
 
 def test_only_requested_dependencies_and_assets(monkeypatch, tmp_path):

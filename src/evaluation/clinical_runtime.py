@@ -82,7 +82,7 @@ def specifications(metrics, assets, device, green_max_length=2048):
             'device': device, 'batch_size': 1,
             'settings': ({'dtype': 'float16', 'max_length': green_max_length,
                           'do_sample': False, 'prompt': 'upstream make_prompt + chat_template',
-                          'parse_policy': 'official counts with structural validation'} if metric == 'green' else
+                          'parse_policy': 'official counts with structural validation and canonical format repair v1'} if metric == 'green' else
                          {'model_type': 'radgraph-xl', 'reward_level': 'all', 'dtype': 'float32'} if metric == 'radgraph' else
                          {'affinity_matrix': 'long', 'dtype': 'float32', 'entity_max_tokens': 30,
                           'sentence_max_tokens': 512, 'empty_entities': 0.5} if metric == 'rate' else

@@ -1,8 +1,10 @@
 from argparse import Namespace
+import json
 from types import SimpleNamespace
 import pytest
 from src.cli.evaluate_checkpoint import (
     checkpoint_config, combine_metrics, make_commands, metric_selection, select_samples,
+    validate_saved_generation,
 )
 
 
@@ -65,7 +67,32 @@ def test_restore_stage_and_preprocessing_from_checkpoint(tmp_path):
 
 def test_summary_does_not_mislabel_unrequested_or_failed_scores():
     generated={'status':'complete','overall':{'bleu4':12,'rougeL':30},'answer_ce':{'answer_ce':2.5}}
-    scored={'status':'complete','clinical':{'overall':{'green':{'mean':.6}}}}
-    assert combine_metrics(generated,scored,['green','answer_ce'])=={'green':.6,'answer_ce':2.5}
-    scored['status']='incomplete'
-    with pytest.raises(ValueError):combine_metrics(generated,scored,['green'])
+    scored={'status':'complete','clinical':{'overall':{'green':{
+        'mean':.6, 'status':'complete', 'valid':3, 'expected':3,
+    }}}}
+    overall, skipped = combine_metrics(generated,scored,['green','answer_ce'])
+    assert overall == {'green':.6,'answer_ce':2.5} and skipped == {}
+    scored['status']='partial'
+    scored['clinical']['overall']['green'] = {
+        'mean': None, 'status': 'incomplete', 'valid': 2, 'expected': 3,
+    }
+    overall, skipped = combine_metrics(generated,scored,['green','answer_ce'])
+    assert overall == {'answer_ce':2.5}
+    assert skipped['green']['reason'] == 'incomplete'
+
+
+def test_saved_generation_is_reused_only_after_identity_validation(tmp_path):
+    sample = SimpleNamespace(id='s1', patient_id='p1', case_id='c1', cohort='BraTS_GLI',
+                             sequence='t1n', split='test', finding='reference')
+    (tmp_path / 'generation').mkdir()
+    (tmp_path / 'expected_ids.json').write_text('["s1"]')
+    (tmp_path / 'generation/metrics.json').write_text('{"status":"complete"}')
+    row = {'id': 's1', 'patient_id': 'p1', 'case_id': 'c1', 'cohort': 'BraTS_GLI',
+           'sequence': 't1n', 'split': 'test', 'reference': 'reference',
+           'prediction': 'prediction', 'checkpoint_id': 'abc'}
+    (tmp_path / 'generation/predictions.jsonl').write_text(json.dumps(row) + '\n')
+    assert validate_saved_generation(tmp_path, 'abc', [sample])
+    row['checkpoint_id'] = 'different'
+    (tmp_path / 'generation/predictions.jsonl').write_text(json.dumps(row) + '\n')
+    with pytest.raises(ValueError, match='checkpoint/manifest'):
+        validate_saved_generation(tmp_path, 'abc', [sample])

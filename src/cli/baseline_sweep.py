@@ -48,6 +48,8 @@ def parser():
                      metavar='KEY=VALUE', help='Training/config override, e.g. training.lora.rank=32')
     cli.add_argument('--dry-run', action='store_true',
                      help='Read manifests/headers, print configs and commands; no models or run files')
+    cli.add_argument('--resume-run', type=Path,
+                     help='Resume an existing sweep from its saved plan; completed ratios are skipped')
     return cli
 
 
@@ -170,9 +172,13 @@ def write_json(path, value):
     temporary.replace(path)
 
 
-def run_logged(command, log_path):
+def run_logged(command, log_path, append=False):
     print(shlex.join(command), flush=True)
-    with Path(log_path).open('w') as log:
+    log_path = Path(log_path)
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    with log_path.open('a' if append else 'w') as log:
+        if append:
+            log.write('\n# resumed command\n')
         log.write(shlex.join(command) + '\n')
         log.flush()
         with subprocess.Popen(command, cwd=ROOT, stdout=subprocess.PIPE,
@@ -195,31 +201,97 @@ def run_logged(command, log_path):
             raise subprocess.CalledProcessError(code, command)
 
 
-def execute_plan(plan):
-    root = Path(plan['run_root'])
-    root.parent.mkdir(parents=True, exist_ok=True)
-    root.mkdir()  # Atomic refusal if another process claimed this run name.
-    write_json(root / 'sweep_plan.json', plan)
+def load_resume_plan(path, projector):
+    root = path.expanduser().resolve(strict=True)
+    if not root.is_dir():
+        raise ValueError(f'--resume-run must be a sweep directory: {root}')
+    plan_path = root / 'sweep_plan.json'
+    if not plan_path.is_file():
+        raise ValueError(f'Missing saved sweep plan: {plan_path}')
+    plan = json.loads(plan_path.read_text())
+    if plan.get('version') != 1 or plan.get('projector') != projector:
+        raise ValueError('Saved sweep plan version/projector does not match this launcher')
+    if Path(plan.get('run_root', '')).resolve() != root:
+        raise ValueError('Saved sweep plan run_root does not match --resume-run')
+    if not plan.get('runs') or [run.get('ratio') for run in plan['runs']] != plan.get('ratios'):
+        raise ValueError('Saved sweep plan has an invalid run list')
     for run in plan['runs']:
-        save_config(OmegaConf.create(run['config']), run['config_path'])
-    state = {'status': 'running', 'projector': plan['projector'], 'completed_ratios': [],
-             'active_ratio': None, 'phase': 'preflight_complete'}
+        for key in ('directory', 'config_path', 'checkpoint', 'metric_path'):
+            try:
+                Path(run[key]).resolve().relative_to(root)
+            except (KeyError, ValueError):
+                raise ValueError(f'Saved sweep {key} is outside the run directory') from None
+    return plan
+
+
+def training_finished(checkpoint):
+    state_path = checkpoint.parent.parent / 'training_state.json'
+    if not checkpoint.is_file() or not state_path.is_file():
+        return False
+    state = json.loads(state_path.read_text())
+    return state.get('stop_reason') in ('max_epochs', 'max_steps', 'early_stopping')
+
+
+def execute_plan(plan, resume=False):
+    root = Path(plan['run_root'])
+    if resume:
+        if not root.is_dir():
+            raise FileNotFoundError(f'Cannot resume missing sweep: {root}')
+        state_path = root / 'sweep_status.json'
+        previous = json.loads(state_path.read_text()) if state_path.is_file() else {}
+        completed = [ratio for ratio in previous.get('completed_ratios', [])
+                     if ratio in plan['ratios']]
+        partial = [item for item in previous.get('partial_ratios', [])
+                   if item.get('ratio') in completed]
+        state = {'status': 'running', 'projector': plan['projector'],
+                 'completed_ratios': completed, 'partial_ratios': partial,
+                 'active_ratio': None, 'phase': 'resume_preflight_complete'}
+    else:
+        root.parent.mkdir(parents=True, exist_ok=True)
+        root.mkdir()  # Atomic refusal if another process claimed this run name.
+        write_json(root / 'sweep_plan.json', plan)
+        for run in plan['runs']:
+            save_config(OmegaConf.create(run['config']), run['config_path'])
+        state = {'status': 'running', 'projector': plan['projector'], 'completed_ratios': [],
+                 'partial_ratios': [], 'active_ratio': None, 'phase': 'preflight_complete'}
     try:
         for run in plan['runs']:
+            if run['ratio'] in state['completed_ratios']:
+                print(f'Skipping completed ratio r{run["ratio"]}.', flush=True)
+                continue
             state.update(active_ratio=run['ratio'], phase='training')
             write_json(root / 'sweep_status.json', state)
-            run_logged(run['train_command'], Path(run['directory']) / 'train_console.log')
+            checkpoint = Path(run['checkpoint'])
+            if resume and checkpoint.is_file():
+                if not training_finished(checkpoint):
+                    raise ValueError(
+                        f'Checkpoint exists but training completion is not recorded: {checkpoint}')
+                print(f'Reusing completed checkpoint for r{run["ratio"]}: {checkpoint}', flush=True)
+            else:
+                run_logged(run['train_command'], Path(run['directory']) / 'train_console.log',
+                           append=resume)
             if not Path(run['checkpoint']).is_file():
                 raise FileNotFoundError(f'Training returned without best checkpoint: {run["checkpoint"]}')
             state['phase'] = 'evaluation'
             write_json(root / 'sweep_status.json', state)
-            run_logged(run['eval_command'], Path(run['directory']) / 'evaluation_console.log')
+            eval_command = list(run['eval_command'])
+            evaluation_dir = Path(run['metric_path']).parent
+            if resume and evaluation_dir.exists() and '--resume' not in eval_command:
+                eval_command.append('--resume')
+            run_logged(eval_command, Path(run['directory']) / 'evaluation_console.log',
+                       append=resume)
             result = json.loads(Path(run['metric_path']).read_text())
-            if result.get('status') != 'complete':
+            if result.get('status') not in ('complete', 'partial'):
                 raise ValueError(f'Evaluation did not complete for ratio {run["ratio"]}')
+            if result['status'] == 'partial':
+                state['partial_ratios'].append({
+                    'ratio': run['ratio'],
+                    'skipped_metrics': result.get('skipped_metrics', {}),
+                })
             state['completed_ratios'].append(run['ratio'])
             write_json(root / 'sweep_status.json', state)
-        state.update(status='complete', active_ratio=None, phase='complete')
+        state.update(status='partial' if state['partial_ratios'] else 'complete',
+                     active_ratio=None, phase='complete')
     except BaseException as exc:
         state.update(status='failed', error_type=type(exc).__name__, error=str(exc))
         raise
@@ -232,8 +304,9 @@ def main():
     cli = parser()
     args = cli.parse_args()
     try:
-        plan = build_plan(args)
-    except (ValueError, FileExistsError) as exc:
+        plan = (load_resume_plan(args.resume_run, args.projector)
+                if args.resume_run is not None else build_plan(args))
+    except (ValueError, FileExistsError, FileNotFoundError) as exc:
         cli.error(str(exc))
     if args.dry_run:
         print(json.dumps(plan, indent=2))
@@ -243,7 +316,7 @@ def main():
         print(f'{args.projector} target={run["ratio"]}x: '
               f'N={budget["input_tokens"]}, M={budget["expected_output_tokens"]}, '
               f'actual={budget["actual_ratio"]:.6f}x; schedule={run["schedule"]}', flush=True)
-    execute_plan(plan)
+    execute_plan(plan, resume=args.resume_run is not None)
 
 
 if __name__ == '__main__':
