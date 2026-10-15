@@ -4,7 +4,7 @@ from types import SimpleNamespace
 import pytest
 from src.cli.evaluate_checkpoint import (
     checkpoint_config, combine_metrics, make_commands, metric_selection, select_samples,
-    validate_saved_generation,
+    partial_metric_details, validate_saved_generation,
 )
 
 
@@ -72,13 +72,46 @@ def test_summary_does_not_mislabel_unrequested_or_failed_scores():
     }}}}
     overall, skipped = combine_metrics(generated,scored,['green','answer_ce'])
     assert overall == {'green':.6,'answer_ce':2.5} and skipped == {}
+    assert partial_metric_details(scored, overall) == {}
     scored['status']='partial'
     scored['clinical']['overall']['green'] = {
-        'mean': None, 'status': 'incomplete', 'valid': 2, 'expected': 3,
+        'mean': None, 'valid_only_mean': .75, 'status': 'incomplete', 'valid': 2,
+        'expected': 3, 'statuses': {'ok': 2, 'format_repair_failed': 1},
     }
     overall, skipped = combine_metrics(generated,scored,['green','answer_ce'])
-    assert overall == {'answer_ce':2.5}
+    assert overall == {'green': .75, 'answer_ce':2.5} and skipped == {}
+    partial = partial_metric_details(scored, overall)['green']
+    assert partial['valid'] == 2 and partial['failed'] == 1 and partial['expected'] == 3
+    assert partial['coverage'] == pytest.approx(2 / 3)
+    assert partial['reason'] == 'valid_samples_only'
+    assert partial['statuses'] == {'ok': 2, 'format_repair_failed': 1}
+    # Raw full-population summaries remain unchanged; a subset mean is not a full-set mean.
+    assert scored['clinical']['overall']['green']['mean'] is None
+
+
+@pytest.mark.parametrize('valid,value', [(0, None), (0, 0.), (2, None),
+                                         (2, float('nan')), (2, float('inf'))])
+def test_green_unavailable_subset_is_not_published(valid, value):
+    generated = {'status': 'complete', 'overall': {}, 'answer_ce': {'answer_ce': 2.5}}
+    scored = {'status': 'partial', 'clinical': {'overall': {'green': {
+        'mean': None, 'valid_only_mean': value, 'status': 'incomplete',
+        'valid': valid, 'expected': 3,
+    }}}}
+    overall, skipped = combine_metrics(generated, scored, ['green', 'answer_ce'])
+    assert overall == {'answer_ce': 2.5}
     assert skipped['green']['reason'] == 'incomplete'
+    assert partial_metric_details(scored, overall) == {}
+
+
+def test_zero_green_is_a_valid_subset_score():
+    generated = {'status': 'complete', 'overall': {}}
+    scored = {'status': 'partial', 'clinical': {'overall': {'green': {
+        'mean': None, 'valid_only_mean': 0., 'status': 'incomplete',
+        'valid': 1, 'expected': 2,
+    }}}}
+    overall, skipped = combine_metrics(generated, scored, ['green'])
+    assert overall == {'green': 0.} and skipped == {}
+    assert partial_metric_details(scored, overall)['green']['failed'] == 1
 
 
 def test_saved_generation_is_reused_only_after_identity_validation(tmp_path):

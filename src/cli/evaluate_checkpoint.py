@@ -120,6 +120,14 @@ def combine_metrics(generated, scored, metrics):
             summaries = {key: scored['clinical']['overall'][key] for key in METRIC_KEYS[metric]}
             if any(item['status'] != 'complete' or item['mean'] is None
                    for item in summaries.values()):
+                if metric == 'green':
+                    item = summaries['green']
+                    value = item.get('valid_only_mean')
+                    if (0 < item['valid'] <= item['expected']
+                            and isinstance(value, (int, float)) and not isinstance(value, bool)
+                            and math.isfinite(value) and 0 <= value <= 1):
+                        overall['green'] = value
+                        continue
                 skipped[metric] = {
                     'reason': 'incomplete',
                     'summaries': summaries,
@@ -130,6 +138,30 @@ def combine_metrics(generated, scored, metrics):
     if any(v is None for v in overall.values()):
         raise ValueError('Selected metric missing')
     return overall, skipped
+
+
+def partial_metric_details(scored, overall):
+    """Keep coverage explicit when publishing GREEN over successful samples only.
+
+    The underlying clinical summary retains its strict full-set mean/CI contract.
+    This publication policy does not change per-pair scoring or cache identity.
+    """
+    if scored is None or 'green' not in overall:
+        return {}
+    summary = scored['clinical']['overall']['green']
+    if summary['status'] == 'complete' and summary['mean'] is not None:
+        return {}
+    valid, expected = summary['valid'], summary['expected']
+    return {'green': {
+        'reason': 'valid_samples_only',
+        'aggregation': 'mean_over_successful_samples',
+        'mean': overall['green'],
+        'valid': valid,
+        'failed': expected - valid,
+        'expected': expected,
+        'coverage': valid / expected,
+        'statuses': summary.get('statuses', {}),
+    }}
 
 
 def validate_saved_generation(output_dir, checkpoint_sha256, samples):
@@ -282,8 +314,10 @@ def main():
         generated = json.loads((args.output_dir / 'generation/metrics.json').read_text())
         scored = json.loads((args.output_dir / 'scoring/metrics.json').read_text()) if commands[1] else None
         overall, skipped = combine_metrics(generated, scored, args.metrics)
-        status = 'partial' if skipped else 'complete'
-        result = dict(plan, status=status, overall=overall, skipped_metrics=skipped)
+        partial = partial_metric_details(scored, overall)
+        status = 'partial' if skipped or partial else 'complete'
+        result = dict(plan, status=status, overall=overall, skipped_metrics=skipped,
+                      partial_metrics=partial)
         result.pop('commands')
         result['details'] = {'generation': 'generation/metrics.json',
                              'scoring': 'scoring/metrics.json' if scored else None,
@@ -292,9 +326,10 @@ def main():
                                'clinical': scored['clinical']['bootstrap'] if scored else None}
         write_json(args.output_dir / 'metric.json', result)
         write_json(args.output_dir / 'pipeline.json', dict(plan, status=status,
-                   skipped_metrics=skipped))
+                   skipped_metrics=skipped, partial_metrics=partial))
         print(json.dumps({'status': status, 'overall': result['overall'],
                           'skipped_metrics': skipped,
+                          'partial_metrics': partial,
                           'output': str(args.output_dir / 'metric.json')}, indent=2))
     except Exception as exc:
         if not args.dry_run and args.output_dir.exists():

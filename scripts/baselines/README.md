@@ -1,5 +1,12 @@
 # BraTS baseline 一键训练与评测
 
+GREEN 的二次格式修复仍失败时，最终 `metric.json` 的 `overall.green` 按其余
+`status=ok` 样本取均值，失败样本不计零分、不进入分母。`partial_metrics.green`
+记录 valid/failed/expected、coverage 和失败状态；评测及 sweep 仍标为 `partial`。
+只有完全没有有效 GREEN 分数时才省略该均值并放入 `skipped_metrics`。原始
+`scoring/clinical_metrics.json` 保留 `valid_only_mean`，其全量 `mean` 和全量置信区间
+在覆盖不完整时仍为空。不同方法比较时同时报告覆盖率；需要配对比较时使用共同有效样本。
+
 所有入口显式加载 `configs/training/joint_lora.yaml`、确定性设置、原网格预处理和对应方法配置。
 每个压缩率独立从预训练 NeuroVFM / Llama 初始化，projector 从头训练，LLM 始终冻结。
 每一档执行 **训练 → 评测该档验证 CE 最低的 best.pt → 下一档**；不会沿用上一档权重。

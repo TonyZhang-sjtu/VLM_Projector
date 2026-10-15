@@ -284,10 +284,13 @@ def execute_plan(plan, resume=False):
             if result.get('status') not in ('complete', 'partial'):
                 raise ValueError(f'Evaluation did not complete for ratio {run["ratio"]}')
             if result['status'] == 'partial':
-                state['partial_ratios'].append({
+                partial_result = {
                     'ratio': run['ratio'],
                     'skipped_metrics': result.get('skipped_metrics', {}),
-                })
+                }
+                if result.get('partial_metrics'):
+                    partial_result['partial_metrics'] = result['partial_metrics']
+                state['partial_ratios'].append(partial_result)
             state['completed_ratios'].append(run['ratio'])
             write_json(root / 'sweep_status.json', state)
         state.update(status='partial' if state['partial_ratios'] else 'complete',

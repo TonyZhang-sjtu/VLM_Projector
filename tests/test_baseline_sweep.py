@@ -151,9 +151,13 @@ def test_sequential_execution_and_stop_on_failure(tmp_path, population, failure)
     assert (Path(plan['run_root']) / 'r4/evaluation_console.log').is_file()
 
 
-def test_partial_evaluation_is_recorded_and_sweep_continues(tmp_path, population):
+@pytest.mark.parametrize('valid_subset', [False, True])
+def test_partial_evaluation_is_recorded_and_sweep_continues(tmp_path, population, valid_subset):
     plan = sweep.build_plan(arguments(tmp_path))
     trace = tmp_path / 'trace.txt'
+    result = ({'status': 'partial', 'overall': {'green': .75}, 'skipped_metrics': {},
+               'partial_metrics': {'green': {'valid': 2, 'expected': 3, 'failed': 1}}}
+              if valid_subset else {'status': 'partial', 'skipped_metrics': {'green': {}}})
     for run in plan['runs']:
         run['train_command'] = command_stub(trace, 'train', run['ratio'], run['checkpoint'])
         run['eval_command'] = command_stub(trace, 'eval', run['ratio'], run['metric_path'])
@@ -163,13 +167,16 @@ def test_partial_evaluation_is_recorded_and_sweep_continues(tmp_path, population
                 ("import json,pathlib; "
                  f"p=pathlib.Path({str(trace)!r}); p.open('a').write('eval_8\\n'); "
                  f"a=pathlib.Path({run['metric_path']!r}); a.parent.mkdir(parents=True,exist_ok=True); "
-                 "a.write_text(json.dumps({'status':'partial','skipped_metrics':{'green':{}}}))")
+                 f"a.write_text(json.dumps({result!r}))")
             ]
     sweep.execute_plan(plan)
     state = json.loads((Path(plan['run_root']) / 'sweep_status.json').read_text())
     assert state['status'] == 'partial'
     assert state['completed_ratios'] == [4, 8, 16, 32]
-    assert state['partial_ratios'] == [{'ratio': 8, 'skipped_metrics': {'green': {}}}]
+    expected = {'ratio': 8, 'skipped_metrics': result['skipped_metrics']}
+    if valid_subset:
+        expected['partial_metrics'] = result['partial_metrics']
+    assert state['partial_ratios'] == [expected]
     assert trace.read_text().splitlines()[-2:] == ['train_32', 'eval_32']
 
 
