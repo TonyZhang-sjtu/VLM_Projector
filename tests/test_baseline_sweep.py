@@ -151,6 +151,70 @@ def test_sequential_execution_and_stop_on_failure(tmp_path, population, failure)
     assert (Path(plan['run_root']) / 'r4/evaluation_console.log').is_file()
 
 
+def test_partial_evaluation_is_recorded_and_sweep_continues(tmp_path, population):
+    plan = sweep.build_plan(arguments(tmp_path))
+    trace = tmp_path / 'trace.txt'
+    for run in plan['runs']:
+        run['train_command'] = command_stub(trace, 'train', run['ratio'], run['checkpoint'])
+        run['eval_command'] = command_stub(trace, 'eval', run['ratio'], run['metric_path'])
+        if run['ratio'] == 8:
+            run['eval_command'] = [
+                sys.executable, '-c',
+                ("import json,pathlib; "
+                 f"p=pathlib.Path({str(trace)!r}); p.open('a').write('eval_8\\n'); "
+                 f"a=pathlib.Path({run['metric_path']!r}); a.parent.mkdir(parents=True,exist_ok=True); "
+                 "a.write_text(json.dumps({'status':'partial','skipped_metrics':{'green':{}}}))")
+            ]
+    sweep.execute_plan(plan)
+    state = json.loads((Path(plan['run_root']) / 'sweep_status.json').read_text())
+    assert state['status'] == 'partial'
+    assert state['completed_ratios'] == [4, 8, 16, 32]
+    assert state['partial_ratios'] == [{'ratio': 8, 'skipped_metrics': {'green': {}}}]
+    assert trace.read_text().splitlines()[-2:] == ['train_32', 'eval_32']
+
+
+def test_resume_reuses_finished_checkpoint_and_continues_sweep(tmp_path, population):
+    plan = sweep.build_plan(arguments(tmp_path))
+    root = Path(plan['run_root'])
+    root.mkdir(parents=True)
+    sweep.write_json(root / 'sweep_plan.json', plan)
+    sweep.write_json(root / 'sweep_status.json', {
+        'status': 'failed', 'projector': plan['projector'], 'completed_ratios': [],
+        'partial_ratios': [], 'active_ratio': 4, 'phase': 'evaluation',
+    })
+    trace = tmp_path / 'resume_trace.txt'
+    for run in plan['runs']:
+        run['train_command'] = command_stub(trace, 'train', run['ratio'], run['checkpoint'])
+        run['eval_command'] = command_stub(trace, 'eval', run['ratio'], run['metric_path'])
+    first = plan['runs'][0]
+    checkpoint = Path(first['checkpoint'])
+    checkpoint.parent.mkdir(parents=True)
+    checkpoint.write_text('finished checkpoint')
+    sweep.write_json(checkpoint.parent.parent / 'training_state.json', {
+        'stop_reason': 'max_epochs', 'global_step': 1230,
+    })
+    Path(first['metric_path']).parent.mkdir(parents=True)
+
+    sweep.execute_plan(plan, resume=True)
+
+    assert trace.read_text().splitlines() == [
+        'eval_4', 'train_8', 'eval_8', 'train_16', 'eval_16', 'train_32', 'eval_32',
+    ]
+    state = json.loads((root / 'sweep_status.json').read_text())
+    assert state['status'] == 'complete'
+    assert state['completed_ratios'] == [4, 8, 16, 32]
+
+
+def test_load_resume_plan_rejects_wrong_projector(tmp_path, population):
+    plan = sweep.build_plan(arguments(tmp_path))
+    root = Path(plan['run_root'])
+    root.mkdir(parents=True)
+    sweep.write_json(root / 'sweep_plan.json', plan)
+    assert sweep.load_resume_plan(root, 'avgpool3d') == plan
+    with pytest.raises(ValueError, match='projector'):
+        sweep.load_resume_plan(root, 'concat3d')
+
+
 @pytest.mark.parametrize('method', DEFAULTS)
 def test_bash_entrypoints_from_another_working_directory(tmp_path, method):
     stem = 'mlp2x' if method == 'mlp2x_gelu' else method
