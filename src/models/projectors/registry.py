@@ -9,8 +9,9 @@ from src.models.projectors.adaptive_merge import AdaptiveMerge3D
 from src.models.projectors.selection import TokenSelect3D
 from src.models.projectors.common import StructuredProjector
 from src.models.projectors.specs import resolve_projector_config, DEFAULTS
+from src.models.projectors.bindformer.projector import BindFormer3D
 
-PROJECTORS = {'mlp2x_gelu': MLPProjector, 'avgpool3d': AveragePool3D,
+PROJECTORS = {'bindformer3d': BindFormer3D, 'mlp2x_gelu': MLPProjector, 'avgpool3d': AveragePool3D,
               'concat3d': ConcatAdapter3D, 'convpool3d': ConvPool3D,
               'mixer3d': Mixer3D, 'local_packer3d': LocalPacker3D,
               'attention_pool': QueryResampler, 'perceiver_nv': QueryResampler,
@@ -29,7 +30,8 @@ def build_projector(config, input_dim, output_dim):
     resolve_projector_config(config.projector)
     from src.models.projectors.budget import require_resolved
     require_resolved(config.projector)
-    projector = PROJECTORS[config.projector.name](input_dim, output_dim, config.projector)
+    kwargs = {'project_root': config.project_root} if config.projector.name == 'bindformer3d' else {}
+    projector = PROJECTORS[config.projector.name](input_dim, output_dim, config.projector, **kwargs)
     if isinstance(projector, StructuredProjector):
         projector.stage = config.training.stage
         projector.seed = config.seed

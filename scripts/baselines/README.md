@@ -1,5 +1,9 @@
 # BraTS baseline 一键训练与评测
 
+BindFormer 入口 `run_bindformer3d.sh`（默认 8/16/32×，GPU 3）和 `run_bindformer3d_2.sh`（默认 4×，GPU 1）也使用此处相同的 `joint_lora` 训练、完整 BraTS test 评测和 `all` 指标协议。其概念记忆和 BindFormer 参数由专用 sweep 配置；训练与评价调度和普通 baseline 对齐。
+
+BindFormer 的几何、包内 SA、局部读取全局和特征重建均已实现，但默认关闭；四角色 query 数默认均为 1。参数、独立消融命令和教师缓存导出方法见[设计文档第 26 节](../../Pipeline_0929/BINDFORMER_DESIGN_AND_IMPLEMENTATION_PLAN.md#26-可选结构与特征重建实现2026-10-16)，测试范围和待决策项见[扩展验收记录](../../Pipeline_0929/BINDFORMER_EXTENSIONS_ACCEPTANCE.md)。`L_text` 暂不实现。
+
 GREEN 的二次格式修复仍失败时，最终 `metric.json` 的 `overall.green` 按其余
 `status=ok` 样本取均值，失败样本不计零分、不进入分母。`partial_metrics.green`
 记录 valid/failed/expected、coverage 和失败状态；评测及 sweep 仍标为 `partial`。
@@ -28,6 +32,8 @@ MLP 不压缩，只执行 **1× 一次**。各 Bash 顶部的配置区是该文�
 | `run_perceiver_flamingo.sh` | `perceiver_flamingo` | 4、8、16、32 |
 | `run_adaptive_merge3d.sh` | `adaptive_merge3d` | 4、8、16、32 |
 | `run_token_select3d.sh` | `token_select3d` | 8、16（当前用户设置） |
+| `run_bindformer3d.sh` | `bindformer3d` | 8、16、32（默认物理 GPU 3） |
+| `run_bindformer3d_2.sh` | `bindformer3d` | 4（默认物理 GPU 1） |
 
 ## 在文件中指定压缩率
 

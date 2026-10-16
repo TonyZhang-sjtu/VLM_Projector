@@ -32,14 +32,14 @@ class StructuredProjector(Projector):
             raise ValueError('Projector input channel dimension mismatch')
         return validate_inputs(features, coords, metadata)
 
-    def finish(self, output, features, metadata, **details):
+    def finish(self, output, features, metadata, auxiliary=None, **details):
         from src.models.projectors.budget import output_info
         info = dict(metadata)
         info['projector'] = {'name': self.name, 'requested_tokens': self.params.get('num_tokens'),
                              'actual_tokens': len(output),
                              'budget_policy': self.params.get('budget_policy', 'natural' if self.name == 'concat3d' else 'exact'),
                              **details, **output_info(self.budget, len(features), len(output))}
-        return ProjectedVolume(output, len(features), len(output), info).validate(self.output_dim)
+        return ProjectedVolume(output, len(features), len(output), info, auxiliary).validate(self.output_dim)
 
 
 class QueryBlock(nn.Module):

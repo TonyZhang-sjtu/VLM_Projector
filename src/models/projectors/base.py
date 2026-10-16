@@ -8,6 +8,7 @@ class ProjectedVolume:
     input_tokens: int
     output_tokens: int
     metadata: dict
+    auxiliary: object | None = None
 
     def validate(self, output_dim, required_tokens=None):
         import torch

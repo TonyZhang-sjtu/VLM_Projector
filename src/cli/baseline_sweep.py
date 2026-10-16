@@ -44,6 +44,8 @@ def parser():
     cli.add_argument('--repeats', type=int, default=1000, help='Evaluation bootstrap repeats')
     cli.add_argument('--eval-sample-fraction', type=float,
                      help='Optional fixed random evaluation fraction; default: full split')
+    cli.add_argument('--config', action='append', default=[], type=Path,
+                     help='Additional local YAML overlay, applied after shared presets and before --set')
     cli.add_argument('--set', action='append', default=[], dest='overrides',
                      metavar='KEY=VALUE', help='Training/config override, e.g. training.lora.rank=32')
     cli.add_argument('--dry-run', action='store_true',
@@ -100,6 +102,7 @@ def build_plan(args):
                ROOT / 'configs/training/deterministic.yaml',
                ROOT / 'configs/preprocessing/native_grid.yaml',
                ROOT / f'configs/projector/{args.projector}.yaml']
+    presets.extend(args.config)
     runs, samples, header_report = [], None, None
     for ratio in ratios:
         ratio_dir = run_root / f'r{ratio}'

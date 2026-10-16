@@ -10,7 +10,7 @@ from omegaconf import OmegaConf
 
 VERSION = 'method_native_ratio_v1'
 GRID_METHODS = frozenset(('avgpool3d', 'convpool3d', 'mixer3d', 'local_packer3d'))
-EXACT_METHODS = frozenset(('attention_pool', 'perceiver_nv', 'perceiver_flamingo',
+EXACT_METHODS = frozenset(('bindformer3d', 'attention_pool', 'perceiver_nv', 'perceiver_flamingo',
                            'adaptive_merge3d', 'token_select3d'))
 CONCAT_GROUPS = {4: (4, 1, 1), 8: (8, 1, 1), 16: (6, 1, 3), 32: (6, 2, 3)}
 TOLERANCE = 0.05
@@ -24,7 +24,7 @@ def ratio_value(projector):
     return value
 
 
-def derive_budget(name, ratio, grid, extent):
+def derive_budget(name, ratio, grid, extent, params=None):
     from src.models.projectors.geometry import choose_grid
     grid, extent = tuple(grid), tuple(extent)
     if len(grid) != 3 or any(type(n) is not int or n < 1 for n in grid):
@@ -60,11 +60,17 @@ def derive_budget(name, ratio, grid, extent):
     error = abs(n / actual / ratio - 1)
     if error > TOLERANCE + 1e-12:
         raise ValueError(f'Compression ratio deviation exceeds 5%: target={ratio}, N={n}, M={actual}, error={error:.4%}')
+    allocation = {}
+    if name == 'bindformer3d':
+        from src.models.projectors.bindformer.budget import allocate_tokens, role_counts
+        allocation = allocate_tokens(actual, (params or {}).get('global_fraction', 0.25),
+                                     role_query_counts=role_counts((params or {}).get('role_query_counts')))
     return {'version': VERSION, 'method': name, 'kind': kind, 'target_ratio': ratio,
             'input_grid_dhw': list(grid), 'input_extent_mm_dhw': list(extent),
             'input_tokens': n, 'raw_num_tokens': raw, 'expected_output_tokens': actual,
             'output_grid_dhw': output_grid, 'group_size': group,
-            'actual_ratio': n/actual, 'relative_error': error, 'max_relative_error': TOLERANCE}
+            'actual_ratio': n/actual, 'relative_error': error, 'max_relative_error': TOLERANCE,
+            **allocation}
 
 
 def validate_resolved(projector):
@@ -73,7 +79,7 @@ def validate_resolved(projector):
     record = OmegaConf.to_container(projector.resolved_budget, resolve=True)
     try:
         expected = derive_budget(projector.name, ratio, record['input_grid_dhw'],
-                                 record['input_extent_mm_dhw'])
+                                 record['input_extent_mm_dhw'], projector.params)
     except (KeyError, TypeError) as exc:
         raise ValueError('Malformed resolved projector budget') from exc
     if record != expected:
@@ -98,7 +104,7 @@ def resolve_budget(projector, grid, extent):
     ratio = ratio_value(projector)
     if ratio is None:
         return None
-    record = derive_budget(projector.name, ratio, grid, extent)
+    record = derive_budget(projector.name, ratio, grid, extent, projector.params)
     if projector.get('resolved_budget'):
         saved = validate_resolved(projector)
         if saved['input_grid_dhw'] != record['input_grid_dhw'] or any(

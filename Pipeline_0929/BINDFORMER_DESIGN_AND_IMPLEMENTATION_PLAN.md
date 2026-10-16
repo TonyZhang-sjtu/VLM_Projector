@@ -2,11 +2,15 @@
 
 日期：2026-10-13。代码核对基点：Git HEAD `464b946`。
 
-状态：**设计整理与代码接入计划，尚未实现 BindFormer、生成事实标签或启动训练。** 本文保留原方案的核心结构，修正公式排版，并区分已有能力、待验证假设和工程建议。目录名沿用 `Pipeline_0929`。
+状态（2026-10-15 更新）：**已实现首版 BindFormer3D：槽 + BraTS 概念库 + 共享支持域，训练目标仅报告 CE。** 几何统计、额外交互和辅助损失仍待实现。早先误用 Stage A-only 训练协议的正式 sweep 已按用户要求删除；当前四档改用与其他 baselines 相同的 `joint_lora` 正式 sweep，尚无已完成的 BindFormer test 结果。当前入口和协议见第 25 节；前文保留研究设计与历史审计。目录名沿用 `Pipeline_0929`。
 
 2026-10-14 更新：第 19 节补充当前输入/标注缺口、tuple/binding 监督解释、本地 BioLORD 编码检查、UMLS 候选消歧结果和离线资产实施顺序。
 
 2026-10-15 更新：第 20 节根据跨数据集迁移和标注成本的约束，提出以图像—报告配对为默认输入的训练候选；原 tuple/binding 作为可选监督分支，尚未进行效果验证或代码实现。
+
+2026-10-15 后续更新：第 21 节记录两个知识 encoder 的实际下载、首版 CLS 偏好、68 条 UMLS 候选草案，以及重建头规模和多槽—句子匹配的设计细化。
+
+当前确认配置：name + short definition → SapBERT 最终 CLS → L2 normalize；仅使用 `brats_train` 范围；只训练报告生成 CE；槽迭代 3 次。M 由压缩率 4/8/16/32 推导，按全局 25%、局部 75% 选择最近合法整数解，每槽四个角色。正式比较统一使用 projector warm-up 后 joint projector + visual LoRA 的 `joint_lora` 训练计划，LLM 冻结。第 20 节保留额外损失方案，第 23 节记录 v2 资产，第 24–25 节记录首版结构与实际实现。
 
 ## 1. 这个 pipeline 在解决什么问题
 
@@ -98,6 +102,8 @@ Projector.forward(features, coords, metadata) -> ProjectedVolume
 `ProjectedVolume.validate()` 已检查形状、有限值和 `training.required_visual_tokens`。`StructuredProjector` 提供输入/预算检查及输出 metadata，适合作为父类。
 
 ### 2.4 代码与原设想的差距
+
+下表为初次审计时的状态；当前已实现的序列传递、知识检索、槽路由与辅助张量接口以第 25 节为准。
 
 | 问题 | 已有实现 | 本方案所需 |
 | --- | --- | --- |
@@ -348,6 +354,8 @@ $$
 
 ## 9. 完整事实组与绑定监督
 
+本节保留最初的结构化监督方案。它要求可靠事实组资产，现作为可选分支；不依赖新增逐实例标签的 X 特征重建和报告片段对齐补充方案见第 20 节。记录这些候选目标不代表首轮实现必须同时启用全部损失。
+
 ### 9.1 共同 Hungarian 匹配
 
 离线解析部分标注集合 \(\mathcal T=\{t_\ell\}_{\ell=1}^L\)，可靠字段 mask 为 \(\omega_{\ell j}\in\{0,1\}\)。字段经 \(r(j)\) 映射到角色，预测为 \(p_{kj}=\mathcal H_j(\widetilde b_{k,r(j)})\)：
@@ -510,7 +518,7 @@ Stage A DDP 当前默认不启用 find_unused_parameters。启用头但 batch �
 
 ### 10.2 建议配置草案
 
-以下示例**不是当前已经支持的配置**，需要实现 schema 后才能运行。首版纯结构、纯 RG，后续 preset 覆盖单个模块与 loss 权重。
+以下示例**不是当前已经支持的配置**，需要实现 schema 后才能运行。它保留为纯结构、纯 RG 对照草案；当前首版建议改用第 24 节的知识开启、CE-only 配置，不能将本节示例当成最终运行配置。
 
 ```yaml
 projector:
@@ -598,27 +606,29 @@ assets/knowledge/bindformer_brain_v1/
 
 同 ratio 不是同 M，旧结果不能直接称为严格固定预算消融。
 
-### 12.1 首轮固定 M
+### 12.1 固定 M 对照（保留的可选模式）
 
-建议 M=256，示例 G=32、K=56、R=4；容量最终由 train 的 L 分布及冗余槽情况确定。M=128/512 可分别选 (16,28,4)/(64,112,4)。改变 M 同时改变槽容量，应另做固定 M 的 G/K 分配实验。
+早期草案采用 M=256、G=32、K=56、R=4。当前主实验已改为第 12.2 节的压缩率模式和全局占比 0.25；固定 M 仍可用于严格预算对照。采用当前占比时 M=256 得到 G=64、K=48、R=4。改变 M 同时改变槽容量，应另做固定 M 的预算分配实验。
 
 设置 num_tokens=M、required_visual_tokens=M，断言 M=G+KR，ratio=null。AttentionPool/Perceiver 可直接配置同 M；网格方法选可实现的 exact grid 并检查，不填零/裁剪凑数。未压缩 MLP 为 N-token 参考，不是同预算方法。
 
-### 12.2 后续 ratio 模式
+### 12.2 当前已实现的 ratio 模式
 
-先取 M=ceil(N/rho)，再按首选 G0 分解：
+先取 M=ceil(N/rho)，设全局比例 alpha=0.25，在 K>=1、G=M-KR>=1 的整数解中最小化 |G/M-alpha|：
 
 $$
-K=\left\lfloor\frac{M-G_0}{R}\right\rfloor,\qquad G=M-KR.
+K\approx\operatorname{round}\left(\frac{(1-\alpha)M}{R}\right),\qquad G=M-KR.
 $$
 
-M=275、G0=32、R=4 时 K=60、G=35。记录 M/G/K/R 与预算版本，拒绝 K<1 等非法组合。固定 G/R 不一定可整除，应报错或用明示的新取整策略，不能丢掉部分角色。
+实现检查最近的合法整数候选；距离相同时选 G 较大者，使用精确分数避免浮点误差改变平局规则。M=275、alpha=0.25、R=4 时 K=52、G=67。记录 M/G/K/R 和 `bindformer_nearest_fraction_v1`，预算不足一个角色包时直接拒绝，不裁掉角色凑数。alpha=0 的可选预算分配允许 G=0；若 M 不能被 R 整除，最近合法解仍有余数个全局 token，日志记录实际比例。
 
 预算在构造前解析，forward 不改变参数数量；跨几何动态 ratio 是后续扩展，不能绕过当前预检。
 
 去掉 global 也须控制 M：M=256、R=4 可改为 G=0、K=64，但这同时改变 K，属于预算重分配。也可保留 G 个位置用声明的替代分支填充作对照；不能宣称删除 G 后 M/K/R 都不变。
 
 ## 13. 实现顺序与交付
+
+本节保留完整方案的早期阶段划分。UMLS v2 已就绪，且用户已确定首版仅用 CE，当前优先顺序以第 24 节为准：最小槽结构与知识检索一起接入，其他损失后置。
 
 | 阶段 | 交付 | 进入下一阶段的依据 |
 | --- | --- | --- |
@@ -631,7 +641,7 @@ M=275、G0=32、R=4 时 K=60、G=35。记录 M/G/K/R 与预算版本，拒绝 K<
 | P6：额外组件 | 几何统计、包内 SA、读 global、concept loss，逐项开启 | 每项有独立对照 |
 | P7：扩展 | 多 M、ratio、冻结 vs LoRA、重复种子 | 核心机制已有检验 |
 
-**最先落地 P1/P2，不等 UMLS，也不一次加入所有 loss。** UMLS 获取、事实审核与这些开发步骤可以独立推进。
+早期建议先落地 P1/P2、不等待 UMLS；现在知识库已完成，首版可以同时接入知识。事实审核不阻塞 CE-only 训练，P3/P4 不再是加入知识的前置条件。
 
 复用 stage_a 数据/缓存/梯度逻辑，统一 LR/步数/早停并记录。当前 baseline Bash → sweep 的 stage 为保留字段，不能普通 --set 改为 a；应使用通用 train 入口或新增固定 M/Stage A runner。
 
@@ -646,7 +656,7 @@ M=275、G0=32、R=4 时 K=60、G=35。记录 M/G/K/R 与预算版本，拒绝 K<
 | 槽+角色，beta=0 vs beta>0 | 共享支持域的独立作用 |
 | 固定结构：RG / RG+tuple / RG+tuple+binding | 各监督项增量 |
 | learned role / 名称 E / 名称+定义 E | 结构、词汇与描述语义的区别 |
-| 随机固定 E / 角色内错配 E | 容量与正确语义的区别 |
+| 同尺寸随机单位向量 E / 名称与名称+定义 E | 固定向量容量与医学文本表示的区别 |
 | geometry off/on | 范围矩是否补足均值 |
 | 包内 SA off/on；global read off/on | 协调与绑定的取舍 |
 | global 分配变化 / 无 global | 全局信息与容量分配 |
@@ -659,7 +669,9 @@ M=275、G0=32、R=4 时 K=60、G=35。记录 M/G/K/R 与预算版本，拒绝 K<
 
 当前 Perceiver 不是完整 BLIP-2 Q-Former；若称 Q-Former 对照，需单独适配 query SA+visual CA，说明预训练权重。报告参数量、宽度、depth、FFN，不只固定 M。
 
-先做结构×监督核心矩阵，再逐项加知识/几何/交互，最后对完整模型移除单项；不必第一轮遍历所有组合。
+仅将候选索引与对应向量、掩码一起重排，不会改变软检索结果，不能作为知识破坏消融。在没有额外概念标签/身份约束的 CE-only 设置中，同一允许候选集合内部的向量置换也可能只是重排求和项；首轮采用知识关闭、随机固定向量和 name-only 等明确改变计算或语义几何的对照。
+
+当前先做第 24 节的 CE-only 结构与知识对照，之后逐项加入几何、交互和辅助监督；不必第一轮遍历所有组合。
 
 ## 15. 评估与验收
 
@@ -820,7 +832,7 @@ print("Verified:", target)
 
 解析流程：按官方列定义读管道分隔文件 → 筛英语/选定来源及有效术语 → 按 CUI 聚合名称/定义/类型 → 与 train 候选术语链接 → 人工处理歧义 → 按角色生成精简 concepts.jsonl → 编码 E。
 
-某些概念没有可用定义，应记录缺失并回退到名称模板，不能自动编造 UMLS 定义。预计算子集含 obsolete/suppressible 内容，过滤策略要版本化。语义类型只作筛选依据，不能自动转换成四个项目角色。
+某些概念没有可用定义，应记录缺失，不能自动编造 UMLS 定义。当前主版本采用名称＋简短定义：无合适定义的候选进入待补充/审核队列；本地撰写的解释必须标明来源。name-only 可作为明确标记的消融或降级配置，不能静默混入主库。预计算子集含 obsolete/suppressible 内容，过滤策略要版本化。语义类型只作筛选依据，不能自动转换成四个项目角色。
 
 第一版不需要把全量数百万概念都变成 embedding。先建立与任务相关、可审核的候选集合，避免无关概念增加检索成本和错误语义先验；这一步由 train 和预先确定的词表决定。
 
@@ -931,7 +943,7 @@ $$
 
 BioLORD 按官方 mean pooling 使用；SapBERT 按其官方示例使用最终层 CLS 表示。pooling 是 encoder 配置的一部分，不应对所有模型随意采用同一方式。初版可将文本长度上限固定为 128，并记录截断；本地 BioLORD 配置也使用此上限。
 
-实验应先在同一 encoder 下比较 name-only 与 name+definition，再比较不同 encoder，避免把模型差异误认为定义的贡献。没有可用定义时回退名称，人工补充描述需明确标记本地来源。2026AA 新术语可以编码，但模型能处理字符串并不表示其 CUI 或视觉含义已经正确。
+当前主版本直接使用 name+definition；name-only 留作后续在同一 encoder 下的消融，再比较不同 encoder，避免把模型差异误认为定义的贡献。没有可用定义的条目进入待补描述队列，人工补充描述需明确标记本地来源。2026AA 新术语可以编码，但模型能处理字符串并不表示其 CUI 或视觉含义已经正确。
 
 当前 RaTEScore 也使用本地 BioLORD。若知识库和指标使用同一模型家族，应披露这一共享，并增加独立事实/绑定指标与人工核验；这本身不等于测试集泄漏。
 
@@ -1011,7 +1023,34 @@ concepts 至少包含 concept_id、可空 CUI、标准名、同义词、role/fie
 
 本次新增内容仅为审计与设计补充，并完成本地文本 encoder 的 CPU 编码检查；没有实现 BindFormer、生成正式概念库/事实标签或启动训练。
 
-## 20. 2026-10-15：减少新增标注依赖的训练方案与文本表示选择
+## 20. 补充训练方案：以 X 为目标的特征重建与报告片段对齐
+
+本节正式记录两项待实现、待消融的辅助目标。它们复用现有图像—报告数据，分别检查压缩后的视觉内容保留和临床文本语义对齐；不要求新增逐实例人工训练标签。主实验仍冻结 NeuroVFM 和 LLM，维持相同的最终输出预算 M。
+
+| 补充目标 | 训练监督从哪里来 | 辅助模块读取什么 | 推理时是否需要辅助模块 |
+| --- | --- | --- | --- |
+| L_feat：特征重建 | 当前图像的冻结 NeuroVFM 输出 X | 最终 Z、对应位置 p、序列 m | 否 |
+| L_text：报告片段对齐 | 已有图像—报告配对，冻结文本 encoder 的片段表示 | 最终 Z 的证据包和训练用文本向量 | 否 |
+
+两者可独立开关，总目标写作：
+
+$$
+\mathcal L_{\rm supplement}
+=\mathcal L_{\rm RG}
++\lambda_f\mathcal L_{\rm feat}
++\lambda_s\mathcal L_{\rm text},
+\qquad \lambda_f,\lambda_s\ge0.
+$$
+
+训练数据流：
+
+    主路径：V → 冻结 NeuroVFM → X → Projector → Z → 冻结 LLM → L_RG
+    重建分支：Z + p + m → R_ψ → X_hat；与 stop-gradient(X) 比较 → L_feat
+    文本分支：Z 的证据包 + 离线报告片段向量 → 投影/匹配头 → L_text
+
+两个辅助分支的视觉输入都来自 Z。报告损失和辅助损失共同向 projector 传梯度；重建头及文本匹配头只接收各自辅助目标的梯度。需要保留 LLM 对 Z 的梯度，但不更新 LLM 参数。辅助目标不要求额外调用一次 8B LLM。
+
+第 20.2/20.3 节给出目标定义；第 21.2/21.3 节给出规模估算及多槽匹配变体。具体 projector 简化结构、辅助头形式和首轮启用哪些目标，留待后续讨论；此处不把这些设计候选当作已经实现的默认配置。
 
 ### 20.1 RadGenome 已有什么标注，原损失究竟缺什么
 
@@ -1135,12 +1174,564 @@ BioLORD-2023 原论文在其评测协议下报告了多项优于 SapBERT 的语�
 
 CLS 的最终隐藏状态也经过上下文计算，不是只拿一个没有阅读解释的固定向量；mean pooling 则汇聚有效位置的上下文表示。两者都可以处理整段解释，但应匹配模型预训练/官方使用方式。
 
-第一版按照官方方式使用 BioLORD 的 masked mean pooling 和 SapBERT 的最终层 CLS，分别比较同一 encoder 下的 name-only 与 name+short-definition。不同 pooling 只有经过独立实验才可比较，不能把“用完整文本”误写成“只能 mean pooling”。[BioLORD 模型卡](https://huggingface.co/FremyCompany/BioLORD-2023)、[SapBERT 模型卡](https://huggingface.co/cambridgeltl/SapBERT-from-PubMedBERT-fulltext)
+官方用法分别是 BioLORD 的 masked mean pooling 和 SapBERT 的最终层 CLS。按用户当前选择，首版主库使用 SapBERT＋CLS＋name+short-definition；name-only 是后续消融，BioLORD 的 CLS 可作为独立变体。不同 pooling 需要单独记录和比较，不能把“用完整文本”误写成“只能 mean pooling”。[BioLORD 模型卡](https://huggingface.co/FremyCompany/BioLORD-2023)、[SapBERT 模型卡](https://huggingface.co/cambridgeltl/SapBERT-from-PubMedBERT-fulltext)
 
-对名称匹配，名称和同义词应占主要信息；对视觉 query 引导，建议检验名称加简短、经审核且与角色/序列相关的定义。长定义可能包含病因、其他器官、其他成像模态和诊断关联，这些内容不一定有助于当前图像读取。没有定义时回退名称，不能将自行补充的说明伪装成 UMLS 原始定义。
+对名称匹配，名称和同义词应占主要信息；对视觉 query 引导，当前主版本采用名称加简短、经审核且与角色/序列相关的定义。长定义可能包含病因、其他器官、其他成像模态和诊断关联，这些内容不一定有助于当前图像读取。没有合适定义时先记录缺失并补充审核，不能将自行撰写的说明伪装成 UMLS 原始定义。
 
 本版仍将一段文本池化成一个概念向量。把全部 token 向量保留为概念记忆属于另外一种多向量结构，会改变存储、检索和计算成本，不建议与第一版同时引入。
 
 选择应分两层验证：先检查概念链接准确率、同义词召回和左右/高低/否定等混淆；再在相同数据、M 和模型容量下比较最终 Findings。无监督图像语义与文本向量不会自动对齐，在线 T_r、U_r 等映射仍需通过训练学习。
 
 本节仅更新设计与依据，没有切换现有评测模型、生成伪标签、实现辅助损失或启动训练。
+
+## 21. CLS 起步、候选概念草案和辅助目标细化
+
+### 21.1 已下载的模型与第一版 pooling
+
+用户选择先尝试 CLS，并明确首版直接输入“概念名称＋简短定义”。因此当前知识编码主方案为 SapBERT 的最终层 CLS＋name+short-definition；name-only 留作后续消融。BioLORD-2023 的最终层首 token 表示也可以作为 CLS 变体实验，但应标明不同于其官方 masked mean pooling，不能据此概括完整 BioLORD 模型的最佳能力。输入文本和 pooling 是独立配置。
+
+| 模型 | 本地路径 | 固定 revision | 下载文件合计 |
+| --- | --- | --- | ---: |
+| cambridgeltl/SapBERT-from-PubMedBERT-fulltext | assets/models/knowledge/sapbert | 090663c3ae57bf35ffe4d0d468a2a88d03051a4d | 438,186,514 bytes |
+| FremyCompany/BioLORD-2023 | assets/models/knowledge/biolord-2023 | 167aab527b238a50ca65224e6319215d2ff4fc9f | 438,925,385 bytes |
+
+下载脚本为 [download_knowledge_encoders.py](../scripts/download_knowledge_encoders.py)，仅保存 safetensors 权重、配置、tokenizer 和模型说明，没有重复下载其他框架的权重。所有文件记录 SHA256，权重与 Hub LFS SHA256 比对通过，各目录保存 asset_manifest.json。
+
+两模型均已用本地文件在 CPU 加载，分别检查 CLS 与 masked mean 的 4×768 输出、有限值和归一化范数，结果保存在各目录的 load_check.json。这是可加载性与数值检查，不是模型质量排名。没有替换现有评测用 BioLORD-2023-C，也未导出正式概念向量。
+
+### 21.2 重建头可以明确限定为约 185 万参数
+
+以下是一个具体候选架构的参数核算，尚未接入训练。输入为最终 Z 的 4096 维 token，内部宽度 256，单层 4-head CA，FFN 扩展为 512，输出 768 维 encoder 特征。坐标标准化及轴方向须按数据协议处理。
+
+| 组件 | 结构 | 参数数 |
+| --- | --- | ---: |
+| Z 标准化 | LayerNorm(4096) | 8,192 |
+| Z 降维 | Linear(4096,256) | 1,048,832 |
+| 坐标 query | Linear(3,256), GELU, Linear(256,256) | 66,816 |
+| 序列 embedding | 6×256，含预留序列槽 | 1,536 |
+| query 标准化 | LayerNorm(256) | 512 |
+| cross-attention | MultiheadAttention(256,4) | 263,168 |
+| FFN 标准化 | LayerNorm(256) | 512 |
+| FFN | Linear(256,512), GELU, Linear(512,256) | 262,912 |
+| 输出 | Linear(256,768) | 197,376 |
+| 合计 | 含上述 bias 和标准化参数 | 1,849,856 |
+
+例如每体积抽样 512 个有效 patch、Z 含 256 个 token，位置 query 读取 Z 后预测对应 x_i。这里的数量是计算示例，不是已经确定的主实验预算。FP32 权重约 7.4 MB；梯度、optimizer 和 activation 另外占用显存，不能把权重大小当训练显存或据参数量推断实测延迟。
+
+训练时 projector 参数 θ 和重建头参数 ψ 同时优化：
+
+$$
+\mathcal L=\mathcal L_{\rm RG}(P_\theta(X))
++\lambda_f\mathcal L_{\rm feat}(R_\psi(P_\theta(X),p,m),\operatorname{sg}(X)).
+$$
+
+RG 更新 projector；feat 更新 projector 和重建头。主实验的 encoder 和 LLM 保持冻结，LLM 仍向 projector 传梯度。推理只保留 projector，移除 R，不增加 8B LLM 调用。
+
+重建目标是输入图像在固定 encoder 下的特征，而不是原始 MRI 像素。验收应包括：按患者隔离的验证集上归一化 MSE/余弦相似度、位置对应是否正确、对未抽样位置和不同脑区域的泛化、坐标/序列专用头与平均特征基线、换成其他患者 Z 后是否明显变差，以及对最终报告事实的影响。只看训练重建 loss 下降不足以排除重建头过拟合或平均脑模板捷径。即使特征恢复很好，也不能据此声称图像完全相同、真实病灶分割正确或全部临床事实保留。
+
+### 21.3 从 max 分数到损失，以及多槽匹配的边界
+
+原分数 s(I,c)=max_k cos(u_k,v_c) 可以直接进入图像对比损失：
+
+$$
+\mathcal L_{\rm text}=
+-\frac1{|\mathcal C_{\rm valid}|}\sum_{c\in\mathcal C_{\rm valid}}
+\log
+\frac{\exp(s(I^+,c)/\tau)}
+{\exp(s(I^+,c)/\tau)+\sum_{I^-\in\mathcal N_c}\exp(s(I^-,c)/\tau)}.
+$$
+
+正例来自已有报告所属图像，负例须排除同患者和相同/相近临床内容等明显冲突。这里不是给其他患者标医学阴性。没有可靠负例时跳过该项。
+
+max 只有胜出槽获得这一匹配项的梯度；多个槽即使都相似，也不会因此被训练成共同解释。一个槽可以在多句话上反复胜出。它没有任何“均衡槽数”的保证，所以只能作为最简单的多实例基线。
+
+换成 log-sum-exp 可以分散梯度，但仍主要聚合替代匹配分数，不自动证明两个槽的互补事实被组合起来。真正需要“多个槽共同解释句子”时，应使用集合读取/聚合头，并对组合后的视觉表示计算文本匹配损失。
+
+可选方案是学习软匹配矩阵 T_{k,l}，对每个有效片段满足 Σ_k T_{k,l}=1，允许一列有多个非零项，再以一个小型集合头聚合被选中的完整角色包。所有角色使用同一个 T，不能各自跨槽挑字段。对每个候选图像都重新计算匹配，集合头的 value 仅来自视觉 token，避免将目标文本直接复制进视觉表示。
+
+为了限制单个槽承接全部片段，可加入软容量项：
+
+$$
+\mathcal L_{\rm cap}
+=\sum_k\left[\max\!\left(0,\sum_lT_{k,l}-c_k\right)\right]^2.
+$$
+
+c_k 是允许的文本分配质量上限，不是真实病灶数；重复描述同一异常时应允许同一槽复用。未使用槽可保持零分配；不可靠片段可在训练前过滤或引入单独的 null 匹配，并检查全选 null 的退化。也可研究具有放松边际约束的匹配求解，但不能把一个平衡算法当作临床对应关系的保证。[不平衡最优传输的基础方法](https://arxiv.org/abs/1607.05816)
+
+注意：列归一化保证的是每个片段的分配权重总和，不是相同的非零槽数。若 K=12，三句话实际需要 2、3、1 个槽，剩余 6 个空闲完全合理；强制每句 4 个槽会制造冗余。希望控制的是可靠片段的覆盖、避免严重垄断和错误绑定，而不是句句相同的槽数量。
+
+### 21.4 实际构建的 UMLS 候选草案
+
+候选种子为 [bindformer_umls_seed_terms_v1.tsv](bindformer_umls_seed_terms_v1.tsv)，生成脚本为 [build_bindformer_umls_candidates.py](../scripts/build_bindformer_umls_candidates.py)。仅使用当前 BraTS 训练集 1960 条报告计算词面证据，不读取验证/测试文本。
+
+| 角色 | 种子条目数 | 本轮覆盖 |
+| --- | ---: | --- |
+| finding | 14 | 异常信号、病变/占位、水肿、出血、坏死、囊性改变、占位效应、中线移位、脑室效应等 |
+| location/laterality | 30 | 26 个解剖/区域词，4 个侧别/中线词 |
+| signal | 10 | 信号强度、均匀性、增强模式 |
+| morphology/extent | 14 | 形状、边界、范围、数量 |
+| 合计 | 68 | 任务候选，不是最终概念数 |
+
+其中 61 个种子获得规范化精确匹配，涉及 93 个不同 CUI；20 个种子有多个 CUI。其余 7 个应继续做同义词消歧或保留 local ID，不能解释为 UMLS 中一定不存在。
+
+产物位于 assets/knowledge/bindformer_brain_candidates_v1：
+
+- [REVIEW.md](../assets/knowledge/bindformer_brain_candidates_v1/REVIEW.md)：全部候选、训练词面命中数和歧义标记。
+- [candidates.jsonl](../assets/knowledge/bindformer_brain_candidates_v1/candidates.jsonl)：角色/字段、序列范围、命中来源、候选 CUI、英文同义词、语义类型、原始定义来源。
+- [audit.json](../assets/knowledge/bindformer_brain_candidates_v1/audit.json)：输入版本、hash、数量和构建限制。
+- [source_versions.json](../assets/knowledge/bindformer_brain_candidates_v1/source_versions.json)：候选涉及的 UMLS 来源版本。
+
+所有条目均为 pending，selected_cui 均为空；候选绝不直接充当病例真值。训练命中统计包括否定、不确定和上下文歧义，仅用于决定审核优先级。没有训练命中的预定 schema 词归入覆盖扩展候选，不因“罕见”自动删掉。
+
+筛选原则：
+
+1. 优先当前图像可支持的观察、部位和属性，不把 glioma/meningioma/metastasis 等队列诊断默认当作视觉事实。
+2. 同义表达合并到同一概念候选；同名多 CUI 必须结合语义类型、定义和 MRI 上下文消歧。解剖部位与侧别分子字段。
+3. 增强相关候选限制为 T1C；信号强度最终需保留序列语境。DWI/ADC 等后续扩展不能未经序列适用性检查直接沿用当前核心词表。
+4. MRDEF 定义通过对应的有效英文 AUI 关联筛选，保留原来源；若没有符合条件的定义，明确记录缺失。
+5. 首批可以先选定义/类型清晰的解剖与形态概念及明确观察词；mass、lesion、edema、enhancement、midline 等需要优先处理歧义。
+6. 显式 unknown/other 是字段控制项，缺失标签用 mask 表示；它们不能混为一个病理概念。
+7. 审核之后再形成 concepts.jsonl 和冻结向量。按用户最新选择，第一版直接做 SapBERT+CLS+name+short-definition；name-only 和 BioLORD+CLS 留作后续独立对照。
+
+本次完成下载、校验、编码加载检查和候选草案构建；没有把重建头、匹配损失或正式知识库接入训练，也未修改既有评测模型。
+
+### 21.5 这 68 个候选是如何产生的
+
+当前是 schema 驱动的种子草案，不是把全部训练报告切成 tokenizer token 后逐个映射 CUI，也不是已经完成的全语料医学实体抽取。
+
+具体过程为：
+
+1. 根据已讨论的四个角色和脑 MRI 描述范围，由本次设计起草 68 个种子条目，写入 seed TSV；这一步是项目设计选择，不等于临床审核。
+2. 每条种子包含角色、子字段、若干候选搜索短语、序列范围和报告词面匹配规则。例如 lesion 同时搜索 lesion 和 brain lesion，edema 同时搜索 brain edema、cerebral edema 和 edema。
+3. 在 BraTS 训练报告中计算这些规则的命中数，保留队列/序列统计与示例 ID。此步用于审核优先级，不会自动发现种子表之外的新术语，也不会识别肯定/否定及实例归属。
+4. 将搜索短语做大小写、空白和连字符规范化，再与 MRCONSO 中 LAT=ENG、SUPPRESS=N 的完整术语字符串精确匹配。
+5. 汇总命中的全部 CUI，补充英文同义词、语义类型和定义，形成待审候选表；不自动选择唯一 CUI。
+
+这里需要保持 mass effect、white matter 等多词概念的整体；LLM tokenizer 的子词只是模型输入单位，并不等于 UMLS 概念。否定词、修饰词和序列语境还需要单独保留。
+
+因此，68 条只是可检查的起点，不能宣称覆盖了训练语料中的所有重要医学概念。2026-10-15 已从全量训练报告独立抽取词面/医学片段并核查遗漏，详见第 22 节；正式概念审核尚未完成。完整性不应仅由出现频率决定，验证/测试报告不参与构建词表。
+
+### 21.6 一个种子为什么会有多个 CUI，以及如何选择
+
+CUI 标识概念的意义，不是每个英文字符串的唯一编号。相同意义的不同来源名称可以归到同一个 CUI；同一个字符串也可能对应不同意义。不能把多个 CUI 简单解释成“来自不同词表的同一个东西”。[NLM 概念与标识符说明](https://www.nlm.nih.gov/research/umls/new_users/online_learning/Meta_005.html)
+
+当前 20 个多 CUI 条目还包含另一来源：一个项目种子合并了多个搜索短语，而这些短语可能有不同的概念粒度。例子来自本地 2026AA 候选结果：
+
+| 种子 | 候选 CUI | 当前资料显示的含义 | 选择思路 |
+| --- | --- | --- | --- |
+| lesion | C0221198 | 泛指局部组织/器官病变，Finding | 适合泛指病变的概念身份 |
+| lesion | C0221505 | 脑部病变，Finding；由 brain lesion 命中 | 若该条明确限定为脑部病变，可选更具体的身份；也可与通用病变拆成两个有层级关系的条目 |
+| lesion | C1546698 | 标本来源编码相关，Intellectual Product | 排除作为 MRI 病变描述的候选 |
+| midline | C0549183 | 空间中线，Spatial Concept | 空间角色候选；还需选择适合脑 MRI 的来源定义 |
+| midline | C1660780 | 细胞成分，Cell Component | 排除作为脑部空间中线的候选 |
+| enhancement | C1627358 | 屈光手术相关的增强/追加手术，Therapeutic or Preventive Procedure | 不作为 MRI 增强概念 |
+| enhancement | C2349975 | 一般意义的改善/增强活动，Activity | 不作为 MRI 增强概念 |
+
+edema 种子也同时收集了泛指水肿 C0013604、脑水肿相关 C0006114/C1527311，以及测量属性相关 C1717255。这些不是都要同时进入一个 query。对接近的脑水肿概念需要继续核对来源定义、使用范围和关系；本轮不把两者强行认定为完全等价，也不根据编号或匹配频率指定胜者。
+
+建议使用两阶段筛选：
+
+- **先排除含义不符的候选。** 检查角色/字段、语义类型、解剖范围、成像条件、定义和原文上下文。语义类型只是粗筛，同为 Finding 也可能分别指 MRI 所见与组织标本所见。
+- **再在意义合适的候选中规范化。** 选择与项目概念粒度一致、来源和定义清楚的身份，固定来源版本与选择理由。不能一律选最具体的概念，例如不能把未说明病因的水肿直接解释成某一种机制。
+
+若需要保留通用与特定概念，应拆成明确的本地 concept_id 或记录层级，避免把相近 CUI 当作多个独立患者事实反复监督。若现有候选全部不符，应继续同义词检索或保留 local ID；没有必须从当前列表中挑一个的要求。
+
+还有一个重要的独立步骤是选定义：即使 CUI 已确定，其不同来源定义也不一定同样适用于当前任务。例如 C0549183 的本地资料同时包含身体/部位中线的描述和牙弓方向的描述。构建脑 MRI 向量时不能把所有定义机械拼接，应保留相关定义及来源，排除无关语境。
+
+### 21.7 当前确定的名称＋简短定义编码方式
+
+主版本按以下流程构建：
+
+$$
+\mathrm{text}_c=\mathrm{name}_c\ \Vert\ \mathrm{short\_definition}_c,\qquad
+e_c=\operatorname{Normalize}
+\left(E_{\rm SapBERT}(\mathrm{text}_c)_{\rm CLS}\right)
+\in\mathbb R^{768}.
+$$
+
+这与只输入名称时使用同一种 CLS 汇聚方式，区别是 encoder 阅读的文本内容。输入一段解释并不要求输出多个 token；本版仍为每个概念生成一个向量。
+
+简短定义应保留该概念的关键意义，避免引入当前患者信息、参考报告结论、未经图像支持的诊断推断或其他模态的解释。可从相关的原始定义选取/忠实缩写，保存 original_definition、short_definition、definition_source、source_version、编辑方式与审核状态。由项目自行撰写的 MRI 语境说明应标为本地说明，不得标成 UMLS 原文。
+
+没有合适定义的候选进入待补描述队列；无法可靠定义的条目暂不进入正式名称＋定义主库，不静默改成 name-only。名称、定义模板、最大 token 长度、截断日志、概念顺序和模型 revision 均需固定。
+
+后续 name-only 消融应在同一套概念 ID、同一 encoder 和同一 pooling 下去掉定义，才能检验定义的贡献；它不再是首轮实验的前置步骤。Projector 结构简化及这些辅助损失的首轮组合留待后续讨论。
+
+---
+
+## 22. 从训练报告出发核查候选覆盖（2026-10-15）
+
+### 22.1 修正候选来源与覆盖判断
+
+原 68 条是 schema 驱动的人工起草种子，之后才用训练报告统计命中数，不能代表全量训练医学词汇。本次按用户要求改变构建顺序：**先独立扫描训练原文，再提取候选、比较旧表，最后进行概念规范化和 CUI 审核**。
+
+当前 `configs/base.yaml` 的训练 manifest 为 `single_sequence_findings_coref_v2/train.jsonl`，共 2,177 条报告：BraTS_MEN 656、BraTS_GLI 644、BraTS_MET 660、ISLES22 175、WMH 42。原 v1 只统计其中 1,960 条 BraTS 报告；本次同时保留全训练集和 BraTS 分层计数。当前 ISLES22 实际输入是 ADC，不能将其误称为输入 DWI；原四序列候选范围不能直接代表全训练集。
+
+完整核查入口：[训练报告词汇核查](../assets/knowledge/bindformer_brain_corpus_audit_v1/REVIEW.md)。生成脚本：[audit_bindformer_report_vocabulary.py](../scripts/audit_bindformer_report_vocabulary.py)。抽取后整理的审核规则：[bindformer_corpus_review_rules_v1.tsv](bindformer_corpus_review_rules_v1.tsv)。这些规则用于解释独立抽取的结果，不是先用新的一组种子筛选语料。
+
+### 22.2 已完成的独立抽取
+
+| 产物 | 数量 | 含义与边界 |
+| --- | ---: | --- |
+| 英文词形清单 | 1,121 | 保留全部频次，包括单次出现与普通词 |
+| 原文连续 1–8 词字符串 | 128,864 | 不跨标点构造短语；不是医学概念数 |
+| 精确匹配有效英文 UMLS 术语的字符串 | 1,139 | 对应 1,903 个候选 CUI，包含普通词、缩写歧义及错误语义候选 |
+| 本地 RaTE-NER 预测片段 | 12,230 | 3,682 种不同字符串，全部保留报告 ID、字符位置及上下文 |
+| 抽取后的重点审核词族/字段 | 60 | 全部有训练原文证据，不是 60 个正式新概念 |
+
+NER 没有截断报告，但会合并并列部位、漏检或误判断言状态，只作为候选来源。UMLS 精确字符串匹配与 NER 交叉补充；没有精确匹配的表达保留在剩余审核队列。没有读取验证/测试报告，也未把预测实体标签用于训练监督。
+
+### 22.3 已发现的缺口及对 schema 的影响
+
+- **新增部位与细分层级**：脑沟、脑回、脑池、脑裂、大脑镰、颅骨/颅底、桥小脑角、海马、外囊、胼胝体压部/膝部/体部、脑室角等。旧表可能只涵盖其上级概念，不能视为细粒度覆盖。
+- **旧规则误归并**：`frontal bone` 被 `frontal_lobe` 的 `frontal` 规则命中，`cerebellopontine angle` 被 `cerebellum` 的前缀规则命中。必须保留完整医学短语再判断概念。
+- **词形/同义遗漏**：`iso-intense / iso-intensity / iso-signal / isotense` 共 47 条报告，旧等信号规则均未命中；`edematous` 出现于 18 条，其中 17 条旧水肿规则未命中。词面漏计优先通过别名归并修复，不盲目增加重复 CUI。
+- **字段缺口**：散在分布、程度、偏移方向、相对位置、实性/囊实性组成、具体数量和尺寸。可继续使用四个角色，但不能假设最初的子字段已经足够；程度需绑定其修饰对象，偏移方向不能等同病变侧别。
+- **跨队列/序列扩展**：`restricted diffusion / diffusion restriction` 出现在 17 条 ADC 训练报告中；半卵圆中心、放射冠等低频部位也必须保留审核，不能仅按 BraTS 的频数建库。
+
+### 22.4 从“出现过的词”到“可用的知识向量”
+
+原文有医学词汇，并不意味着它是该患者的肯定视觉事实。例如 `edema or gliosis`、`possible bleeding or calcification`，以及血脑屏障和肿瘤类型的解释性描述，应保留不确定性和推断性质。`not mentioned` 与正常/阴性分开；尺寸用数值字段承载，不为每个数字创建概念向量。
+
+正式构建顺序更新为：
+
+```text
+全部训练报告
+  → 原文短语 + 医学实体候选 + 未匹配词形清单
+  → 拆分并列结构，保留断言、关系、序列和原文位置
+  → 区分新概念 / 旧概念别名 / 子部位 / 字段信息 / 解释性文本
+  → 结合完整上下文、角色、语义类型与定义审核 CUI 或 local ID
+  → 名称 + 简短定义 + 来源/版本/序列适用性
+  → SapBERT 最终 CLS + L2 normalize
+```
+
+本次完成训练词面/候选的全量抽取和重点缺口核查，尚未完成全部候选的医学语义审核，因此不宣称“全部医学概念已覆盖”，也不以 68/1,139 等不同单位的数量计算覆盖率。原 v1 留作对照，正式向量库需基于此轮报告驱动的候选审核后生成。Projector 主结构及损失组合继续按此前安排另行讨论。
+
+---
+
+## 23. 已生成的 v2 候选库与离线向量（2026-10-15）
+
+已按第 22 节的流程生成 [bindformer_brain_candidates_v2](../assets/knowledge/bindformer_brain_candidates_v2/README.md)，包含规范概念、原文提及、上下文字段、显式 CUI/定义选择、剩余审核表和可直接读取的 SapBERT 向量。
+
+### 23.1 固定规模与接口
+
+主矩阵为 $E\in\mathbb R^{128\times768}$：100 个 UMLS 关联条目、20 个本地概念、8 个角色级 unknown/other 控制项。主角色分布为 finding 15、location/laterality 78、signal 14、morphology/extent 21。mild/moderate/marked 在 finding、signal、morphology 三个角色共享，因此实际候选集合使用 `role_mask` 决定，不能只依赖主角色列。
+
+输入固定为 `name + ". " + short_definition`，使用冻结 SapBERT `090663c3ae57bf35ffe4d0d468a2a88d03051a4d` 的最终层 CLS，经 L2 归一化后保存 float32。最长 38 个 token，未截断。所有短描述均明确标为项目编写的任务说明，原始 UMLS 定义和来源另存。
+
+输出包括 `concept_bank.safetensors`、`embeddings.npy`、`role_mask.npy`、`sequence_mask.npy`、`scope_mask.npy` 和 `concept_index.json`。矩阵分别为 `[128,768]`、角色掩码 `[4,128]`、序列掩码 `[5,128]`、词表范围掩码 `[2,128]`。按角色、序列、词表范围取交集后，得到式（9）所需候选集合及概念矩阵。
+
+### 23.2 必须明确的实验词表范围
+
+第 22 节的 2,177 条是训练 manifest 全量；当前 `configs/base.yaml` 的 `data.datasets: [brats]` 实际选择 1,960 条 BraTS 报告。v2 对此提供：
+
+- `brats_train`：120 条，包括 8 个控制项，作为当前 BraTS 主实验默认范围。
+- `all_train`：128 条，明确使用全部训练队列词汇时采用。
+
+仅在非 BraTS 训练报告观察到的 8 个条目为半卵圆中心、大脑脚、放射冠、大脑皮层、内囊、海马旁回、楔前叶、扩散受限。该掩码表示语料构建范围，不是生物学适用性判断；序列适用性由另一个 `sequence_mask` 表示。未使用验证或测试报告。
+
+### 23.3 概念和上下文的实际边界
+
+四角色继续保留，子字段扩展到结构效应、区域描述、相对位置、偏移方向、信号均匀性、扩散、分布、组成和程度等。脑叶与同名颅骨、桥小脑角与小脑、胼胝体各部、整体脑室与具体脑室角分别处理。
+
+提及文件保留完整原文位置、分句、序列、断言线索及文本对象候选。并列部位按共同中心词拆分；多个候选对象或跨句共指不明确时保留歧义。`not mentioned`、否定、不确定、正常性分开记录，尚不将这些启发式关联作为 tuple/binding 真值。
+
+尺寸、数量和关系线索存入上下文字段，不为每个数字创建一个向量。胶质增生、钙化的鉴别表达、血脑屏障/血管机制、疾病推断保留在解释性审核队列。130 个规范规格中，中央前回和侧脑室颞角因无可靠独立训练词面依据暂缓；完整未处理词面与 NER 片段继续保留，不宣称语义覆盖率达到 100%。
+
+### 23.4 审核与可复现性
+
+术语规格：[bindformer_v2_spec.py](../scripts/bindformer_v2_spec.py)。CUI/定义决策：[bindformer_v2_cui_decisions.json](bindformer_v2_cui_decisions.json)。生成入口：[build_bindformer_knowledge_v2.py](../scripts/build_bindformer_knowledge_v2.py)。
+
+本次审核是概念身份、来源和项目 schema 层面的研究审核，不是假定完成临床专家标注。所有选定 CUI、来源定义 AUI、版本、别名和选择理由可追溯；不可靠的映射保留 local ID。例如 perilesional 排除给药途径 CUI，enhancement 排除一般改善/屈光手术含义，扩散受限的相关影像定义作为支持资料保存而不强配不合适的概念类型。
+
+验证包含原文字符位置、训练集范围、CUI/定义引用、掩码与向量索引、有限值、L2 范数、文本无截断，以及易错部位/并列/断言/数值的回归用例。知识库交付时尚未修改 Projector；现已按第 25 节完成首版接入。
+
+## 24. 首版最小 Projector：槽 + 知识引导 + 共享支持域，只训练生成 CE
+
+### 24.1 已确定的范围与仍属建议的配置
+
+用户已确定：首版直接使用 name + short definition 的 SapBERT CLS 向量；训练只用报告生成 CE，其他 loss 后加。本节结构现已实现；预算按后续确认改为压缩率模式与全局占比 0.25。超参数尚未经过效果选优。
+
+v2 的 128 条是记忆库条目数：100 条关联 UMLS CUI、20 条本地概念、8 条 unknown/other 控制项。当前 BraTS 训练默认采用 `brats_train`，允许其中 120 条；再根据角色与输入序列筛选。128 不是槽数、输出 token 数或病灶类别标签数。资产已核验 `[128,768]`、有限值、L2 范数与文件哈希，但研究审核不等于临床标注，语料覆盖也未证明达到 100%。
+
+首版核心机制：**先按当前图像形成证据槽，再用槽和角色检索概念，形成角色 query；同槽的角色 query 在共享支持域内读取视觉内容。** 这是采用 query 压缩思想的自定义 projector，不要求下载或复用完整 BLIP-2 Q-Former 权重。
+
+### 24.2 全方案的模块划分
+
+| 大模块 | 首版范围 | 后续扩展 |
+| --- | --- | --- |
+| 输入适配 | LN、768→d、基础 3D 网格 PE、序列 embedding | 物理坐标 PE、跨几何验证 |
+| 证据分组 | 可学习初始槽、竞争归属、加权汇聚、GRU/残差 MLP、背景槽 | 迭代次数/背景槽/容量消融 |
+| 知识引导 | 冻结 E、角色/序列/语料范围掩码、软检索、可训练映射 | name-only、随机固定 E、其他文本 encoder |
+| 角色化视觉读取 | 四角色 query、共享归属 bias、一层视觉 CA、逐 token FFN | 不共享支持域、更多读取层 |
+| 全局补充与输出 | 小型全局 CA、拼接、输出 MLP 到 decoder 宽度 | 全局与局部的预算分配 |
+| 支持域几何统计 | 关闭 | 中心、协方差、软有效体积及几何 MLP |
+| token 交互 | 关闭额外包内 SA 和局部读全局 | 分别开启，不同时加入 |
+| 训练监督 | 仅 Findings 自回归 CE | X 特征重建、L_text、可靠标签下的 tuple/binding/concept |
+
+严格的结构核心可以只用槽、知识角色 query、视觉读取和输出头；但首个 Findings 版本建议保留一个浅层全局分支，为整体结构和正常/弥漫所见提供读取路径。全局分支不保证自动承担这些语义，仍需通过实验检验。
+
+### 24.3 建议的前向与张量接口
+
+固定 `d=768`、`R=4`，M 由压缩率确定，G/K 按全局占比 0.25 求最近整数解，始终满足 `M=G+K*R`。例如压缩率 32：`M=275,G=67,K=52`。内部额外一个背景槽；K 是容量，不代表真实异常数量。所有参数在模型构造时创建。
+
+1. **输入适配。** 接收 `X[N,768]`、`coords[N,3]` 和允许的输入序列 ID，形成 `H[N,d]`。首版建议使用归一化网格中心的三维 Fourier/sinusoidal PE，而不是等待完整几何统计模块。仅在方向与轴排列契约一致的 BraTS 设置中使用，并校验 `oriented`、`array_zyx_to_dhw` 等元数据。网格中心表示相对位置，不能解释成毫米坐标；后续替换物理 PE 时须追踪 affine、padding 和有效视野。
+2. **槽路由。** 从共享的可学习初始槽出发，对每张图独立运行 `slot_iterations=3`：patch 在 `K+1` 个槽之间 softmax → 按槽归一化汇聚 → GRU/MLP 更新。最终重算 `A[N,K+1]`，取非背景的 `S[K,d]`。三轮仅发生在 projector 内部，各轮复用参数和视觉投影。
+3. **知识检索与角色 query。** 从源矩阵 `E[128,768]` 按 `brats_train` 先实际筛选为 `[120,768]` 冻结 buffer；另外两个队列独有的八条向量不进入在线投影。在线再取 `sequence_mask & role_mask`。按式（9）从槽检索概念，按式（10）构造 `Q[K,4,d] = slot_projection + knowledge_projection + role_embedding`。首版无几何项，知识投影和角色 embedding 随 CE 训练，E 本身冻结。候选为空或序列缺失时明确报错。
+4. **角色视觉读取。** 使用 `content_logits + beta * log(eps + A)`，沿 patch 轴 softmax，产生 `B[K,4,d]`。初值建议固定 `beta=1`，`beta=0` 是独立消融。局部 token 的 value 来自 H；首版不将概念向量作为额外视觉 value，也不把知识 query 通过直接残差绕过视觉读取送往输出。视觉读取结果可接逐 token 的残差 FFN。这里可复用现有 attention 运算，但不能原样使用含 query 残差、无支持域 bias 的 QueryBlock 作为全部局部逻辑。
+5. **全局与输出。** 默认一层全局 CA 得到 `Bg[G,d]`；按 `[globals, slot_1 的四角色, ..., slot_K 的四角色]` 拼接为 `[M,d]`，经共享输出 MLP 得到 `Z[M,4096]`。角色顺序固定，槽不按参考报告排序；全局与局部暂不做额外交互。
+6. **Decoder 与训练。** 复用现有 `LlamaDecoder.prepare()`，在图像占位位置插入 Z；沿用原 prompt、报告目标与生成流程。训练 CE 只监督答案 token，提示、视觉位置和 padding 不计入目标。推理无需 SapBERT、UMLS 原始文件或报告检索，不新增知识文本 token。
+
+槽路由、知识检索和属性读取均在 decoder 之前完成。增加槽迭代不会让 8B decoder 为每轮重新运行；该结构也不直接解决 8B 自回归解码的逐 token 速度问题，应分别记录 projector、prefill 和 decoding 时间。
+
+### 24.4 唯一训练目标与可验证边界
+
+首版 `L = L_RG = CE(预测 Findings, 参考 Findings)`，保留当前按有效答案 token、梯度累积窗口和 DDP 归一化的方式。训练主设置建议 `training.stage=a`：冻结 NeuroVFM 与 LLM，仅训练 projector；冻结 LLM 的前向仍保持对 Z 可微。
+
+可训练项包括输入映射、位置编码中的可选投影、序列 embedding、初始槽、路由映射/GRU/MLP、概念检索映射、角色 embedding、视觉 CA/FFN、全局 queries/CA 和输出头。冻结项包括视觉 encoder、SapBERT 概念向量和 LLM 参数。
+
+不需要事实组 sidecar、Hungarian matching、患者 CUI 标签或病灶分割 mask。按后续确认已预留 `ProjectedVolume.auxiliary`，默认 None；只有 `return_auxiliary=true` 才返回可反传的结构化中间张量。图像—报告配对和已有序列元数据即可训练。
+
+CE 可沿 `LLM → Z → 视觉读取 → query/槽/知识映射` 传播，但只约束最终文本预测：它不保证槽对应真实病灶、每个角色已经得到预期语义、概念权重是诊断概率，或属性绑定已被证明改善。首版验证“结构与知识先验能否改善生成”；后续机制评价和辅助目标负责更细的检验。可记录槽归属量、槽间相似度、检索熵与输出变化，不因 attention 图好看就认定绑定成立。
+
+### 24.5 首轮消融与之后的增加顺序
+
+首轮各组均使用同样的 CE、数据、输入特征、冻结策略、M、prompt、训练预算和选优规则。
+
+| 实验 | 结构 | 主要问题 |
+| --- | --- | --- |
+| A：query 参考 | 现有 AttentionPool/Perceiver，固定同 M | 普通 query 压缩的参考水平 |
+| B：槽结构 | 槽 + 四角色 + 共享支持域 + 全局，知识关闭 | 整体结构方案相对 A 是否有效 |
+| C：首版完整最小模型 | B + v2 name/definition 概念检索 | C 对 B：知识引导是否提供增益 |
+| D：无支持域约束 | C 保持所有其他模块，beta=0 | C 对 D：共享支持域是否提供增益 |
+
+A 对 B 同时改变 query 组织和路由，属于结构整体对照，不能将全部差异归因为单独的槽迭代。若后续需要分离各项，应增加同角色组织的自由 query 对照，并匹配可比的宽度、深度和输入条件。参数量与实际计算成本同时报告，固定 M 不等于计算量完全相同。
+
+之后先做 `T=1 vs 3`、背景槽开关，以及 name-only/随机固定 E 对照；再分别加入物理 PE、几何统计、包内 SA、局部读取全局。辅助目标从 CE 基础上逐项比较 `CE+L_feat`、`CE+L_text`，必要时再验证组合。tuple/binding/concept 仍作为需要可靠监督条件的后续方案。
+
+去掉 G 个全局 token 会改变预算；如从 `(G,K,R)=(32,56,4)` 改成 `(0,64,4)` 保持 M=256，必须说明同时增加了槽容量，是预算重分配实验。更改 M、R 或 K 同样需明确容量变化。
+
+现有 `run_local_packer3d.sh` 等通过 `baseline_sweep` 启动 joint_lora，且不同方法相同压缩比例可能输出不同 M。不能把它们的旧结果直接作为首版 Stage A 的严格消融；应统一冻结策略并记录各方法实际 M，另做相同 M 的 query 对照。
+
+### 24.6 本轮实际需要的代码接入范围
+
+建议新增 `src/models/projectors/bindformer/`，按职责拆分为 `input_adapter.py`、`slots.py`、`concept_memory.py`、`role_queries.py`、`reader.py` 和 `projector.py`；全局 CA 和输出映射优先复用现有公共模块。物理统计、交互、FactHeads 和辅助 losses 等文件后加。
+
+| 接入点 | 首版改动 |
+| --- | --- |
+| `projectors/registry.py`、`specs.py` | 注册 bindformer3d；校验 M/G/K/R、宽度、迭代数、支持域与知识模式 |
+| `models/multimodal.py` | train/generate 一致地传入 `Sample.sequence`；构造独立 context/metadata 副本，不修改缓存，不传报告/分割路径 |
+| 新 projector | 仍返回现有 `ProjectedVolume(embeddings, input_tokens, output_tokens, metadata)`；metadata 只含可序列化摘要 |
+| `training/checkpoint.py` 的 provenance | 纳入向量库、ID 顺序、掩码与 manifest 内容哈希；E/masks 用 buffer 随 projector state 保存，恢复时验证兼容性 |
+| 新配置与启动脚本 | 与所有 baseline 共用 `joint_lora` 与确定性训练 preset，按 ratio 解析 M；`global_fraction=0.25`、`knowledge_mode=name_definition`、`vocabulary_scope=brats_train` |
+| 当前 Trainer/Decoder CE | 沿用 loss 与归一化，不新增辅助损失接口 |
+
+原第 10 节的全部公共接口改动是完整模型计划，不是首版必须同时完成的工作。首版只需把生成链路接通，并保留模块开关。未知/未来配置不应假装已经支持。
+
+实现验收包括：输出符合解析后的 M；支持域 softmax 维度正确；beta=0 退化为普通视觉读取；知识掩码确实排除不适用条目；CE 梯度到达启用的 projector 分支而冻结参数不更新；checkpoint 恢复一致；新图像不继承前一张的槽状态；原有 baseline 路径兼容。实际测试与有限端到端更新记录见第 25 节及独立验收文档。
+
+## 25. 已实现版本与运行接口（2026-10-15）
+
+实现入口：[BindFormer3D](../src/models/projectors/bindformer/projector.py)。参数：[bindformer3d.yaml](../configs/projector/bindformer3d.yaml)。验收：[BINDFORMER_IMPLEMENTATION_ACCEPTANCE.md](BINDFORMER_IMPLEMENTATION_ACCEPTANCE.md)。
+
+### 25.1 确认后的默认配置
+
+| 参数 | 默认值/解析方式 |
+| --- | --- |
+| `target_compression_ratio` | 启动脚本依次运行 4、8、16、32，每档独立初始化 |
+| `global_fraction` | 0.25；M=ceil(N/ratio)，G/K 取最近合法整数解 |
+| `roles` | finding、location_laterality、signal、morphology_extent，固定顺序 |
+| `inner_dim / num_heads / ffn_expansion` | 768 / 8 / 4 |
+| `slot_iterations / background_slot` | 3 / true，背景槽不输出 |
+| `position_mode / position_frequencies` | grid_fourier / 8，归一化网格轴通过方向矩阵旋转到 LPS 方向；不是毫米尺度 |
+| `sequence_condition` | true，仅从输入样本序列 ID 传递 |
+| `knowledge_mode / vocabulary_scope` | name_definition / brats_train |
+| `support_beta` | 四角色均为 1，允许标量或四元素列表，0 去掉支持域偏置 |
+| `global_depth` | 1，可配置堆叠层数，各层参数独立 |
+| `reader_chunk_size / checkpoint_blocks` | 128 / true；分块不改变完整 patch softmax 或 token 数 |
+| `head_type / hidden_size / dropout` | mlp / 4096 / 0；输出 MLP 为 768→4096→4096 |
+| 训练 | 与其他 baselines 相同的 `joint_lora`：projector warm-up → projector+视觉 LoRA warm-up → joint cosine；LLM 冻结；仅报告 CE；projector/encoder LoRA 峰值 LR 均为 1e-5 |
+| `return_auxiliary` | false；开启返回独立 dataclass，不把张量写入 metadata |
+
+N=8775 时：
+
+| 压缩率 | M | G | K | 局部 token |
+| --- | --- | --- | --- | --- |
+| 4 | 2194 | 550 | 411 | 1644 |
+| 8 | 1097 | 273 | 206 | 824 |
+| 16 | 549 | 137 | 103 | 412 |
+| 32 | 275 | 67 | 52 | 208 |
+
+2026-10-16 更新：geometry、within-slot SA、local-reads-global、`L_feat` 和每角色多 query 已实现，全部保持关闭或原始默认值；详见第 26 节。`L_text`、tuple/binding/concept loss 仍未实现，非零权重会明确报错。
+
+### 25.2 BraTS 专用知识限制
+
+源资产保留完整 v2 文件以便版本追溯；运行时先筛出 120 条 BraTS 范围条目，只给它们分配在线检索权重。排除的八条为 `centrum_semiovale`、`cerebral_peduncle`、`corona_radiata`、`cortex`、`internal_capsule`、`parahippocampal_gyrus`、`precuneus`、`restricted_diffusion`。共享概念和八个角色级控制项保留。
+
+120 条再按角色和序列筛选；例如 T2W 不允许增强相关候选。名称、定义、向量、ID 顺序及掩码通过 manifest 哈希校验，checkpoint 保存冻结 buffer 和资产指纹。同一路径内容改变也拒绝恢复，避免悄悄换词表。
+
+### 25.3 启动与消融
+
+在项目根目录运行。先做数据头、预算与知识资产预检，不加载大模型：
+
+    bash scripts/baselines/run_bindformer3d.sh --dry-run
+
+GPU 3 上运行默认的 8×、16×、32×；每档独立使用 joint_lora 训练，随后评估 best checkpoint：
+
+    bash scripts/baselines/run_bindformer3d.sh
+
+单档和消融示例：
+
+    bash scripts/baselines/run_bindformer3d.sh --ratios 32
+    bash scripts/baselines/run_bindformer3d.sh --ratios 32 --knowledge-mode none
+    bash scripts/baselines/run_bindformer3d.sh --ratios 32 --support-beta 0
+    bash scripts/baselines/run_bindformer3d.sh --ratios 32 --global-fraction 0.125
+    bash scripts/baselines/run_bindformer3d.sh --ratios 32 --slot-iterations 1
+    bash scripts/baselines/run_bindformer3d.sh --ratios 32 --set projector.params.background_slot=false
+
+`run_bindformer3d.sh` 默认运行 8×、16×、32×并使用物理 GPU 3；`run_bindformer3d_2.sh` 默认运行 4×并使用物理 GPU 1。两者使用与其他 baseline 相同的 `joint_lora` 配置、训练日程、完整 BraTS test 和 `all` 指标，依次执行每档训练与 best checkpoint 评测。外部 `CUDA_VISIBLE_DEVICES` 可覆盖脚本默认卡号。输出写入新的 `runs/baselines/bindformer3d_joint_lora_<tag>/`，保存 plan、解析配置、逐档训练/评测日志、checkpoint、预测与指标。默认 BraTS-only，训练集 1960、验证集 268、test 560；不包含 ISLES/WMH。
+
+入口固定 BraTS 数据范围和 `brats_train` 词表，训练阶段固定为 `joint_lora`。每个压缩率从预训练视觉 encoder/LLM 独立初始化，不从另一压缩率或旧 Stage A checkpoint 续训。中断后用 sweep 的 `--resume-run <run-dir>` 恢复；Trainer 的 `last.pt` 续训仍要求使用原解析配置和同一实验设置。
+
+2026-10-15 曾误按 Stage A-only 完成 4×、8×、16×并训练至 32× step 925；这些正式实验目录已按用户要求删除，工程验收目录保留。后续修正入口为 joint_lora。重跑状态和结果以 `runs/baselines/bindformer_joint_lora_gpu{1,3}_20261015T211700Z/sweep_status.json`、逐档日志和 `metric.json` 为准。工程检查通过不等于生成质量或实例绑定效果已经得到验证。
+
+## 26. 可选结构与特征重建实现（2026-10-16）
+
+本节记录当前代码行为；前文的 `L_text`、tuple/binding 等仍是研究设计，不代表已经启用。详细验收和待决策项见 [BINDFORMER_EXTENSIONS_ACCEPTANCE.md](BINDFORMER_EXTENSIONS_ACCEPTANCE.md)。
+
+### 26.1 默认行为与模块路径
+
+默认仍为 CE-only 最小 BindFormer，四个角色各 1 query、槽迭代 3 次、目标全局比例 0.25、BraTS 范围知识库 120 条。两个运行脚本的默认参数没有修改。新组件关闭时不创建其参数、不消耗初始化随机数；已与修改前的模型参数、输出、梯度和 RNG 逐项精确比较，并核对正在运行的 r8 实验的 provenance contract 保持一致。
+
+```text
+X + coords + 序列
+  → InputAdapter → CompetitiveSlotRouter（3 次）→ slots、A
+  → 每槽每角色检索 UMLS 概念
+  → [可选] 由 A 和坐标计算支持域几何，编码到位置、形态角色
+  → RoleQueries（按 J_finding/J_location/J_signal/J_morphology 展开）
+  → 共享支持域约束的视觉读取
+  → [可选] 同槽内 SA → [可选] 门控读取全局 token
+  → 全局在前、局部按槽/角色/子 query 顺序排列
+  → final_norm + 输出 MLP → Z → 冻结 LLM → CE
+                            └→ [可选，训练/验证] 特征重建头 → L_feat
+```
+
+新增实现文件：`geometry.py`、`interactions.py`、`reconstruction.py`，位于 `src/models/projectors/bindformer/`。教师缓存实现为 `src/training/feature_targets.py`，导出入口为 `scripts/cache_bindformer_teacher.py`。`src/models/multimodal.py`、`src/training/loss.py` 和 Trainer 负责目标读取、损失聚合、日志及 checkpoint。
+
+### 26.2 每个角色独立设置 query 数
+
+参数 `projector.params.role_query_counts` 的四个键为：
+
+```yaml
+finding: 1
+location_laterality: 1
+signal: 1
+morphology_extent: 1
+```
+
+每项必须为正整数，记每包长度 `Q = sum(J_r)`。根据压缩率先确定 `M = ceil(N / ratio)`，再求使 `|G/M - global_fraction|` 最小的合法整数解：
+
+\[
+M=G+KQ,\qquad K\ge1.
+\]
+
+要求全局分支时至少保留一个全局 token；等距时选择较多的全局 token。不会通过舍弃末尾局部 token 来凑预算。背景槽始终不输出。N=8775、32×、M=275 时：
+
+| 四角色 J，按固定角色顺序 | Q | G | K | 局部 token |
+| --- | ---: | ---: | ---: | ---: |
+| 1,1,1,1 | 4 | 67 | 52 | 208 |
+| 1,1,2,1 | 5 | 70 | 41 | 205 |
+| 1,2,3,2 | 8 | 67 | 26 | 208 |
+| 2,2,2,2 | 8 | 67 | 26 | 208 |
+| 4,4,4,4 | 16 | 67 | 13 | 208 |
+
+同一槽同一角色的子 query 共享角色 embedding、概念混合向量、几何向量及支持域，通过不同的可学习子 query 偏移区分，然后独立读取视觉内容。第一个 query 保留原表达式，其余 query 添加各自偏移；偏移在槽之间共享。不是复制读取后的 token。概念检索目前仍为“每槽每角色一次”，未扩展为“每子 query 独立检索”。`support_beta` 仍接受一个数或四角色列表，内部自动展开到所有子 query。
+
+### 26.3 几何统计：不要求病灶 mask
+
+`geometry_enabled=false`；启用后 `geometry_space=grid` 为默认。几何来自可学习归属 A 与预处理元数据，不读取分割标签。
+
+| 模式 | 中心/协方差的坐标基础 | 体积摘要 |
+| --- | --- | --- |
+| `grid` | 有效 FOV 内 [-1,1] 坐标，经方向矩阵统一轴方向 | 有效 FOV 的软覆盖比例 |
+| `voxel` | voxel 坐标，经方向矩阵旋转；不使用 spacing | 有效 voxel 数 |
+| `mm` | bounded affine 得到 LPS 毫米坐标 | mm³ |
+
+DHW→XYZ 轴序、padding 偏移和部分有效 patch 均被处理。毫米坐标使用 `bounded_before_pad.affine_xyz_to_lps`，该 affine 已包含裁剪原点，不重复加 crop_start。全 padding patch 不参加统计。中心与协方差按 `a_ik × valid_fraction_i` 加权；软体积按 `sum_i a_ik × valid_volume_i` 计算，避免对部分 patch 体积重复乘有效比例。
+
+送入 MLP 的 10 维输入为：中心 3 维、协方差上三角 6 维、`log1p(soft_volume / volume_scale)` 1 维。voxel/mm 中心相对有效 FOV 中心平移，并除以 `geometry_coordinate_scale=100`；协方差相应除以该尺度平方，体积默认 `geometry_volume_scale=1000`。grid 模式已经归一化，两种 scale 固定使用 1。原始物理坐标不等于配准后的图谱坐标。
+
+位置和形态角色各有一个 `10→128→768` GELU MLP，与 projector 同步训练；finding、signal 不加几何向量。`geometry_hidden_dim=128` 可配置。空支持域输出零。几何统计采用 FP32，包括 autocast 下的方向校验。现有输入 `grid_fourier` PE 保持原样，未增加毫米 PE。
+
+### 26.4 包内 SA 与局部读取全局
+
+- `within_slot_sa=false`，启用后 `within_slot_sa_depth=1`。每个槽的全部 Q 个 token 做 pre-LN 多头 SA + 残差，不跨槽混合；不同槽共享同一组层参数。
+- `local_reads_global=false`，启用后 `local_global_depth=1`。Q 来自局部包，K/V 来自全局 token，残差由每槽 sigmoid 门控调节。门控输入为包内归一化 token 的均值，权重初始化为 0，偏置对应 `local_global_gate_init=0.1`；随后端到端训练。
+- 顺序为先 SA，后读取全局。两种新增交互层不额外加 FFN；原属性读取和全局分支已有 FFN。深度可分别调整。
+- 支持 activation checkpoint；确定性模式使用 math attention。新增交互的非确定性模式允许 flash/efficient/math，排除实测反向不兼容广播 K/V 的 cuDNN SDPA。
+
+### 26.5 特征重建 L_feat
+
+只有 `feature_loss_weight>0` 才创建和训练重建网络。默认权重 0，无重建参数、缓存读取或附加损失。目标不是 MRI 像素，而是压缩前 NeuroVFM 的 768 维特征。
+
+**目标来源**：
+
+- 默认 `feature_target=frozen_base_cache`：离线运行冻结、已预训练且不带 LoRA 的 NeuroVFM，生成固定 `X^T`，适用于当前 joint_lora。它是训练中的表征保留约束，不保证固定教师比适配后 encoder 更好。
+- 可选 `frozen_input`：仅 Stage A 可用，直接使用当前冻结 encoder 的输出并 detach。LoRA/full 训练明确拒绝此模式；detach 不会使变化中的 encoder 成为固定教师。
+
+**重建结构**：最终 Z 经 LN 和线性层降至 256 维作为 memory；归一化有效 FOV 坐标经小 MLP，再加序列 embedding 作为 query；一层 4-head CA + FFN（expansion=2），最后映射到 768 维。默认参数量 1,848,320。网络与 projector 同步优化，预测分支只读 Z、坐标和序列，不读原 X、槽归属 A 或参考报告，避免绕过压缩接口。
+
+每张图最多选 `feature_samples=512` 个有效 patch，空间粗分区后不放回采样，不够则全部使用；`feature_query_chunk_size=128` 控制重建 query 分块，所有块仍读取完整 Z。采样使用私有 CPU generator，seed 由实验 seed、样本 ID、optimizer step 确定；验证固定 step=0，避免评估波动和污染模型 dropout RNG。
+
+令 `w_i` 为 patch 有效比例、`S_b` 为采样集合，LN 无可学习参数，按通道独立处理每个 patch：
+
+\[
+\mathcal L_{\mathrm{feat}}^{(b)}=
+\frac{\sum_{i\in S_b}w_i\,\frac1{768}\left\|
+\operatorname{LN}(\hat x_i)-\operatorname{LN}(\operatorname{stopgrad}(x_i^T))
+\right\|_2^2}{\sum_{i\in S_b}w_i},
+\qquad
+\mathcal L=\frac{\sum \mathcal L_{\mathrm{CE,sum}}}{\sum T_y}
++\lambda_f\frac{\sum_b\mathcal L_{\mathrm{feat}}^{(b)}}{B}.
+\]
+
+损失在 FP32 计算。梯度累积窗口和 DDP 分别使用全局回答 token 数、全局图像数作为两个分母，避免长报告或 microbatch 划分改变重建权重。日志增加 `feature_loss`、`feature_cosine`、`feature_patch_count`、`total_objective`。验证同时记录 CE 和重建指标；best checkpoint 与 early stopping 仍按原有验证 CE。
+
+生成时不运行重建头，也不需要教师缓存；已通过强制让重建调用和缓存读取报错的方式验收。辅助头权重仍随训练 checkpoint 保存，生成时未执行它，未单独导出裁掉辅助头的部署权重。
+
+**缓存与启用示例**（下列是按需执行的命令，本次没有导出全训练集或启动新正式训练）：
+
+```bash
+# 与正式实验保持相同预处理；脚本内部强制冻结基座、移除训练 LoRA。
+python -m scripts.cache_bindformer_teacher \
+  --config configs/training/joint_lora.yaml \
+  --config configs/preprocessing/native_grid.yaml \
+  --config configs/projector/bindformer3d.yaml \
+  --output cache/bindformer_teacher --device cuda:0
+
+# 新实验示例；0.1 只用于说明和工程 smoke，不代表已选出的最优权重。
+bash scripts/baselines/run_bindformer3d.sh --ratios 32 \
+  --set projector.params.feature_loss_weight=0.1 \
+  --set projector.params.feature_target_cache=cache/bindformer_teacher
+```
+
+缓存记录基座权重指纹、预处理版本和输入 cache_key，逐文件验证特征形状、数值及 patch 坐标顺序。manifest 原子创建，目标文件原子写入；不匹配或缺失立即报错，不会临时改用当前 LoRA 特征。默认导出所选 train/val；不使用 test。每张完整 BraTS BF16 特征约 12.85 MiB，启用前需为完整训练/验证选集导出。
+
+### 26.6 独立消融入口与尚未实现部分
+
+```bash
+bash scripts/baselines/run_bindformer3d.sh --ratios 32 --dry-run \
+  --finding-queries 1 --location-laterality-queries 1 \
+  --signal-queries 2 --morphology-extent-queries 1
+
+# 以下每行分别代表一次新实验，可按需组合。
+bash scripts/baselines/run_bindformer3d.sh --ratios 32 --set projector.params.geometry_enabled=true
+bash scripts/baselines/run_bindformer3d.sh --ratios 32 --set projector.params.within_slot_sa=true
+bash scripts/baselines/run_bindformer3d.sh --ratios 32 --set projector.params.local_reads_global=true
+bash scripts/baselines/run_bindformer3d.sh --ratios 32 --knowledge-mode none
+bash scripts/baselines/run_bindformer3d.sh --ratios 32 --support-beta 0
+```
+
+已有默认实验继续原样训练/恢复。改变 J、结构或损失需要创建新实验；严格 checkpoint 检查不会把旧优化器状态静默套到不同结构，暂未实现旧最小模型到新增分支的部分权重迁移工具。
+
+按照本轮要求，`L_text` 的正负候选构建、对比损失均未实现；没有额外创建所谓“仅正例对齐”的替代目标。tuple/binding/concept loss、毫米 PE、每子 query 独立知识检索等仍为后续工作。

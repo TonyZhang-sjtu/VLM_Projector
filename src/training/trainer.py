@@ -18,7 +18,7 @@ from src.models.multimodal import MultimodalModel
 from src.training.optim import build_optimizer,build_scheduler,build_joint_scheduler
 from src.training.stages import assert_stage,wrap_distributed
 from src.training.schedule import resolve_joint_schedule,update_joint_validation
-from src.training.loss import global_answer_tokens,backward_scale
+from src.training.loss import global_answer_tokens,global_sample_count,combined_loss
 from src.training.checkpoint import provenance,save_checkpoint,load_checkpoint,rng_state
 
 
@@ -72,6 +72,10 @@ def validate(model,dataset,microbatch=1,rank=0,world=1,description='validation')
                 if not torch.isfinite(result['loss_sum']):raise FloatingPointError(f'Nonfinite validation loss: {item["sample"].id}')
                 records.append({'id':item['sample'].id,'cohort':item['sample'].cohort,
                     'loss_sum':float(result['loss_sum']),'answer_tokens':result['answer_tokens']})
+                if 'feature_loss_sum' in result:
+                    if not torch.isfinite(result['feature_loss_sum']):raise FloatingPointError('Nonfinite validation reconstruction')
+                    records[-1].update(feature_loss=float(result['feature_loss_sum']),
+                                       feature_cosine=float(result['feature_cosine_sum']))
         if world>1:
             gathered=[None]*world;dist.all_gather_object(gathered,records)
             records=[r for rows in gathered for r in rows]
@@ -84,7 +88,11 @@ def validate(model,dataset,microbatch=1,rank=0,world=1,description='validation')
         total=sum(r['loss_sum'] for r in records);count=sum(r['answer_tokens'] for r in records)
         if count<1:raise ValueError('Empty validation set')
         for group in groups.values():group['answer_ce']=group['loss_sum']/group['answer_tokens']
-        return {'answer_ce':total/count,'answer_tokens':count,'samples':len(records),'cohorts':groups}
+        metrics={'answer_ce':total/count,'answer_tokens':count,'samples':len(records),'cohorts':groups}
+        if records and 'feature_loss' in records[0]:
+            metrics.update(feature_loss=sum(r['feature_loss'] for r in records)/len(records),
+                           feature_cosine=sum(r['feature_cosine'] for r in records)/len(records))
+        return metrics
     finally:model.train(was_training)
 
 
@@ -220,17 +228,28 @@ class Trainer:
                 # Count text tokens before forward, without retaining multiple GPU graphs.
                 local_tokens=sum(self.model.decoder.answer_count(self.train_data.samples[i]) for i in indices)
                 count=global_answer_tokens(local_tokens,self.device)
+                feature_weight=float(c.projector.params.get('feature_loss_weight',0.))
+                sample_count=global_sample_count(len(indices),self.device) if feature_weight else None
                 self.optimizer.zero_grad(set_to_none=True)
                 loss_total=0.;encoder_tokens=0;projector_tokens=0
+                feature_total=0.;feature_cosine=0.;feature_patches=0
                 start=time.perf_counter();torch.cuda.reset_peak_memory_stats(self.device)
                 batches=[indices[i:i+micro] for i in range(0,len(indices),micro)]
                 for j,ids in enumerate(batches):
                     context=self.wrapped.no_sync() if self.world>1 and j<len(batches)-1 else nullcontext()
                     with context,torch.autocast('cuda',dtype=torch.bfloat16):
-                        result=self.wrapped([self.train_data[i] for i in ids])
+                        items=[self.train_data[i] for i in ids]
+                        if feature_weight:
+                            for item in items:item['feature_sampling_step']=self.state['global_step']
+                        result=self.wrapped(items)
                         if not torch.isfinite(result['loss_sum']):raise FloatingPointError('Nonfinite training loss')
-                        loss=result['loss_sum']*backward_scale(count,self.world)
+                        loss=combined_loss(result,count,self.world,feature_weight,sample_count)
                     loss.backward();loss_total+=float(result['loss_sum'].detach())
+                    if feature_weight:
+                        if result['feature_samples']!=len(ids):raise ValueError('Incomplete reconstruction supervision')
+                        feature_total+=float(result['feature_loss_sum'].detach())
+                        feature_cosine+=float(result['feature_cosine_sum'])
+                        feature_patches+=result['feature_patch_count']
                     encoder_tokens+=sum(result['encoder_token_counts'])
                     projector_tokens+=sum(result['projector_token_counts'])
                     del loss,result
@@ -252,6 +271,12 @@ class Trainer:
                     'grad_norm':float(norm),'seconds':time.perf_counter()-start,
                     'peak_allocated_bytes':torch.cuda.max_memory_allocated(self.device),
                     'peak_reserved_bytes':torch.cuda.max_memory_reserved(self.device)}
+                if feature_weight:
+                    aux=torch.tensor([feature_total,feature_cosine,feature_patches],device=self.device,dtype=torch.float64)
+                    if self.world>1:dist.all_reduce(aux)
+                    record.update(feature_loss=float(aux[0]/sample_count),feature_cosine=float(aux[1]/sample_count),
+                                  feature_patch_count=int(aux[2]),feature_loss_weight=feature_weight,
+                                  total_objective=record['answer_ce']+feature_weight*float(aux[0]/sample_count))
                 if c.projector.get('resolved_budget'):
                     budget=c.projector.resolved_budget
                     record.update(target_compression_ratio=budget.target_ratio,

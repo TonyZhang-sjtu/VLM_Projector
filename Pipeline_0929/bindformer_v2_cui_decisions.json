@@ -1,0 +1,1321 @@
+{
+  "lesion": {
+    "selected_cui": "C0221505",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A31611301",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "mass": {
+    "selected_cui": "C0270614",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_names_and_project_schema"
+  },
+  "abnormal_signal": {
+    "selected_cui": null,
+    "identity_status": "local_identity",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "No unambiguous exact UMLS identity was established for this MRI task phrase; retain a project-local concept rather than force an unrelated CUI.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "corpus_expression_and_project_schema"
+  },
+  "edema": {
+    "selected_cui": "C0006114",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Choose brain edema with appropriate source descriptions; preserve alternative cerebral-edema candidates without asserting their equivalence.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7568239",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "hemorrhage": {
+    "selected_cui": "C0151699",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A10765326",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "necrosis": {
+    "selected_cui": "C0027540",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Choose cell/tissue necrosis, not a finding restricted to a tissue specimen. Source definition explicitly selected for the anatomical/imaging scope rather than the shortest available definition.",
+    "selected_definition_source": "MSH",
+    "selected_definition_aui": "A0090503",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "cystic_change": {
+    "selected_cui": "C0205207",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Select a qualitative cystic appearance, not microscopic cystic change in a tissue specimen.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_names_and_project_schema"
+  },
+  "dural_tail": {
+    "selected_cui": "C5139232",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "HPO",
+    "selected_definition_aui": "A30925930",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "mass_effect": {
+    "selected_cui": "C4086564",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A26707359",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "midline_shift": {
+    "selected_cui": "C4086580",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A26702128",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "ventricular_compression": {
+    "selected_cui": null,
+    "identity_status": "local_identity",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "No unambiguous exact UMLS identity was established for this MRI task phrase; retain a project-local concept rather than force an unrelated CUI.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "corpus_expression_and_project_schema"
+  },
+  "ventricular_dilatation": {
+    "selected_cui": "C1531647",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A10795099",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "sulcal_effacement": {
+    "selected_cui": "C5442488",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_names_and_project_schema"
+  },
+  "brain": {
+    "selected_cui": "C0006104",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Choose the broad brain concept with anatomical source definitions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7569200",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "brain_parenchyma": {
+    "selected_cui": "C0440746",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_names_and_project_schema"
+  },
+  "frontal_lobe": {
+    "selected_cui": "C0016733",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7570667",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "parietal_lobe": {
+    "selected_cui": "C0030560",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7572837",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "temporal_lobe": {
+    "selected_cui": "C0039485",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7574008",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "occipital_lobe": {
+    "selected_cui": "C0028785",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7572608",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "insula": {
+    "selected_cui": "C0021640",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7668671",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "thalamus": {
+    "selected_cui": "C0039729",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7574043",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "basal_ganglia": {
+    "selected_cui": "C0004781",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7569038",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "corpus_callosum": {
+    "selected_cui": "C0010090",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7569779",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "callosal_splenium": {
+    "selected_cui": "C0152319",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7662880",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "callosal_genu": {
+    "selected_cui": "C0152321",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Choose the corpus-callosum structure, not knee C0022742. Bare genu requires callosal text context.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7648007",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "callosal_body": {
+    "selected_cui": "C0152320",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7637390",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "white_matter": {
+    "selected_cui": "C0682708",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7666561",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "gray_matter": {
+    "selected_cui": "C0018220",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Choose gray matter tissue, not the narrower cerebral cortex.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7648342",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "cortex": {
+    "selected_cui": "C0007776",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7569463",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "cerebral_hemisphere": {
+    "selected_cui": "C0228174",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions. Source definition explicitly selected for the anatomical/imaging scope rather than the shortest available definition.",
+    "selected_definition_source": "NEU",
+    "selected_definition_aui": "A20944120",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "cerebellum": {
+    "selected_cui": "C0007765",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7569456",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "cerebellar_hemisphere": {
+    "selected_cui": "C0228465",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7648822",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "cerebellar_vermis": {
+    "selected_cui": "C0228482",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7666188",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "brainstem": {
+    "selected_cui": "C0006121",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7569203",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "midbrain": {
+    "selected_cui": "C0025462",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7572081",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "pons": {
+    "selected_cui": "C0032639",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7585923",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "midbrain_tegmentum": {
+    "selected_cui": "C0039441",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "MSH",
+    "selected_definition_aui": "A0123834",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "cerebral_peduncle": {
+    "selected_cui": "C0007793",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Choose the broad cerebral-peduncle concept, not the narrower crus cerebri candidate.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7569465",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "internal_capsule": {
+    "selected_cui": "C0152341",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7585631",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "external_capsule": {
+    "selected_cui": "C0152345",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7646004",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "hippocampus": {
+    "selected_cui": "C3887642",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Choose hippocampus proper with MSH/NCI description. Do not merge hippocampal formation, rodent hippocampal region or generic perihippocampal location. Source definition explicitly selected for the anatomical/imaging scope rather than the shortest available definition.",
+    "selected_definition_source": "MSH",
+    "selected_definition_aui": "A0068201",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "hippocampal_region": {
+    "selected_cui": null,
+    "identity_status": "local_identity",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "MRI regional phrase is broader than hippocampus proper; available hippocampal-region CUIs include rodent/cytoarchitectural scopes.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "corpus_expression_and_project_schema"
+  },
+  "parahippocampal_gyrus": {
+    "selected_cui": "C0228249",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions. Source definition explicitly selected for the anatomical/imaging scope rather than the shortest available definition.",
+    "selected_definition_source": "MSH",
+    "selected_definition_aui": "A1648807",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "precentral_gyrus": {
+    "selected_cui": "C0152299",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7659299",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "ventricular_system": {
+    "selected_cui": "C0007799",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Choose cerebral ventricles; reject cardiac ventricles and generic organ chambers.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7637551",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "lateral_ventricle": {
+    "selected_cui": "C0152279",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7585786",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "fourth_ventricle": {
+    "selected_cui": "C0149556",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions. Source definition explicitly selected for the anatomical/imaging scope rather than the shortest available definition.",
+    "selected_definition_source": "MSH",
+    "selected_definition_aui": "A1646659",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "anterior_horn": {
+    "selected_cui": "C0152281",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Select lateral-ventricle horn; reject the spinal gray anterior horn candidate.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7647113",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "posterior_horn": {
+    "selected_cui": "C0152282",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Select lateral-ventricle horn; reject the spinal gray posterior horn candidate.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7656984",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "temporal_horn": {
+    "selected_cui": "C0152283",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_names_and_project_schema"
+  },
+  "septum_pellucidum": {
+    "selected_cui": "C0036700",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7573625",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "cerebral_sulcus": {
+    "selected_cui": "C0458394",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Choose cerebral sulcus; reject the dinoflagellate cell surface sulcus. Source definition explicitly selected for the anatomical/imaging scope rather than the shortest available definition.",
+    "selected_definition_source": "NEU",
+    "selected_definition_aui": "A20940063",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "cerebral_gyrus": {
+    "selected_cui": "C0458308",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Use the NCI/NeuroNames surface-convolution concept C0458308; retain the FMA structural candidate as an alternative.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7639995",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "subarachnoid_cistern": {
+    "selected_cui": "C0228144",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7663425",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "longitudinal_fissure": {
+    "selected_cui": "C0228186",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7669034",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "cerebral_fissure": {
+    "selected_cui": "C3536748",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7639993",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "sylvian_fissure": {
+    "selected_cui": "C0228187",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7576607",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "falx": {
+    "selected_cui": "C0228120",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7646366",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "skull": {
+    "selected_cui": "C0037303",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Choose the anatomical skull concept; do not use a generic location-only duplicate.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7573703",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "calvarium": {
+    "selected_cui": "C0205950",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Choose the skullcap anatomy; reject the organism named Calvarium.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A17696867",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "skull_base": {
+    "selected_cui": "C0149543",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7636411",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "frontal_bone": {
+    "selected_cui": "C0016732",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7570666",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "parietal_bone": {
+    "selected_cui": "C0030558",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7572835",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "temporal_bone": {
+    "selected_cui": "C0039484",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7574007",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "occipital_bone": {
+    "selected_cui": "C0028784",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7572607",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "tentorium": {
+    "selected_cui": "C0228121",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Choose tentorium cerebelli anatomy; reject the organism named Tentorium.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7669381",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "superior_sagittal_sinus": {
+    "selected_cui": "C0226859",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7663572",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "sagittal_sinus": {
+    "selected_cui": "C0447120",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Generic sagittal sinus remains separate from the superior sagittal sinus.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7661927",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "cerebellopontine_angle": {
+    "selected_cui": "C0007764",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A10760366",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "middle_cranial_fossa": {
+    "selected_cui": "C0230045",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A10767909",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "suprasellar_region": {
+    "selected_cui": "C0230054",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A10792539",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "frontal_operculum": {
+    "selected_cui": "C0149547",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NEU",
+    "selected_definition_aui": "A22651054",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "centrum_semiovale": {
+    "selected_cui": "C0228181",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_names_and_project_schema"
+  },
+  "corona_radiata": {
+    "selected_cui": "C0737244",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions. Source definition explicitly selected for the anatomical/imaging scope rather than the shortest available definition.",
+    "selected_definition_source": "NEU",
+    "selected_definition_aui": "A20944247",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "periventricular": {
+    "selected_cui": "C4331000",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Choose the anatomical region rather than a duplicate adjective/spatial qualification.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A27921949",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "left": {
+    "selected_cui": "C0205091",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Use side of patient; displacement-toward-left is a separate local field.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7575701",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "right": {
+    "selected_cui": "C0205090",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Use side of patient; displacement-toward-right is a separate local field.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7575700",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "bilateral": {
+    "selected_cui": "C0238767",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7579459",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "midline": {
+    "selected_cui": "C0549183",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Use bodily spatial midline; exclude dental-arch and cell-component definitions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A17693956",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "perilesional": {
+    "selected_cui": null,
+    "identity_status": "local_identity",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Perilesional C5555499 is a medicinal administration route; keep the spatial region as a local concept.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "corpus_expression_and_project_schema"
+  },
+  "peritumoral": {
+    "selected_cui": "C3897941",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A24372080",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "peripheral": {
+    "selected_cui": "C0205100",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Use spatial periphery in relation to the referenced lesion, not peripheral edema as a separate finding.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7575706",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "central": {
+    "selected_cui": "C0205099",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Use NCI central-within-a-structure meaning; do not import a fixed body-midline interpretation.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7580358",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "leftward": {
+    "selected_cui": "C5570776",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_names_and_project_schema"
+  },
+  "rightward": {
+    "selected_cui": "C5570774",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_names_and_project_schema"
+  },
+  "hyperintense": {
+    "selected_cui": "C5667489",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A34193828",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "hypointense": {
+    "selected_cui": "C5667487",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A34188055",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "isointense": {
+    "selected_cui": "C1517605",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7651015",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "mixed_signal": {
+    "selected_cui": null,
+    "identity_status": "local_identity",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "No unambiguous exact UMLS identity was established for this MRI task phrase; retain a project-local concept rather than force an unrelated CUI.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "corpus_expression_and_project_schema"
+  },
+  "homogeneous": {
+    "selected_cui": "C1881065",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A12811294",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "heterogeneous": {
+    "selected_cui": "C0019409",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A12798605",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "enhancement": {
+    "selected_cui": null,
+    "identity_status": "local_identity",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Exact enhancement CUIs describe a refractive procedure or generic improvement, not the intended MRI finding.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "corpus_expression_and_project_schema"
+  },
+  "nonenhancing": {
+    "selected_cui": null,
+    "identity_status": "local_identity",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "No unambiguous exact UMLS identity was established for this MRI task phrase; retain a project-local concept rather than force an unrelated CUI.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "corpus_expression_and_project_schema"
+  },
+  "ring_enhancement": {
+    "selected_cui": null,
+    "identity_status": "local_identity",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "No unambiguous exact UMLS identity was established for this MRI task phrase; retain a project-local concept rather than force an unrelated CUI.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "corpus_expression_and_project_schema"
+  },
+  "nodular_enhancement": {
+    "selected_cui": null,
+    "identity_status": "local_identity",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "No unambiguous exact UMLS identity was established for this MRI task phrase; retain a project-local concept rather than force an unrelated CUI.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "corpus_expression_and_project_schema"
+  },
+  "garland_enhancement": {
+    "selected_cui": null,
+    "identity_status": "local_identity",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Keep the observed garland/crown-like pattern separate until equivalence to ring enhancement is established.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "corpus_expression_and_project_schema"
+  },
+  "restricted_diffusion": {
+    "selected_cui": null,
+    "identity_status": "local_identity",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Restricted Diffusion C2826108 describes membrane transport. C5667516 has an imaging definition but is typed Neoplastic Process; retain as related evidence, not a forced identity for ADC stroke descriptions.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "related_UMLS_imaging_definition_and_project_schema",
+    "related_concept_evidence": [
+      {
+        "cui": "C5667516",
+        "relation": "definition_support_only_not_selected_identity",
+        "semantic_types": [
+          {
+            "tui": "T191",
+            "name": "Neoplastic Process"
+          }
+        ],
+        "definitions": [
+          {
+            "aui": "A34190442",
+            "source": "NCI",
+            "text": "A radiologic finding seen as high-signal intensity on diffusion weighted imaging with corresponding reduced apparent diffusion coefficient (ADC) values. ADC is a measurement of the diffusion of water molecules in a given tissue."
+          }
+        ]
+      }
+    ]
+  },
+  "punctate": {
+    "selected_cui": "C0205330",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A23973177",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "patchy": {
+    "selected_cui": "C0205413",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A15562087",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "nodular": {
+    "selected_cui": "C0205297",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_names_and_project_schema"
+  },
+  "irregular": {
+    "selected_cui": "C0205271",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A12798764",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "round": {
+    "selected_cui": "C0332490",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A10768220",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "mass_like": {
+    "selected_cui": null,
+    "identity_status": "local_identity",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "No unambiguous exact UMLS identity was established for this MRI task phrase; retain a project-local concept rather than force an unrelated CUI.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "corpus_expression_and_project_schema"
+  },
+  "linear": {
+    "selected_cui": null,
+    "identity_status": "local_identity",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "A generic band shape is insufficient to establish exact equivalence for all linear/strip-like MRI appearances.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "corpus_expression_and_project_schema"
+  },
+  "plaque_like": {
+    "selected_cui": "C0439644",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_names_and_project_schema"
+  },
+  "well_defined": {
+    "selected_cui": "C0442825",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A17691160",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "ill_defined": {
+    "selected_cui": "C0577553",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_names_and_project_schema"
+  },
+  "focal": {
+    "selected_cui": "C0392752",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "HPO",
+    "selected_definition_aui": "A24672392",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "extensive": {
+    "selected_cui": "C0205231",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A10763817",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "scattered": {
+    "selected_cui": "C0439742",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Choose spatial scattered; sporadic is a corpus-context alias, not the hereditary-disease meaning.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_names_and_project_schema"
+  },
+  "solid": {
+    "selected_cui": null,
+    "identity_status": "local_identity",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Generic Solid CUIs describe matter/dosage forms; Solid Lesion C5783497 describes the whole lesion, while this field is a component.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "corpus_expression_and_project_schema"
+  },
+  "cystic_solid": {
+    "selected_cui": null,
+    "identity_status": "local_identity",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "No unambiguous exact UMLS identity was established for this MRI task phrase; retain a project-local concept rather than force an unrelated CUI.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "corpus_expression_and_project_schema"
+  },
+  "multiple": {
+    "selected_cui": "C0439064",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Reviewed the full task-specific term, source synonyms, semantic types and available source definitions; narrower source terms are not automatically patient assertions. Source definition explicitly selected for the anatomical/imaging scope rather than the shortest available definition.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A7575761",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "mild": {
+    "selected_cui": "C2945599",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Select qualitative mild and use the NCI definition; reject instrument-score-specific definitions.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A15563827",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "moderate": {
+    "selected_cui": "C1881878",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Select general qualitative moderate; reject privacy metadata and disease-activity scores.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A15567881",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "marked": {
+    "selected_cui": "C1706089",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Select a noticeable imaging degree; do not use statistical significance.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A10767872",
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "finding_unknown": {
+    "selected_cui": null,
+    "identity_status": "local_identity",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Explicit project schema control; not a UMLS disease and not a substitute for missing annotations.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "corpus_expression_and_project_schema"
+  },
+  "finding_other": {
+    "selected_cui": null,
+    "identity_status": "local_identity",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Explicit project schema control; not a UMLS disease and not a substitute for missing annotations.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "corpus_expression_and_project_schema"
+  },
+  "location_laterality_unknown": {
+    "selected_cui": null,
+    "identity_status": "local_identity",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Explicit project schema control; not a UMLS disease and not a substitute for missing annotations.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "corpus_expression_and_project_schema"
+  },
+  "location_laterality_other": {
+    "selected_cui": null,
+    "identity_status": "local_identity",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Explicit project schema control; not a UMLS disease and not a substitute for missing annotations.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "corpus_expression_and_project_schema"
+  },
+  "signal_unknown": {
+    "selected_cui": null,
+    "identity_status": "local_identity",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Explicit project schema control; not a UMLS disease and not a substitute for missing annotations.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "corpus_expression_and_project_schema"
+  },
+  "signal_other": {
+    "selected_cui": null,
+    "identity_status": "local_identity",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Explicit project schema control; not a UMLS disease and not a substitute for missing annotations.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "corpus_expression_and_project_schema"
+  },
+  "morphology_extent_unknown": {
+    "selected_cui": null,
+    "identity_status": "local_identity",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Explicit project schema control; not a UMLS disease and not a substitute for missing annotations.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "corpus_expression_and_project_schema"
+  },
+  "morphology_extent_other": {
+    "selected_cui": null,
+    "identity_status": "local_identity",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Explicit project schema control; not a UMLS disease and not a substitute for missing annotations.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description checked against concept meaning; not verbatim UMLS text.",
+    "description_basis": "corpus_expression_and_project_schema"
+  },
+  "precentral_cerebellar_cistern": {
+    "selected_cui": null,
+    "identity_status": "local_identity",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "No reliable exact CUI established for this complete named cistern; do not map the precentral substring to precentral gyrus.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description, checked against source concept or complete corpus phrase; not verbatim UMLS text.",
+    "description_basis": "corpus_expression_and_project_schema"
+  },
+  "precuneus": {
+    "selected_cui": "C0152306",
+    "identity_status": "umls_linked",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "Precuneus source anatomy and definition distinguish medial parietal cortex from occipital cuneus.",
+    "selected_definition_source": "NCI",
+    "selected_definition_aui": "A23885910",
+    "description_review": "Project-authored task description, checked against source concept or complete corpus phrase; not verbatim UMLS text.",
+    "description_basis": "umls_definition_and_task_context"
+  },
+  "frontal_region": {
+    "selected_cui": null,
+    "identity_status": "local_identity",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "The regional phrase has head-region, lobe or cytoarchitectural interpretations; preserve a local regional descriptor without forcing a lobe/bone identity.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description, checked against source concept or complete corpus phrase; not verbatim UMLS text.",
+    "description_basis": "corpus_expression_and_project_schema"
+  },
+  "parietal_region": {
+    "selected_cui": null,
+    "identity_status": "local_identity",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "The regional phrase has head-region, lobe or cytoarchitectural interpretations; preserve a local regional descriptor without forcing a lobe/bone identity.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description, checked against source concept or complete corpus phrase; not verbatim UMLS text.",
+    "description_basis": "corpus_expression_and_project_schema"
+  },
+  "temporal_region": {
+    "selected_cui": null,
+    "identity_status": "local_identity",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "The regional phrase has head-region, lobe or cytoarchitectural interpretations; preserve a local regional descriptor without forcing a lobe/bone identity.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description, checked against source concept or complete corpus phrase; not verbatim UMLS text.",
+    "description_basis": "corpus_expression_and_project_schema"
+  },
+  "occipital_region": {
+    "selected_cui": null,
+    "identity_status": "local_identity",
+    "review_level": "assistant_research_vocabulary_review_not_clinical_annotation",
+    "decision_reason": "The regional phrase has head-region, lobe or cytoarchitectural interpretations; preserve a local regional descriptor without forcing a lobe/bone identity.",
+    "selected_definition_source": null,
+    "selected_definition_aui": null,
+    "description_review": "Project-authored task description, checked against source concept or complete corpus phrase; not verbatim UMLS text.",
+    "description_basis": "corpus_expression_and_project_schema"
+  }
+}

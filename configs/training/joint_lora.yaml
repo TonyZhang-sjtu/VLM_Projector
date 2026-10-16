@@ -9,6 +9,8 @@ training:
   joint_warmup_steps: null
   projector_warmup_ratio: 0.0625
   joint_warmup_ratio: 0.0625
+  cosine_min_lr_ratio: 0.0
+  joint_warmup_projector_mode: restart
   # Legacy single-stage warm-up is not used by joint_lora.
   warmup_ratio: 0.0
   warmup_steps: null

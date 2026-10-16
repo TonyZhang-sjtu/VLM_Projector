@@ -11,6 +11,16 @@ from src.data.datasets import ALL_DATASETS, normalize_datasets
 from src.preprocessing.cache import atomic_torch_save
 
 
+def projector_contract(config):
+    value=OmegaConf.to_container(config,resolve=True)
+    if value['name']=='bindformer3d':
+        from src.models.projectors.bindformer.config import EXTENSION_DEFAULTS
+        for key,default in EXTENSION_DEFAULTS.items():
+            if value['params'].get(key)==default:
+                value['params'].pop(key)
+    return value
+
+
 def rng_state():
     return {'python':random.getstate(),'numpy':np.random.get_state(),'torch':torch.get_rng_state(),
             'cuda':torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None}
@@ -40,11 +50,17 @@ def provenance(config,model,preprocessor,manifest_summary):
         temporary=handle.name;json.dump(memo,handle,indent=2)
     os.replace(temporary,memo_path)
     content={'encoder_base':model.encoder.fingerprint,'decoder_files':files,
-        'preprocessing':preprocessor.version,'projector':OmegaConf.to_container(config.projector,resolve=True),
+        'preprocessing':preprocessor.version,'projector':projector_contract(config.projector),
         'target_version':config.data.target_version,'manifest_hashes':{k:v['sha256'] for k,v in manifest_summary.items()},
         'prompt':model.decoder.task.fingerprint,'tokenizer_image_id':model.decoder.image_id,
         'encoder_execution':'independent','decoder_loss':'answer_only_causal_ce_sum',
         'source_files':{str(p.relative_to(ROOT)):file_hash(p) for p in sorted((ROOT/'src').rglob('*.py'))}}
+    concept_assets=getattr(model.projector,'asset_provenance',None)
+    if concept_assets is not None:
+        content['projector_assets']=concept_assets
+    target_store=getattr(model,'feature_target_store',None)
+    if target_store is not None:
+        content['feature_target_assets']=target_store.provenance()
     # Source snapshot is retained separately. Resume/data compatibility checks use
     # the numerical/data contract, permitting diagnostic code additions.
     content['contract_id']=digest({k:v for k,v in content.items() if k!='source_files'})
@@ -126,6 +142,10 @@ def load_checkpoint(path,model,mode='evaluate',optimizer=None,scheduler=None,exp
                         'projector_warmup_ratio','joint_warmup_ratio','max_epochs','max_steps',
                         'early_stopping_min_delta','early_stopping_patience'):
                 if checkpoint['config']['training'][key]!=model.config.training[key]:
+                    raise ValueError(f'Resume changed training setting: {key}')
+            for key, original_default in (('cosine_min_lr_ratio',0.0),
+                                          ('joint_warmup_projector_mode','restart')):
+                if checkpoint['config']['training'].get(key,original_default)!=model.config.training[key]:
                     raise ValueError(f'Resume changed training setting: {key}')
             if optimizer is None or [g['param_names'] for g in optimizer.param_groups]!=[
                     g['param_names'] for g in checkpoint['optimizer']['param_groups']]:

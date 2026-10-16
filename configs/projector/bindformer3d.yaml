@@ -1,0 +1,34 @@
+projector:
+  name: bindformer3d
+  hidden_size: 4096
+  bias: true
+  params:
+    global_fraction: 0.25
+    roles: [finding, location_laterality, signal, morphology_extent]
+    role_query_counts:
+      finding: 1
+      location_laterality: 1
+      signal: 1
+      morphology_extent: 1
+    inner_dim: 768
+    num_heads: 8
+    ffn_expansion: 4
+    dropout: 0.0
+    checkpoint_blocks: true
+    head_type: mlp
+    slot_iterations: 3
+    background_slot: true
+    position_mode: grid_fourier
+    sequence_condition: true
+    knowledge_mode: name_definition
+    concept_bank: assets/knowledge/bindformer_brain_candidates_v2
+    vocabulary_scope: brats_train
+    support_beta: [1.0, 1.0, 1.0, 1.0]
+    global_depth: 1
+    reader_chunk_size: 128
+    geometry_enabled: false
+    geometry_space: grid
+    within_slot_sa: false
+    local_reads_global: false
+    feature_loss_weight: 0.0
+    text_loss_weight: 0.0

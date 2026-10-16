@@ -1,0 +1,69 @@
+role	field	key	terms	sequence_scope	report_pattern
+finding	observation	lesion	lesion;brain lesion	*	\blesions?\b
+finding	observation	abnormal_signal	abnormal signal;abnormal signal intensity	*	\babnormal signals?\b
+finding	observation	mass	mass;brain mass	*	\bmass(?:es)?\b
+finding	effect	mass_effect	mass effect	*	\bmass effect\b
+finding	effect	midline_shift	midline shift;shift of midline structures	*	\bmidline (?:shift|displacement)\b|\b(?:shift|displacement) of (?:the )?midline\b
+finding	observation	edema	brain edema;cerebral edema;edema	*	\bo?edema\b
+finding	observation	hemorrhage	hemorrhage;intracranial hemorrhage	*	\b(?:h(?:ae|e)morrhag\w*|bleeding)\b
+finding	observation	necrosis	necrosis;necrotic tissue	*	\bnecro(?:sis|tic)\b
+finding	observation	cystic_change	cystic change;cystic lesion	*	\bcystic\b
+finding	effect	ventricular_compression	ventricular compression;compression of cerebral ventricle	*	\bventric\w*.{0,35}\bcompress\w*|\bcompress\w*.{0,35}\bventric\w*
+finding	effect	ventricular_dilatation	ventricular dilatation;ventriculomegaly	*	\bventriculomegaly\b|\bventric\w*.{0,35}\b(?:dilat\w*|enlarg\w*)
+finding	observation	hydrocephalus	hydrocephalus	*	\bhydrocephalus\b
+finding	observation	atrophy	brain atrophy;cerebral atrophy	*	\batroph\w*\b
+finding	effect	sulcal_effacement	sulcal effacement;effacement of sulci	*	\bsulc\w*.{0,30}\befface\w*|\befface\w*.{0,30}\bsulc\w*
+location_laterality	anatomy	frontal_lobe	frontal lobe	*	\bfrontal\b
+location_laterality	anatomy	parietal_lobe	parietal lobe	*	\bparietal\b
+location_laterality	anatomy	temporal_lobe	temporal lobe	*	\btemporal\b
+location_laterality	anatomy	occipital_lobe	occipital lobe	*	\boccipital\b
+location_laterality	anatomy	insula	insula;insular cortex	*	\binsul\w*\b
+location_laterality	anatomy	thalamus	thalamus	*	\bthalam\w*\b
+location_laterality	anatomy	basal_ganglia	basal ganglia	*	\bbasal ganglia\b
+location_laterality	anatomy	caudate	caudate nucleus	*	\bcaudate\b
+location_laterality	anatomy	putamen	putamen	*	\bputamen\b
+location_laterality	anatomy	globus_pallidus	globus pallidus	*	\b(?:globus pallidus|pallid\w*)\b
+location_laterality	anatomy	internal_capsule	internal capsule	*	\binternal capsule\b
+location_laterality	anatomy	corpus_callosum	corpus callosum	*	\bcorpus callosum\b|\bcallosal\b
+location_laterality	anatomy	white_matter	white matter	*	\bwhite matter\b
+location_laterality	anatomy	gray_matter	gray matter;grey matter	*	\bgr[ae]y matter\b
+location_laterality	anatomy	cerebellum	cerebellum	*	\bcerebell\w*\b
+location_laterality	anatomy	brainstem	brain stem;brainstem	*	\bbrain\s*stem\b
+location_laterality	anatomy	midbrain	midbrain	*	\bmidbrain\b
+location_laterality	anatomy	pons	pons	*	\b(?:pons|pontine)\b
+location_laterality	anatomy	medulla	medulla oblongata	*	\bmedulla(?:ry)?\b
+location_laterality	anatomy	lateral_ventricle	lateral ventricle	*	\blateral ventric\w*\b
+location_laterality	anatomy	third_ventricle	third ventricle	*	\bthird ventric\w*\b
+location_laterality	anatomy	fourth_ventricle	fourth ventricle	*	\bfourth ventric\w*\b
+location_laterality	anatomy	periventricular	periventricular;periventricular region	*	\bperiventricular\b
+location_laterality	anatomy	subcortical	subcortical;subcortical region	*	\bsubcortical\b
+location_laterality	anatomy	cortex	cerebral cortex	*	\b(?:cortical|cortex)\b
+location_laterality	anatomy	hemisphere	cerebral hemisphere	*	\b(?:hemisphere|hemispheric)s?\b
+location_laterality	laterality	left	left;left sided	*	\bleft\b
+location_laterality	laterality	right	right;right sided	*	\bright\b
+location_laterality	laterality	bilateral	bilateral	*	\bbilateral(?:ly)?\b
+location_laterality	laterality	midline	midline	*	\bmidline\b
+signal	intensity	hyperintense	hyperintensity;hyperintense;high signal intensity	*	\bhyperintens\w*|\bhigh(?:er)? signal\b
+signal	intensity	hypointense	hypointensity;hypointense;low signal intensity	*	\bhypointens\w*|\blow(?:er)? signal\b
+signal	intensity	isointense	isointensity;isointense;isointense signal	*	\bisointens\w*
+signal	intensity	mixed_signal	mixed signal;mixed signal intensity	*	\bmixed signals?\b
+signal	texture	homogeneous	homogeneous	*	\b(?:homogene\w*|uniform)\b
+signal	texture	heterogeneous	heterogeneous;inhomogeneous	*	\b(?:heterogene\w*|inhomogene\w*|nonuniform)\b
+signal	enhancement	enhancement	contrast enhancement;enhancement	T1C	\benhanc\w*
+signal	enhancement	nonenhancing	nonenhancing;non enhancing	T1C	\bnon[- ]?enhanc\w*|\bno (?:significant |obvious )?enhancement\b
+signal	enhancement	ring_enhancement	ring enhancement;ring enhancing lesion	T1C	\bring[- ](?:like[- ]|shaped[- ])?enhanc\w*
+signal	enhancement	nodular_enhancement	nodular enhancement	T1C	\bnodular enhancement\b
+morphology_extent	shape	punctate	punctate	*	\bpunctate\b
+morphology_extent	shape	patchy	patchy	*	\bpatchy\b
+morphology_extent	shape	nodular	nodular	*	\bnodular\b
+morphology_extent	shape	irregular	irregular	*	\birregular\b
+morphology_extent	shape	round	round;rounded	*	\bround(?:ed)?\b
+morphology_extent	shape	oval	oval;ovoid	*	\b(?:oval|ovoid)\b
+morphology_extent	shape	lobulated	lobulated	*	\blobulat\w*\b
+morphology_extent	margin	well_defined	well defined;well-defined	*	\bwell[- ]defined\b|\b(?:clear|distinct|well[- ]demarcated) (?:boundar\w*|margin\w*)\b
+morphology_extent	margin	ill_defined	ill defined;ill-defined	*	\bill[- ]defined\b|\b(?:unclear|indistinct|poorly[- ]defined) (?:boundar\w*|margin\w*)\b
+morphology_extent	extent	focal	focal;localized	*	\bfocal\b|\blocali[sz]ed\b
+morphology_extent	extent	diffuse	diffuse	*	\bdiffuse(?:ly)?\b
+morphology_extent	extent	extensive	extensive	*	\bextensive\b
+morphology_extent	multiplicity	single	solitary;single	*	\b(?:solitary|single)\b
+morphology_extent	multiplicity	multiple	multiple	*	\bmultiple\b

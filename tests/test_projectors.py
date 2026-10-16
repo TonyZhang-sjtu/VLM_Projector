@@ -17,6 +17,13 @@ from src.models.projectors.adaptive_merge import connected_ward
 def config(name, target=8, **params):
     overrides = [f'projector.name={name}', 'projector.hidden_size=16']
     defaults = DEFAULTS[name]
+    if name == 'bindformer3d':
+        # Generic projector tests have no medical context; dedicated BindFormer
+        # tests exercise real sequence/geometry/knowledge instead.
+        params.setdefault('inner_dim',8)
+        params.setdefault('position_mode','none')
+        params.setdefault('sequence_condition',False)
+        params.setdefault('knowledge_mode','none')
     if 'num_tokens' in defaults: params.setdefault('num_tokens', target)
     if 'num_heads' in defaults: params.setdefault('num_heads', 2)
     if 'depth' in defaults: params.setdefault('depth', 2)
@@ -34,6 +41,10 @@ def volume(grid=(3,4,2), channels=8):
 @pytest.mark.parametrize('target', [1,8,24])
 def test_gradients_update_and_state_roundtrip(name, target):
     torch.manual_seed(11)
+    if name=='bindformer3d' and target<5:
+        with pytest.raises(ValueError,match='complete role bundle'):
+            config(name,target)
+        return
     c = config(name, target)
     model = build_projector(c, 8, 6)
     x, coords, meta = volume()

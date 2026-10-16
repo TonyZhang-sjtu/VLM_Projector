@@ -64,6 +64,10 @@ def load_config(files=(), overrides=()):
 
 
 def validate(c):
+    if c.projector.name == 'bindformer3d':
+        p = c.projector.params
+        if p.feature_loss_weight > 0 and p.feature_target == 'frozen_input' and c.training.stage != 'a':
+            raise ValueError('frozen_input reconstruction requires Stage A; LoRA requires frozen_base_cache')
     from src.data.datasets import normalize_datasets
     if normalize_datasets(c.data.get('datasets'), default=['brats']) != list(c.data.get('datasets', ['brats'])):
         raise ValueError('data.datasets must use canonical dataset names')
@@ -143,6 +147,12 @@ def validate(c):
             raise ValueError('joint_lora starts from pretrained assets or same-run resume, not Stage A initialization')
         if c.training.warmup_steps is not None or c.training.warmup_ratio!=0:
             raise ValueError('joint_lora uses two warm-ups; set legacy warmup_steps=null and warmup_ratio=0')
+        floor=c.training.get('cosine_min_lr_ratio',0.0)
+        if type(floor) not in (int,float) or not math.isfinite(floor) or not 0<=floor<1:
+            raise ValueError('cosine_min_lr_ratio must be finite and between 0 (inclusive) and 1')
+        mode=c.training.get('joint_warmup_projector_mode','restart')
+        if mode not in ('restart','hold_peak'):
+            raise ValueError('joint_warmup_projector_mode must be restart or hold_peak')
         for prefix in ('projector','joint'):
             steps=c.training.get(f'{prefix}_warmup_steps')
             ratio=c.training.get(f'{prefix}_warmup_ratio')

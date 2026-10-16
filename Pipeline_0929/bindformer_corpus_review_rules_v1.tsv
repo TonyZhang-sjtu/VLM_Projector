@@ -1,0 +1,61 @@
+key	role	field	kind	old_seed_keys	pattern	recommendation
+sulci	location_laterality	anatomy	missing_entry		\b(?:sulci|sulcus|sulcal)\b	脑沟本身与脑沟消失分开；正常或未提及时也会出现。
+gyri	location_laterality	anatomy	missing_entry		\b(?:gyri|gyrus|gyral)\b	保留脑回及具体脑回的上下文，不能把整个并列解剖短语当作单个实体。
+cisterns	location_laterality	anatomy	missing_entry		\bcistern(?:s|al)?\b	新增脑池候选；提及不代表异常。
+brain_parenchyma	location_laterality	anatomy	missing_entry		\b(?:brain (?:tissue|parenchyma)|cerebral parenchyma)\b	保留整体组织位置，检查是否应进入全局描述。
+generic_ventricle	location_laterality	anatomy	missing_entry	lateral_ventricle,third_ventricle,fourth_ventricle	\b(?:cerebral )?ventricles?\b	泛指脑室不能自动映射为侧脑室。
+fissures	location_laterality	anatomy	missing_entry		\b(?:interhemispheric|longitudinal|cerebral|sylvian) fissure\b	在候选审核时区分具体裂隙并核对同义关系。
+falx	location_laterality	anatomy	missing_entry		\bfalx(?: cerebri)?\b	新增大脑镰解剖候选。
+skull_calvarium	location_laterality	anatomy	missing_entry		\b(?:skull|calvarium|calvaria|calvarial|cranial vault)\b	保留颅骨、颅盖等层级；本行是审核词族而非单个最终概念。
+skull_base	location_laterality	anatomy	missing_entry		\b(?:skull base|cranial base|base of (?:the )?(?:left |right )?skull)\b	颅底与颅盖分别审核。
+frontal_bone	location_laterality	anatomy	false_merge	frontal_lobe	\bfrontal bone\b	旧规则仅匹配frontal，会把额骨统计成额叶；保留完整名词短语。
+parietal_bone	location_laterality	anatomy	false_merge	parietal_lobe	\bparietal bone\b	顶骨与顶叶区分，避免按形容词直接映射脑叶。
+temporal_bone	location_laterality	anatomy	false_merge	temporal_lobe	\btemporal bone\b	颞骨与颞叶区分。
+occipital_bone	location_laterality	anatomy	false_merge	occipital_lobe	\boccipital bone\b	枕骨与枕叶区分。
+cerebellopontine_angle	location_laterality	anatomy	false_merge	cerebellum	\bcerebellopontine angle\b	桥小脑角单列，旧cerebell前缀命中不等于正确识别。
+callosal_splenium	location_laterality	anatomy	finer_anatomy	corpus_callosum	\bsplenium\b	保留胼胝体压部，比整体胼胝体更细。
+callosal_genu	location_laterality	anatomy	finer_anatomy	corpus_callosum	\bgenu\b	保留胼胝体膝部；结合上下文消歧。
+callosal_body	location_laterality	anatomy	finer_anatomy	corpus_callosum	\bbody of (?:the )?corpus callosum\b	胼胝体体部，不能仅保留整体概念。
+ventricular_horns	location_laterality	anatomy	finer_anatomy	lateral_ventricle	\b(?:anterior|posterior|frontal|temporal) horns?\b	脑室角分型和归属需结合原文，不直接归到脑叶。
+cerebellar_vermis	location_laterality	anatomy	finer_anatomy	cerebellum	\b(?:vermis|vermian)\b	保留小脑蚓部。
+hippocampus	location_laterality	anatomy	missing_entry		\bhippocamp(?:us|al)\b	保留海马及海马区；同名CUI需排除非脑解剖语义。
+external_capsule	location_laterality	anatomy	missing_entry		\bexternal capsule\b	外囊与内囊分开。
+frontal_operculum	location_laterality	anatomy	finer_anatomy	frontal_lobe	\b(?:frontal operculum|frontal-opercular|opercular region)\b	保留额盖及盖区。
+septum_pellucidum	location_laterality	anatomy	missing_entry		\bseptum pellucidum\b	保留透明隔。
+sagittal_sinus	location_laterality	anatomy	missing_entry		\b(?:superior )?sagittal sinus\b	保留矢状窦及上矢状窦层级。
+tentorium	location_laterality	anatomy	missing_entry		\b(?:cerebellar )?tentorium\b	新增小脑幕候选。
+suprasellar	location_laterality	anatomy	missing_entry		\bsuprasellar(?: region)?\b	保留鞍上区域。
+midbrain_tegmentum	location_laterality	anatomy	finer_anatomy	midbrain	\b(?:midbrain )?tegmentum\b	保留被盖，核对具体脑干部位。
+cranial_fossa	location_laterality	anatomy	missing_entry		\b(?:middle )?cranial fossa\b	保留颅窝及中颅窝层级。
+centrum_semiovale	location_laterality	anatomy	extra_cohort		\b(?:centrum|center) semiovale\b	检查ISLES22/WMH扩展，不使用验证测试报告。
+corona_radiata	location_laterality	anatomy	extra_cohort		\bcorona radiata\b	低频但保留，不因出现一次就丢弃。
+parahippocampal_gyrus	location_laterality	anatomy	extra_cohort		\bparahippocampal gyrus\b	保留海马旁回，不能简单并入海马。
+gliosis	finding	observation	inference_review		\b(?:gliosis|gliotic)\b	原文常为edema or gliosis等可能解释；保留不确定性，不能自动作阳性标签。
+dural_tail	finding	observation	missing_entry		\b(?:dural|meningeal) tail(?: sign)?\b	保留硬膜尾等征象候选并审核序列适用性。
+calcification	finding	observation	inference_review		\bcalcification\b	原文为possible bleeding or calcification；不得把鉴别可能性作确定所见。
+edematous_alias	finding	observation	alias_gap	edema	\bedematous\b	优先补入水肿的表达变体，不新增一个重复概念。
+vascularity	finding	observation	inference_review		\b(?:vascularity|neovascularization|vascularization|neovascularity|angiogenesis)\b	多处是由增强推断机制；先隔离审核，不能当作已验证视觉事实。
+bbb_interpretation	context	mechanistic_interpretation	context_only		\b(?:blood-brain barrier|blood brain barrier|bbb)\b	保留原文但不自动进入视觉finding库，审核解释性推断。
+diffusion_restriction	signal	diffusion	extra_sequence		\b(?:restricted diffusion|diffusion restriction)\b	当前175条ISLES22输入为ADC；单列适用序列，不能误标为实际输入DWI。
+isointense_variants	signal	intensity	alias_gap	isointense	\b(?:iso-intense|iso-intensity|iso-signal|isotense)\b	补入拼写与连字符变体；iso-low等混合表述需另处理。
+hypointense_variants	signal	intensity	alias_gap	hypointense	\b(?:hypo-intense|hypo-signal|low-intense|low-signal|low-intensity)\b	修复词面漏计，先核对是否都描述MRI信号。
+hyperintense_variants	signal	intensity	alias_gap	hyperintense	\bhyper-intense\b	连字符变体与已有高信号概念合并。
+mixed_intensity	signal	intensity	alias_gap	mixed_signal	\b(?:mixed high(?: and low)?(?: signal)?|iso to low signal|iso-low|hypo-isointense)\b	保留混合信号组成；单个强度概念不能替代多个信号共存。
+heterogeneity_variants	signal	texture	alias_gap	heterogeneous	\b(?:uneven|non-uniform|non-homogeneous|heterogenous|heterogeneity)\b	需结合增强、信号或形态宾语判断，不能全当信号不均匀。
+garland_enhancement	signal	enhancement	alias_gap	ring_enhancement	\b(?:garland-like|garland|crown-like|flower-ring-like|annular)\b	这些原文变体先审语境，决定映射环形增强还是独立形态。
+nodule_variants	morphology_extent	shape	alias_gap	nodular	\bnodules?\b	结节名词与nodular词形补全；可与finding相关，但不重复建立无区别概念。
+mass_like_shape	morphology_extent	shape	field_gap	mass	\bmass-like\b	旧mass能命中但没有保留形态子字段；区分肿块样形态与诊断。
+cystic_solid	morphology_extent	composition	field_gap	cystic_change	\b(?:cystic-solid|solid components?|solid lesion)\b	保留实性/囊实性组成，而非只记录cystic。
+scattered	morphology_extent	distribution	missing_entry		\b(?:scattered|sporadic)\b	散在分布与多发数量分开。
+linear_patch_variants	morphology_extent	shape	alias_gap	patchy,punctate	\b(?:plaque-like|strip-like|band-like|flake-like|spot-like|dot-like|patch-like|flaky|punctulate|spotty)\b	不同形态不能全部强行归并为patchy；保留原词审核。
+round_variants	morphology_extent	shape	alias_gap	round	\b(?:quasi-circular|round-like|roundish)\b	补全近圆形等原文变体并保留近似程度。
+extent_variants	morphology_extent	extent	alias_gap	extensive,diffuse	\b(?:widespread|large-scale)\b	范围与弥漫模式不完全等价，需要上下文审核。
+explicit_count	morphology_extent	multiplicity	field_gap	single,multiple	\b(?:two|numerous|few)\b	保留计数或数量修饰字段，匹配two本身不自动证明两个病灶。
+severity	morphology_extent	degree	field_gap		\b(?:mild|mildly|slight|slightly|moderate|marked|markedly|extensive|significant|substantial)\b	程度必须绑定被修饰对象；可覆盖增强强度、水肿、受压等多个字段。
+displacement_direction	location_laterality	direction	field_gap	left,right,midline_shift	\b(?:leftward|rightward)\b	偏移方向不是病变所在侧，单列关系字段。
+relative_location	location_laterality	relation	field_gap		\b(?:peritumoral|perilesional|peri-lesional|peripheral|central)\b	相对病灶的位置需绑定参照对象，不等同绝对解剖位置。
+measurement	context	measurement	field_gap		\b\d+(?:\.\d+)?(?:\s*[*x×]\s*\d+(?:\.\d+)?){0,2}\s*(?:mm|millimeters)\b	尺寸用数值和单位字段表示，不为每个毫米数字建立独立UMLS概念。
+normality	context	assertion	context_only		\b(?:normal|unremarkable|intact|preserved|unaffected)\b	保留正常性与所指对象，不能用未提及替代正常。
+uncertainty	context	assertion	context_only		\b(?:possible|possibly|potential|may|might|could|likely|suggests?|suggesting)\b	只标识审核线索；具体否定/不确定作用域仍需解析。
+not_mentioned	context	report_missingness	context_only		\b(?:no mention|not (?:mentioned|described|reported)|no details|no information)\b	报告未提及不是阴性；不得将相关解剖/异常训练成负标签。
+diagnostic_interpretation	context	diagnosis	inference_review		\b(?:gliomas?|meningiomas?|metastatic|infarction|demyelination|inflammation|malignan\w*)\b	保留候选与原文但先隔离疾病/推断，不因队列名称或文本解释自动作为可见事实。

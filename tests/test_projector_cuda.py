@@ -22,7 +22,9 @@ def test_real_grid_bf16_fast_kernels_and_gradient_paths(name,grid):
     x=torch.randn(n,768,device=device,dtype=torch.bfloat16,requires_grad=True)
     coords=torch.cartesian_prod(*(torch.arange(v) for v in grid))
     with torch.autocast('cuda',dtype=torch.bfloat16):
-        out=model(x,coords,{'grid_dhw':list(grid),'id':'cuda-smoke'})
+        out=model(x,coords,{'grid_dhw':list(grid),'id':'cuda-smoke','sequence':'T2W',
+                           'array_zyx_to_dhw':[0,1,2],
+                           'oriented':{'direction':[-1,0,0,0,1,0,0,0,-1]}})
     loss=out.embeddings.float().square().mean(); loss.backward()
     assert out.embeddings.dtype==torch.bfloat16
     assert torch.isfinite(x.grad).all() and x.grad.abs().sum()>0

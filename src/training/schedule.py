@@ -13,10 +13,18 @@ class JointSchedule:
     joint_steps: int
     projector_source: str = 'steps'
     joint_source: str = 'steps'
+    cosine_min_lr_ratio: float = 0.0
+    joint_warmup_projector_mode: str = 'restart'
 
     def __post_init__(self):
         if min(self.projector_steps, self.joint_steps, self.cosine_steps) < 2:
             raise ValueError('Each joint_lora phase needs at least 2 optimizer updates (including endpoints)')
+        if (type(self.cosine_min_lr_ratio) not in (int, float)
+                or not math.isfinite(self.cosine_min_lr_ratio)
+                or not 0 <= self.cosine_min_lr_ratio < 1):
+            raise ValueError('cosine_min_lr_ratio must be finite and between 0 (inclusive) and 1')
+        if self.joint_warmup_projector_mode not in ('restart', 'hold_peak'):
+            raise ValueError('joint_warmup_projector_mode must be restart or hold_peak')
 
     @property
     def cosine_steps(self):
@@ -39,9 +47,12 @@ class JointSchedule:
         if step < self.projector_steps:
             return step / (self.projector_steps - 1) if component == 'projector' else 0.0
         if step < self.cosine_start:
+            if component == 'projector' and self.joint_warmup_projector_mode == 'hold_peak':
+                return 1.0
             return (step - self.projector_steps) / (self.joint_steps - 1)
         progress = (step - self.cosine_start) / (self.cosine_steps - 1)
-        return 0.5 * (1 + math.cos(math.pi * progress))
+        cosine = 0.5 * (1 + math.cos(math.pi * progress))
+        return self.cosine_min_lr_ratio + (1 - self.cosine_min_lr_ratio) * cosine
 
     def to_dict(self):
         return {**asdict(self), 'cosine_steps': self.cosine_steps,
@@ -49,7 +60,9 @@ class JointSchedule:
 
     @classmethod
     def from_dict(cls, value):
-        return cls(**{key: value[key] for key in cls.__dataclass_fields__})
+        # Plans saved before LR-floor/projector-continuity options use the
+        # original defaults; do not change their resume behavior.
+        return cls(**{key: value[key] for key in cls.__dataclass_fields__ if key in value})
 
 
 def resolve_joint_schedule(training, total_steps):
@@ -60,7 +73,9 @@ def resolve_joint_schedule(training, total_steps):
             training[f'{name}_warmup_ratio'] * total_steps + 0.5)
         sources[name] = 'steps' if explicit is not None else 'ratio'
     return JointSchedule(total_steps, lengths['projector'], lengths['joint'],
-                         sources['projector'], sources['joint'])
+                         sources['projector'], sources['joint'],
+                         training.get('cosine_min_lr_ratio', 0.0),
+                         training.get('joint_warmup_projector_mode', 'restart'))
 
 
 def update_joint_validation(state, value, *, eligible, min_delta, patience):

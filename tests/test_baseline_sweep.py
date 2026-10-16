@@ -229,4 +229,5 @@ def test_bash_entrypoints_from_another_working_directory(tmp_path, method):
     subprocess.run(['bash', '-n', str(script)], check=True)
     result = subprocess.run(['bash', str(script), '--help'], cwd=tmp_path,
                             text=True, capture_output=True, check=True)
-    assert '--dry-run' in result.stdout and '--eval-sample-fraction' in result.stdout
+    assert '--dry-run' in result.stdout
+    assert ('--global-fraction' if method=='bindformer3d' else '--eval-sample-fraction') in result.stdout

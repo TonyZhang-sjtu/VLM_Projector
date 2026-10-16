@@ -2,6 +2,7 @@
 from copy import deepcopy
 import math
 from omegaconf import OmegaConf
+from src.models.projectors.bindformer.config import DEFAULTS as BIND_DEFAULTS, validate_params
 
 
 GRID = {'num_tokens': 256, 'budget_policy': 'nearest'}
@@ -9,6 +10,7 @@ HEAD = {'head_type': 'mlp'}
 QUERY = {'num_tokens': 256, 'inner_dim': None, 'num_heads': 8,
          'ffn_expansion': 4, 'dropout': 0.0, 'checkpoint_blocks': False, **HEAD}
 DEFAULTS = {
+    'bindformer3d': {**QUERY, **BIND_DEFAULTS},
     'mlp2x_gelu': {},
     'avgpool3d': {**GRID, **HEAD},
     'concat3d': {'group_size': [2, 2, 2], **HEAD},
@@ -101,6 +103,8 @@ def resolve_projector_config(config):
     if params.get('inner_dim') and params.get('num_heads'):
         if params['inner_dim'] % params['num_heads']:
             raise ValueError('inner_dim must be divisible by num_heads')
+    if name == 'bindformer3d':
+        validate_params(params)
     config.params = OmegaConf.create(params)
     if resolved:
         validate_resolved(config)
