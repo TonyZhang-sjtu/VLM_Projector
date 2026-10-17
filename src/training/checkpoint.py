@@ -144,8 +144,9 @@ def load_checkpoint(path,model,mode='evaluate',optimizer=None,scheduler=None,exp
                 if checkpoint['config']['training'][key]!=model.config.training[key]:
                     raise ValueError(f'Resume changed training setting: {key}')
             for key, original_default in (('cosine_min_lr_ratio',0.0),
-                                          ('joint_warmup_projector_mode','restart')):
-                if checkpoint['config']['training'].get(key,original_default)!=model.config.training[key]:
+                                          ('joint_warmup_projector_mode','restart'),
+                                          ('projector_hold_steps',0)):
+                if checkpoint['config']['training'].get(key,original_default)!=model.config.training.get(key,original_default):
                     raise ValueError(f'Resume changed training setting: {key}')
             if optimizer is None or [g['param_names'] for g in optimizer.param_groups]!=[
                     g['param_names'] for g in checkpoint['optimizer']['param_groups']]:
@@ -166,6 +167,9 @@ def load_checkpoint(path,model,mode='evaluate',optimizer=None,scheduler=None,exp
             raise ValueError('Cannot change determinism policy during resume; start an explicit new experiment')
         if optimizer is None or scheduler is None:raise ValueError('Resume requires optimizer/scheduler')
         optimizer.load_state_dict(checkpoint['optimizer']);scheduler.load_state_dict(checkpoint['scheduler'])
+        if joint:
+            # Normalize restored LambdaLR metadata without changing LR or moments.
+            scheduler.joint_plan=plan.to_dict()
         if rank>=len(checkpoint['rng_states']):raise ValueError('Resume requires the original world size')
         restore_rng(checkpoint['rng_states'][rank])
     return checkpoint

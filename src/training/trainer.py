@@ -158,6 +158,8 @@ class Trainer:
                 if old['config']['training'][key]!=now:raise ValueError(f'Resume changed training setting: {key}')
             if old['config']['seed']!=config.seed:raise ValueError('Resume changed seed')
             self.state=old['state']
+            if self.plan:
+                self.state['schedule']=self.plan.to_dict()
         self.report=assert_stage(self.model)
         self.wrapped=self.model if self.world==1 else wrap_distributed(self.model,device_ids=[self.device.index])
         if self.rank==0:

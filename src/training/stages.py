@@ -1,3 +1,6 @@
+from src.training.schedule import PROJECTOR_ONLY_PHASES
+
+
 def trainable_report(model):
     report={}
     for component in ('encoder','projector','decoder'):
@@ -21,8 +24,8 @@ def assert_stage(model):
     if stage=='b_full' and count!=model.encoder.base_parameter_count:
         raise ValueError('Stage Full has frozen visual parameters')
     if stage=='joint_lora':
-        if model.encoder.phase=='projector_warmup':
-            if count:raise ValueError('Projector warm-up must freeze visual LoRA')
+        if model.encoder.phase in PROJECTOR_ONLY_PHASES:
+            if count:raise ValueError('Projector-only phases must freeze visual LoRA')
         elif count==0:
             raise ValueError('Joint phase has no trainable visual adapters')
         if any('lora_' not in x['name'] for x in report['encoder']['tensors']):

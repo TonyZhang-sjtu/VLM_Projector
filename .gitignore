@@ -7,6 +7,15 @@
 /archive/
 /Pipeline_0929/backups/
 
+# Experiment artifacts stay on their original server; retain the shared guide.
+/results/*
+!/results/BASELINE_RESULTS_ENTRY_GUIDE.md
+
+# Existing local launchers; portable FT entries live in scripts/ft_ablation/.
+/scripts/baselines/run_avgpool3d_r8_lr_floor20_restart.sh
+/scripts/baselines/run_avgpool3d_r8_lr_floor20_hold_peak.sh
+/scripts/baselines/run_avgpool3d_r8_lr_floor20_hold_peak_2x_lr.sh
+
 # Rebuild third-party source checkouts and compiled dependencies from the lock.
 /third_party/*
 !/third_party/README.md

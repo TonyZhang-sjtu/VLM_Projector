@@ -30,6 +30,61 @@ def arguments(tmp_path, method='avgpool3d', extra=()):
                                      '--run-tag', 'test_sweep', *extra])
 
 
+def test_full_test_guard_rejects_val_subset_and_missing_metrics(tmp_path,population):
+    from src.evaluation.clinical import METRIC_KEYS
+    from src.cli.evaluate_checkpoint import OFFLINE_METRICS
+    plan=sweep.build_plan(arguments(tmp_path,extra=['--ratios','8','--require-full-test']))
+    sweep.validate_full_test_plan(plan)
+    for extra in [['--eval-split','val'],['--eval-sample-fraction','0.5'],['--metrics','answer_ce']]:
+        invalid=sweep.build_plan(arguments(tmp_path,extra=extra))
+        with pytest.raises(ValueError):sweep.validate_full_test_plan(invalid)
+    keys={'bleu4','rougeL','answer_ce'}
+    for metric in OFFLINE_METRICS:keys.update(METRIC_KEYS[metric])
+    result={'split':'test','scope':'full_split','evaluated_samples':560,'split_population':560,
+            'overall':dict.fromkeys(keys,0.5)}
+    run=plan['runs'][0]
+    sweep.validate_full_test_result(result,run)
+    for field,value in [('split','val'),('scope','fractional_sample'),('evaluated_samples',559)]:
+        with pytest.raises(ValueError):sweep.validate_full_test_result({**result,field:value},run)
+    for value in [None,float('nan'),float('inf')]:
+        invalid={**result,'overall':{**result['overall'],'green':value}}
+        with pytest.raises(ValueError):sweep.validate_full_test_result(invalid,run)
+    # Partial GREEN coverage is explicit and its finite valid-sample mean remains publishable.
+    sweep.validate_full_test_result({**result,'status':'partial',
+        'partial_metrics':{'green':{'valid':559,'expected':560,'failed':1}}},run)
+
+
+@pytest.mark.parametrize('reason',['max_epochs','max_steps','early_stopping',None,'interrupted'])
+def test_training_completion_gate(tmp_path,reason):
+    checkpoint=tmp_path/'checkpoints/best.pt'
+    checkpoint.parent.mkdir();checkpoint.touch()
+    (tmp_path/'training_state.json').write_text(json.dumps({'stop_reason':reason}))
+    assert sweep.training_finished(checkpoint)==(reason in ('max_epochs','max_steps','early_stopping'))
+
+
+def test_full_test_sweep_evaluates_after_early_stopping(tmp_path,population):
+    from src.evaluation.clinical import METRIC_KEYS
+    plan=sweep.build_plan(arguments(tmp_path,extra=['--ratios','8','--require-full-test']))
+    run=plan['runs'][0]
+    checkpoint=Path(run['checkpoint'])
+    state_path=checkpoint.parent.parent/'training_state.json'
+    run['train_command']=[sys.executable,'-c',
+        "import json,pathlib; "
+        f"p=pathlib.Path({str(checkpoint)!r});p.parent.mkdir(parents=True);p.touch(); "
+        f"pathlib.Path({str(state_path)!r}).write_text(json.dumps({{'stop_reason':'early_stopping'}}))"]
+    keys={'bleu4','rougeL','answer_ce'}
+    for metric_keys in METRIC_KEYS.values():keys.update(metric_keys)
+    result={'status':'complete','split':'test','scope':'full_split','evaluated_samples':560,
+            'split_population':560,'overall':dict.fromkeys(keys,.5)}
+    run['eval_command']=[sys.executable,'-c',
+        "import json,pathlib; "
+        f"p=pathlib.Path({run['metric_path']!r});p.parent.mkdir(parents=True); "
+        f"p.write_text(json.dumps({result!r}))"]
+    sweep.execute_plan(plan)
+    status=json.loads((Path(plan['run_root'])/'sweep_status.json').read_text())
+    assert status['status']=='complete' and status['completed_ratios']==[8]
+
+
 @pytest.mark.parametrize('method', DEFAULTS)
 def test_full_matrix_configs_and_default_schedule(tmp_path, population, method):
     plan = sweep.build_plan(arguments(tmp_path, method))

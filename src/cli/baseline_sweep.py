@@ -41,6 +41,8 @@ def parser():
     cli.add_argument('--scoring-device', help='Offline metrics device; default: same as training')
     cli.add_argument('--eval-split', choices=['val', 'test'], default='test')
     cli.add_argument('--metrics', nargs='+', default=['all'])
+    cli.add_argument('--require-full-test', action='store_true',
+                     help='Require the full test split and every metric; audit the final result')
     cli.add_argument('--repeats', type=int, default=1000, help='Evaluation bootstrap repeats')
     cli.add_argument('--eval-sample-fraction', type=float,
                      help='Optional fixed random evaluation fraction; default: full split')
@@ -163,9 +165,40 @@ def build_plan(args):
             'train_command': train_command, 'eval_command': eval_command,
         })
     return {'version': 1, 'projector': args.projector, 'run_root': str(run_root),
+            'require_full_test': getattr(args, 'require_full_test', False),
             'ratios': ratios, 'eval_split': args.eval_split, 'metrics': metrics,
             'input_header_preflight': {k: v for k, v in header_report.items() if k != 'budget'},
             'runs': runs}
+
+
+def validate_full_test_plan(plan):
+    from src.cli.evaluate_checkpoint import ALL_METRICS
+    if plan.get('eval_split') != 'test' or set(plan.get('metrics', [])) != set(ALL_METRICS):
+        raise ValueError('This experiment requires --eval-split test --metrics all')
+    for run in plan['runs']:
+        if (run.get('evaluation_scope') != 'full_split'
+                or run.get('evaluation_samples', 0) <= 0
+                or run['evaluation_samples'] != run['evaluation_population']):
+            raise ValueError('This experiment requires every sample in the test population')
+
+
+def validate_full_test_result(result, run):
+    from src.cli.evaluate_checkpoint import OFFLINE_METRICS
+    from src.evaluation.clinical import METRIC_KEYS
+    if (result.get('split') != 'test' or result.get('scope') != 'full_split'
+            or result.get('evaluated_samples') != run['evaluation_population']
+            or result.get('split_population') != run['evaluation_population']):
+        raise ValueError('Final evaluation does not match the planned full test population')
+    required = {'bleu4', 'rougeL', 'answer_ce'}
+    for metric in OFFLINE_METRICS:
+        required.update(METRIC_KEYS[metric])
+    overall = result.get('overall', {})
+    missing = [key for key in sorted(required)
+               if type(overall.get(key)) not in (int, float) or not math.isfinite(overall[key])]
+    if missing:
+        raise ValueError(f'Full test evaluation has missing/nonfinite metrics: {missing}')
+    # Valid-sample GREEN means are allowed; the existing partial_metrics and
+    # sweep_status records retain their exact coverage and failure information.
 
 
 def write_json(path, value):
@@ -236,6 +269,8 @@ def training_finished(checkpoint):
 
 
 def execute_plan(plan, resume=False):
+    if plan.get('require_full_test'):
+        validate_full_test_plan(plan)
     root = Path(plan['run_root'])
     if resume:
         if not root.is_dir():
@@ -260,6 +295,9 @@ def execute_plan(plan, resume=False):
     try:
         for run in plan['runs']:
             if run['ratio'] in state['completed_ratios']:
+                if plan.get('require_full_test'):
+                    result = json.loads(Path(run['metric_path']).read_text())
+                    validate_full_test_result(result, run)
                 print(f'Skipping completed ratio r{run["ratio"]}.', flush=True)
                 continue
             state.update(active_ratio=run['ratio'], phase='training')
@@ -275,6 +313,8 @@ def execute_plan(plan, resume=False):
                            append=resume)
             if not Path(run['checkpoint']).is_file():
                 raise FileNotFoundError(f'Training returned without best checkpoint: {run["checkpoint"]}')
+            if plan.get('require_full_test') and not training_finished(checkpoint):
+                raise ValueError('Training completion must be recorded before the final test evaluation')
             state['phase'] = 'evaluation'
             write_json(root / 'sweep_status.json', state)
             eval_command = list(run['eval_command'])
@@ -286,6 +326,8 @@ def execute_plan(plan, resume=False):
             result = json.loads(Path(run['metric_path']).read_text())
             if result.get('status') not in ('complete', 'partial'):
                 raise ValueError(f'Evaluation did not complete for ratio {run["ratio"]}')
+            if plan.get('require_full_test'):
+                validate_full_test_result(result, run)
             if result['status'] == 'partial':
                 partial_result = {
                     'ratio': run['ratio'],
@@ -312,6 +354,9 @@ def main():
     try:
         plan = (load_resume_plan(args.resume_run, args.projector)
                 if args.resume_run is not None else build_plan(args))
+        if args.require_full_test or plan.get('require_full_test'):
+            validate_full_test_plan(plan)
+            plan['require_full_test'] = True
     except (ValueError, FileExistsError, FileNotFoundError) as exc:
         cli.error(str(exc))
     if args.dry_run:

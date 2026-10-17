@@ -6,6 +6,7 @@ from src.config import path_of, file_hash, digest
 from src.models.encoders.base import EncoderAdapter, EncoderOutput
 from src.models.encoders.lora import attach_visual_lora
 from src.preprocessing.cache import TensorCache
+from src.training.schedule import PHASES, PROJECTOR_ONLY_PHASES
 
 
 class NeuroVFMEncoder(EncoderAdapter):
@@ -46,15 +47,14 @@ class NeuroVFMEncoder(EncoderAdapter):
 
     @property
     def vision_frozen(self):
-        return self.stage == 'a' or (self.stage == 'joint_lora' and self.phase == 'projector_warmup')
+        return self.stage == 'a' or (self.stage == 'joint_lora' and self.phase in PROJECTOR_ONLY_PHASES)
 
     def set_phase(self, phase):
-        from src.training.schedule import PHASES
         if self.stage != 'joint_lora' or phase not in PHASES:
             raise ValueError('Invalid continuous LoRA phase')
         self.phase = phase
         for name, parameter in self.core.named_parameters():
-            parameter.requires_grad_('lora_' in name and phase != 'projector_warmup')
+            parameter.requires_grad_('lora_' in name and phase not in PROJECTOR_ONLY_PHASES)
         self.train(self.training)
 
     def _online(self, volumes):

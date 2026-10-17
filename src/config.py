@@ -153,6 +153,9 @@ def validate(c):
         mode=c.training.get('joint_warmup_projector_mode','restart')
         if mode not in ('restart','hold_peak'):
             raise ValueError('joint_warmup_projector_mode must be restart or hold_peak')
+        hold=c.training.get('projector_hold_steps',0)
+        if type(hold) is not int or hold<0:
+            raise ValueError('projector_hold_steps must be a nonnegative integer')
         for prefix in ('projector','joint'):
             steps=c.training.get(f'{prefix}_warmup_steps')
             ratio=c.training.get(f'{prefix}_warmup_ratio')

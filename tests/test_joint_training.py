@@ -138,13 +138,15 @@ def test_phase_freeze_and_adam_preservation():
     assert int(opt.state[model.encoder.core.lora_B]['step'])==3
 
 
-@pytest.mark.parametrize('cut',[1,2,3,4,5])
-def test_resume_every_phase_and_boundary(tmp_path,cut):
+@pytest.mark.parametrize('hold',[0,2])
+@pytest.mark.parametrize('cut',[1,2,3,4,5,6,7])
+def test_resume_every_phase_and_boundary(tmp_path,cut,hold):
     torch.manual_seed(123)
-    c=joint_config();m=TinyModel(c);plan=JointSchedule(8,2,2)
+    c=joint_config(f'training.projector_hold_steps={hold}')
+    m=TinyModel(c);plan=JointSchedule(8,2,2,projector_hold_steps=hold)
     opt=build_optimizer(m,c);sch=build_joint_scheduler(opt,plan);state=initial_state(plan)
     advance(m,opt,sch,state,plan,cut)
-    update_joint_validation(state,1.3,eligible=cut>4,min_delta=.005,patience=3)
+    update_joint_validation(state,1.3,eligible=cut>plan.cosine_start,min_delta=.005,patience=3)
     path=tmp_path/'step.pt';save_checkpoint(path,m,opt,sch,state,{'contract_id':'test'})
     expected_trace=advance(m,opt,sch,state,plan,8)
     expected={n:p.detach().clone() for n,p in m.named_parameters()}
@@ -271,3 +273,57 @@ def test_evaluation_entry_restores_v2_joint_configuration(tmp_path):
     loaded=checkpoint_config(path,args)
     assert loaded.training.stage=='joint_lora' and loaded.training.lora.rank==16
     assert loaded.training.early_stopping_min_delta==.005
+
+
+@pytest.mark.parametrize('total',[1230,2460])
+def test_projector_hold_exact_500_step_boundaries(total):
+    plan=JointSchedule(total,77,77,projector_hold_steps=500,
+                       joint_warmup_projector_mode='hold_peak',cosine_min_lr_ratio=.2)
+    assert plan.joint_start==577 and plan.cosine_start==654
+    assert plan.cosine_steps==total-654
+    assert plan.phase(76)=='projector_warmup'
+    assert plan.phase(77)==plan.phase(576)=='projector_hold'
+    assert plan.phase(577)==plan.phase(653)=='joint_warmup'
+    assert plan.phase(654)=='joint_cosine'
+    for step in range(77,577):
+        assert plan.scale(step,'projector')==1.0
+        assert plan.scale(step,'encoder')==0.0
+    assert plan.scale(577,'projector')==1.0 and plan.scale(577,'encoder')==0.0
+    assert plan.scale(653,'encoder')==plan.scale(654,'encoder')==1.0
+    assert plan.scale(total-1,'projector')==plan.scale(total-1,'encoder')==.2
+    assert JointSchedule.from_dict(plan.to_dict())==plan
+    legacy=JointSchedule(total,77,77).to_dict()
+    del legacy['projector_hold_steps']
+    assert JointSchedule.from_dict(legacy).projector_hold_steps==0
+
+
+def test_projector_hold_freezes_lora_and_preserves_adam():
+    torch.manual_seed(42)
+    c=joint_config('training.projector_hold_steps=2')
+    model=TinyModel(c);plan=JointSchedule(8,2,2,projector_hold_steps=2)
+    opt=build_optimizer(model,c);sch=build_joint_scheduler(opt,plan)
+    state=initial_state(plan)
+    initial_lora=model.encoder.core.lora_B.detach().clone()
+    advance(model,opt,sch,state,plan,2)
+    assert model.encoder.phase=='projector_hold'
+    assert model.encoder.vision_frozen and not model.encoder.core.training
+    assert_stage(model)
+    weight=model.projector.weight
+    optimizer_identity=id(opt)
+    hold_start=weight.detach().clone()
+    advance(model,opt,sch,state,plan,4)
+    assert id(opt)==optimizer_identity and int(opt.state[weight]['step'])==4
+    assert not torch.equal(weight,hold_start)
+    assert torch.equal(initial_lora,model.encoder.core.lora_B)
+    assert model.encoder.core.lora_B not in opt.state
+    assert model.encoder.phase=='joint_warmup' and not model.encoder.vision_frozen
+    assert_stage(model)
+    advance(model,opt,sch,state,plan,8)
+    assert not torch.equal(initial_lora,model.encoder.core.lora_B)
+    assert int(opt.state[weight]['step'])==8
+
+
+@pytest.mark.parametrize('hold',[-1,1.5,True])
+def test_invalid_projector_hold_is_rejected(hold):
+    with pytest.raises(ValueError,match='projector_hold_steps'):
+        JointSchedule(8,2,2,projector_hold_steps=hold)

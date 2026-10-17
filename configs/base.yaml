@@ -70,6 +70,7 @@ training:
   warmup_ratio: 0.05
   warmup_steps: null
   projector_warmup_steps: null
+  projector_hold_steps: 0  # Additional frozen-vision updates at the projector peak LR.
   joint_warmup_steps: null
   projector_warmup_ratio: 0.0625
   joint_warmup_ratio: 0.0625
