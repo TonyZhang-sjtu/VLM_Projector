@@ -12,6 +12,9 @@ run_ft_ablation() {
   fi
   if [[ -n "${PROJECTOR_PYTHON:-}" ]]; then
     ft_python="$PROJECTOR_PYTHON"
+  elif [[ -n "${CONDA_PREFIX:-}" && -x "$CONDA_PREFIX/bin/python" ]]; then
+    # A tmux shell can retain a base-Python PATH despite an activated Conda prefix.
+    ft_python="$CONDA_PREFIX/bin/python"
   else
     ft_python="$(command -v python)" || {
       echo "Activate the training environment or set PROJECTOR_PYTHON to its Python executable." >&2

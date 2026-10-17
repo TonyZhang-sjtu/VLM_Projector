@@ -38,3 +38,22 @@ def test_entrypoint_arguments_from_another_directory(tmp_path,index,lr,hold,epoc
     assert settings==[f'training.projector_lr={lr}',f'training.encoder_lr={lr}',
                       'training.projector_warmup_steps=77',f'training.projector_hold_steps={hold}',
                       'training.joint_warmup_steps=77',f'training.max_epochs={epochs}']
+
+
+@pytest.mark.parametrize('explicit',[False,True])
+def test_conda_python_precedes_path_and_explicit_override_wins(tmp_path,explicit):
+    prefix=tmp_path/'projector'
+    (prefix/'bin').mkdir(parents=True)
+    for path,label in [(prefix/'bin/python','conda'),(tmp_path/'explicit_python','explicit')]:
+        path.write_text('#!'+sys.executable+'\nimport json,sys\n'
+                        f'print(json.dumps({{"selected":{label!r},"args":sys.argv[1:]}}))\n')
+        path.chmod(0o700)
+    env=dict(os.environ,CONDA_PREFIX=str(prefix),CUDA_VISIBLE_DEVICES='0')
+    env.pop('PROJECTOR_PYTHON',None)
+    env.pop('PROJECTOR_LOCAL_CONFIG',None)
+    if explicit:env['PROJECTOR_PYTHON']=str(tmp_path/'explicit_python')
+    result=subprocess.run(['bash',str(ROOT/'scripts/ft_ablation/e1.sh'),'--dry-run'],
+                          cwd=tmp_path,env=env,text=True,capture_output=True,check=True)
+    value=json.loads(result.stdout)
+    assert value['selected']==('explicit' if explicit else 'conda')
+    assert value['args'][:3]==['-u','-m','src.cli.baseline_sweep']

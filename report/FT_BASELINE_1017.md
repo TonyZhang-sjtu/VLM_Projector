@@ -159,6 +159,8 @@ export PROJECTOR_PYTHON="$(command -v python)"
 
 脚本从自己的位置定位仓库，不硬编码服务器的 HOME、Conda 或数据位置。
 
+Python 选择顺序为：显式 `PROJECTOR_PYTHON` → 已激活环境的 `$CONDA_PREFIX/bin/python` → `PATH` 中的 `python`。这可处理 tmux 中提示符显示 `(projector)`、但 `PATH` 仍优先解析到 base Python 的情况；显式设置的 `PROJECTOR_PYTHON` 始终优先。
+
 ### GPU 选择
 
 每个 eN.sh 顶部都能直接编辑 GPU 编号。例如 e2.sh：
@@ -432,3 +434,9 @@ CUDA_VISIBLE_DEVICES='' PYTHONNOUSERSITE=1 OMP_NUM_THREADS=4 \
 - `e1_two_test_samples/metric.json`、`evaluation_smoke.log`、`scoring_assets_preflight.log`。
 
 本次训练 smoke 显式分配物理 GPU 0/1，评测使用 GPU 2。本机 GPU 3 查询报 `Unknown Error`，且无物理 GPU 4/5；在本机正式运行前应调整 E4/E5/E6 的默认卡号并避免任务占卡冲突。另一服务器按自身 GPU 配置分配卡号。
+
+### tmux 解释器选择修复
+
+同日用户直接运行时发现：tmux 的 `CONDA_PREFIX` 已指向 projector，但 `command -v python` 仍返回缺少 OmegaConf 的 base Python。此前真实 smoke 显式设置了 `PROJECTOR_PYTHON`，未覆盖这种环境组合。
+
+共享入口现优先选择已激活 Conda 环境的解释器，并保留显式覆盖优先级。新增相关回归检查后，启动脚本测试 **8 项通过**；在用户原来的 `ft01` 窗口执行 E1 正式配置 `--dry-run`，退出码为 0，解释器、1960/268/560 样本数、2460 steps 和 test split 均核对正确。此检查未启动正式训练。
