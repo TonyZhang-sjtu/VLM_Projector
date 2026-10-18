@@ -1,4 +1,4 @@
-"""N-series: train once, then audit and evaluate named epoch/best checkpoints."""
+"""N-series: save requested epochs; evaluate only epoch 10 and the best checkpoint."""
 import csv
 import hashlib
 import json
@@ -13,8 +13,11 @@ from src.evaluation.ft_diagnostics import summarize_evaluation
 
 def evaluation_jobs(run, split):
     jobs = []
-    epochs = run['config']['training']['checkpoint_epochs']
-    for epoch in [*epochs, None]:
+    # Saving and evaluating are separate policies. N1-N3 retain epochs
+    # 5/10/15/20, but only epoch 10 and validation-best enter test scoring.
+    if 10 not in run['config']['training']['checkpoint_epochs']:
+        raise ValueError('N-series must save epoch 10 for its fixed-budget evaluation')
+    for epoch in (10, None):
         label = f'epoch_{epoch:02d}' if epoch is not None else 'best'
         checkpoint = Path(run['checkpoint']).with_name(label + '.pt')
         directory = Path(run['directory']) / 'evaluation' / f'{label}_{split}'

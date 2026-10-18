@@ -167,6 +167,13 @@ def test_checkpoint_epoch_and_weights_identity(plan):
     assert ft.checkpoint_metadata(a, run)['model_identity_sha256'] != ft.checkpoint_metadata(b, run)['model_identity_sha256']
 
 
+def test_evaluation_requires_saved_epoch_ten(plan):
+    run = plan['runs'][0]
+    run['config']['training']['checkpoint_epochs'] = [5]
+    with pytest.raises(ValueError, match='must save epoch 10'):
+        ft.evaluation_jobs(run, 'test')
+
+
 @pytest.mark.parametrize('early', [False, True])
 def test_orchestration_evaluates_fixed_epoch_and_best_or_marks_missing(plan, monkeypatch, early):
     run = plan['runs'][0]
@@ -218,7 +225,8 @@ def test_result_audit_rejects_wrong_checkpoint_and_split(plan, tmp_path):
 
 
 @pytest.mark.parametrize('failure_label', [None, 'epoch_10'])
-def test_twenty_epoch_orchestration_and_failed_evaluation_resume(plan, monkeypatch, failure_label):
+@pytest.mark.parametrize('best_epoch', [10, 15])
+def test_twenty_epoch_orchestration_and_failed_evaluation_resume(plan, monkeypatch, failure_label, best_epoch):
     run = plan['runs'][0]
     run['config']['training'].update(max_epochs=20, checkpoint_epochs=[5, 10, 15, 20],
                                      early_stopping_enabled=False)
@@ -231,7 +239,7 @@ def test_twenty_epoch_orchestration_and_failed_evaluation_resume(plan, monkeypat
         if 'src.cli.train' in command:
             calls.append('train')
             for epoch in (5, 10, 15, 20): save_fake_checkpoint(run, epoch, f'epoch_{epoch:02d}.pt')
-            best = save_fake_checkpoint(run, 10, 'best.pt')
+            best = save_fake_checkpoint(run, best_epoch, 'best.pt')
             (best.parent.parent / 'training_state.json').write_text(json.dumps({'stop_reason': 'max_epochs', 'epoch': 20}))
         else:
             directory = Path(command[command.index('--output-dir') + 1])
@@ -254,14 +262,19 @@ def test_twenty_epoch_orchestration_and_failed_evaluation_resume(plan, monkeypat
     monkeypatch.setattr(ft, 'summarize_evaluation', lambda *args: {'green_valid': 560, 'green_failed': 0})
     if failure_label:
         with pytest.raises(subprocess.CalledProcessError): ft.execute_plan(plan)
-        assert calls == ['train', 'epoch_05', 'epoch_10']
+        assert calls == ['train', 'epoch_10']
         state = json.loads((Path(plan['run_root']) / 'sweep_status.json').read_text())
         assert state['status'] == 'failed' and state['active_checkpoint'] == failure_label
         ft.execute_plan(plan, resume=True)
-        assert calls == ['train', 'epoch_05', 'epoch_10', 'epoch_10', 'epoch_15', 'epoch_20']
+        assert calls == ['train', 'epoch_10', 'epoch_10'] + (['best'] if best_epoch != 10 else [])
     else:
         ft.execute_plan(plan)
-        assert calls == ['train', 'epoch_05', 'epoch_10', 'epoch_15', 'epoch_20']
+        assert calls == ['train', 'epoch_10'] + (['best'] if best_epoch != 10 else [])
     rows = json.loads((Path(run['directory']) / 'checkpoint_results.json').read_text())['checkpoints']
-    assert [r['checkpoint_label'] for r in rows] == ['epoch_05', 'epoch_10', 'epoch_15', 'epoch_20', 'best']
-    assert rows[-1]['reused_from'] == 'epoch_10' and rows[-1]['epoch'] == 10
+    assert [r['checkpoint_label'] for r in rows] == ['epoch_10', 'best']
+    assert rows[-1]['reused_from'] == ('epoch_10' if best_epoch == 10 else None)
+    assert rows[-1]['epoch'] == best_epoch
+    for epoch in (5, 10, 15, 20):
+        assert Path(run['checkpoint']).with_name(f'epoch_{epoch:02d}.pt').is_file()
+    for epoch in (5, 15, 20):
+        assert not (Path(run['directory']) / 'evaluation' / f'epoch_{epoch:02d}_test').exists()
