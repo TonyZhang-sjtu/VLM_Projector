@@ -46,6 +46,7 @@ run_ft_ablation() {
       --set "training.early_stopping_enabled=$ft_early_stopping_enabled"
       --set "training.checkpoint_epochs=$ft_checkpoint_epochs"
       --set "training.log_optimizer_diagnostics=true"
+      --eval-checkpoint-epochs "${ft_eval_checkpoint_epochs[@]}"
     )
   fi
 

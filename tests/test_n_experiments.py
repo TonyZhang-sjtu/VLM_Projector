@@ -38,9 +38,10 @@ def test_n_launcher_and_real_adamw_rates(tmp_path, index, plr, llr, floor, epoch
     value = json.loads(result.stdout); args = value['args']
     assert value['gpu'] == '2'
     assert args[:3] == ['-u', '-m', 'src.cli.ft_experiments']
-    parsed = ft.sweep.parser().parse_args(args[3:])
+    parsed = ft.parser().parse_args(args[3:])
     assert parsed.require_full_test and parsed.eval_split == 'test'
     assert parsed.eval_sample_fraction == 1 and parsed.metrics == ['all']
+    assert parsed.eval_checkpoint_epochs == ([10] if index <= 3 else [])
     c = load_config([ROOT / 'configs/training/joint_lora.yaml', *parsed.config], parsed.overrides)
     t = c.training
     assert (t.projector_lr, t.encoder_lr, t.cosine_min_lr_ratio, t.max_epochs,
@@ -133,9 +134,10 @@ def plan(tmp_path, monkeypatch):
     monkeypatch.setattr('src.data.manifest.load_manifests', lambda c: (population, {'test': {'sha256': 'manifest'}}))
     monkeypatch.setattr('src.models.projectors.budget.geometry_from_header', lambda *a: ([39, 15, 15], [156., 240., 240.]))
     monkeypatch.setenv('WORLD_SIZE', '1')
-    args = ft.sweep.parser().parse_args(['--projector', 'avgpool3d', '--ratios', '8', '--output-root', str(tmp_path),
+    args = ft.parser().parse_args(['--projector', 'avgpool3d', '--ratios', '8', '--output-root', str(tmp_path),
         '--run-tag', 'n_test', '--config', str(ROOT / 'configs/ft_ablation/avgpool3d_r8.yaml'),
-        '--set', 'training.checkpoint_epochs=[10]', '--set', 'training.log_optimizer_diagnostics=true'])
+        '--set', 'training.checkpoint_epochs=[10]', '--set', 'training.log_optimizer_diagnostics=true',
+        '--eval-checkpoint-epochs', '10'])
     result = ft.build_plan(args)
     assert not Path(result['run_root']).exists()
     return result
@@ -167,15 +169,17 @@ def test_checkpoint_epoch_and_weights_identity(plan):
     assert ft.checkpoint_metadata(a, run)['model_identity_sha256'] != ft.checkpoint_metadata(b, run)['model_identity_sha256']
 
 
-def test_evaluation_requires_saved_epoch_ten(plan):
+def test_evaluation_requires_requested_epoch_to_be_saved(plan):
     run = plan['runs'][0]
     run['config']['training']['checkpoint_epochs'] = [5]
-    with pytest.raises(ValueError, match='must save epoch 10'):
+    with pytest.raises(ValueError, match='entries from checkpoint_epochs'):
         ft.evaluation_jobs(run, 'test')
 
 
 @pytest.mark.parametrize('early', [False, True])
-def test_orchestration_evaluates_fixed_epoch_and_best_or_marks_missing(plan, monkeypatch, early):
+@pytest.mark.parametrize('selected_epochs', [[10], []])
+def test_orchestration_evaluates_fixed_epoch_and_best_or_marks_missing(plan, monkeypatch, early, selected_epochs):
+    ft.select_evaluations(plan, selected_epochs)
     run = plan['runs'][0]
     calls = []
     def execute(command, log, append=False):
@@ -201,15 +205,39 @@ def test_orchestration_evaluates_fixed_epoch_and_best_or_marks_missing(plan, mon
     monkeypatch.setattr(ft.sweep, 'run_logged', execute)
     monkeypatch.setattr(ft, 'summarize_evaluation', lambda *args: {'green_valid': 559, 'green_failed': 1})
     ft.execute_plan(plan)
-    assert len(calls) == 2  # One training, one evaluation; best duplicates epoch 10.
+    assert len(calls) == 2  # One training, one evaluation; optional epoch 10 duplicates best.
     rows = json.loads((Path(run['directory']) / 'checkpoint_results.json').read_text())['checkpoints']
-    assert [r['checkpoint_label'] for r in rows] == ['epoch_10', 'best']
-    assert rows[0]['status'] == ('not_reached' if early else 'partial')
-    if not early:
+    assert [r['checkpoint_label'] for r in rows] == (['epoch_10', 'best'] if selected_epochs else ['best'])
+    assert rows[0]['status'] == ('not_reached' if early and selected_epochs else 'partial')
+    if not early and selected_epochs:
         assert rows[1]['reused_from'] == 'epoch_10'
         assert (Path(run['directory']) / 'evaluation/best_test/alias.json').is_file()
     ft.execute_plan(plan, resume=True)
     assert len(calls) == 2  # Completed evaluations are audited and reused.
+    if not selected_epochs:
+        assert not (Path(run['directory']) / 'evaluation/epoch_10_test').exists()
+    else:
+        # Migrate an older two-checkpoint evaluation to the corrected best-only
+        # selection. Both a direct best result and a best alias must be reusable.
+        original_config = copy.deepcopy(run['config'])
+        saved_plan = (Path(plan['run_root']) / 'sweep_plan.json').read_bytes()
+        ft.select_evaluations(plan, [])
+        ft.execute_plan(plan, resume=True)
+        assert len(calls) == 2 and run['config'] == original_config
+        assert (Path(plan['run_root']) / 'sweep_plan.json').read_bytes() == saved_plan
+        rows = json.loads((Path(run['directory']) / 'checkpoint_results.json').read_text())['checkpoints']
+        assert [row['checkpoint_label'] for row in rows] == ['best']
+        selection = json.loads((Path(plan['run_root']) / 'evaluation_plan.json').read_text())
+        assert selection['evaluation_checkpoint_epochs'] == []
+
+
+def test_legacy_plan_can_select_best_only_without_training_config_changes(plan):
+    run = plan['runs'][0]
+    old_config = copy.deepcopy(run['config'])
+    del run['evaluation_checkpoint_epochs']
+    ft.select_evaluations(plan, [])
+    assert [job['label'] for job in run['evaluations']] == ['best']
+    assert run['config'] == old_config
 
 
 def test_result_audit_rejects_wrong_checkpoint_and_split(plan, tmp_path):

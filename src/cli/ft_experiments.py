@@ -1,4 +1,4 @@
-"""N-series: save requested epochs; evaluate only epoch 10 and the best checkpoint."""
+"""N-series: save requested epochs and evaluate the entrypoint's checkpoint selection."""
 import csv
 import hashlib
 import json
@@ -11,13 +11,24 @@ from src.config import digest, file_hash, save_config
 from src.evaluation.ft_diagnostics import summarize_evaluation
 
 
+def parser():
+    cli = sweep.parser()
+    cli.description = __doc__
+    cli.add_argument('--eval-checkpoint-epochs', nargs='*', type=int, required=True,
+                     help='Saved epochs to test in addition to best; pass no values for best only')
+    return cli
+
+
 def evaluation_jobs(run, split):
     jobs = []
-    # Saving and evaluating are separate policies. N1-N3 retain epochs
-    # 5/10/15/20, but only epoch 10 and validation-best enter test scoring.
-    if 10 not in run['config']['training']['checkpoint_epochs']:
-        raise ValueError('N-series must save epoch 10 for its fixed-budget evaluation')
-    for epoch in (10, None):
+    # Selection is explicit in each nN.sh; it does not depend on LR, epoch
+    # budget, run name, or which additional checkpoints happen to be saved.
+    epochs = run['evaluation_checkpoint_epochs']
+    saved = run['config']['training']['checkpoint_epochs']
+    if (not isinstance(epochs, list) or any(type(epoch) is not int or epoch not in saved for epoch in epochs)
+            or epochs != sorted(set(epochs))):
+        raise ValueError('Evaluation epochs must be unique ascending entries from checkpoint_epochs')
+    for epoch in [*epochs, None]:
         label = f'epoch_{epoch:02d}' if epoch is not None else 'best'
         checkpoint = Path(run['checkpoint']).with_name(label + '.pt')
         directory = Path(run['directory']) / 'evaluation' / f'{label}_{split}'
@@ -27,6 +38,20 @@ def evaluation_jobs(run, split):
         jobs.append({'label': label, 'epoch': epoch, 'checkpoint': str(checkpoint),
                      'directory': str(directory), 'command': command})
     return jobs
+
+
+def select_evaluations(plan, epochs):
+    """Also supports changing the evaluation scope of a completed legacy run.
+
+    The original training config and saved sweep_plan.json remain intact.
+    execute_plan records the effective selection in evaluation_plan.json.
+    """
+    if plan.get('runner') != 'ft_experiments':
+        raise ValueError('Use the matching launcher to resume this plan')
+    for run in plan['runs']:
+        run['evaluation_checkpoint_epochs'] = list(epochs)
+        run['evaluations'] = evaluation_jobs(run, plan['eval_split'])
+    return plan
 
 
 def build_plan(args):
@@ -43,8 +68,7 @@ def build_plan(args):
             raise ValueError('N-series uses complete epochs; max_steps must be null')
         if not training['log_optimizer_diagnostics']:
             raise ValueError('N-series requires optimizer diagnostics')
-        run['evaluations'] = evaluation_jobs(run, plan['eval_split'])
-    return plan
+    return select_evaluations(plan, args.eval_checkpoint_epochs)
 
 
 def checkpoint_metadata(path, run, expected_epoch=None):
@@ -129,6 +153,11 @@ def execute_plan(plan, resume=False):
         root.mkdir()  # Refuse collisions, including concurrent launches.
         sweep.write_json(root / 'sweep_plan.json', plan)
         save_config(OmegaConf.create(run['config']), run['config_path'])
+    sweep.write_json(root / 'evaluation_plan.json', {
+        'training_plan': str(root / 'sweep_plan.json'),
+        'evaluation_checkpoint_epochs': run['evaluation_checkpoint_epochs'],
+        'evaluations': run['evaluations'],
+    })
     state = {'status': 'running', 'phase': 'training', 'active_checkpoint': None}
     entries, completed_models = [], {}
     try:
@@ -171,6 +200,29 @@ def execute_plan(plan, resume=False):
                 sweep.write_json(directory / 'alias.json', entry)
             else:
                 metric_path = directory / 'metric.json'
+                # A previous broader selection may have evaluated epoch 10 and
+                # stored best as an alias. Reuse that audited result when the
+                # new entrypoint requests best only; do not start extra scoring.
+                alias_path = directory / 'alias.json'
+                if resume and alias_path.is_file() and not metric_path.is_file():
+                    alias = json.loads(alias_path.read_text())
+                    if (alias.get('model_identity_sha256') != identity
+                            or alias.get('checkpoint_sha256') != metadata['checkpoint_sha256']):
+                        raise ValueError('Saved evaluation alias belongs to a different checkpoint')
+                    metric_path = Path(alias['metric_path']).resolve()
+                    metric_path.relative_to(Path(run['directory']).resolve())
+                    result = json.loads(metric_path.read_text())
+                    evaluated_sha = alias['evaluated_checkpoint_sha256']
+                    audit_result(result, run, {**metadata, 'checkpoint_sha256': evaluated_sha}, metric_path.parent)
+                    diagnostics = summarize_evaluation(metric_path.parent, result, run['data_identity']['evaluation_ids_sha256'])
+                    entry.update(status=result['status'], evaluated_checkpoint_sha256=evaluated_sha,
+                                 reused_from=alias['reused_from'], metric_path=str(metric_path),
+                                 overall=result['overall'], diagnostics=diagnostics,
+                                 partial_metrics=result.get('partial_metrics', {}))
+                    completed_models[identity] = entry
+                    entries.append(entry)
+                    write_summary(run, entries)
+                    continue
                 if resume and metric_path.is_file():
                     result = json.loads(metric_path.read_text())
                 else:
@@ -199,11 +251,11 @@ def execute_plan(plan, resume=False):
 
 
 def main():
-    cli = sweep.parser()
-    cli.description = __doc__
+    cli = parser()
     args = cli.parse_args()
     try:
-        plan = (sweep.load_resume_plan(args.resume_run, args.projector)
+        plan = (select_evaluations(sweep.load_resume_plan(args.resume_run, args.projector),
+                                   args.eval_checkpoint_epochs)
                 if args.resume_run else build_plan(args))
         if plan.get('runner') != 'ft_experiments':
             raise ValueError('Use the matching launcher to resume this plan')
