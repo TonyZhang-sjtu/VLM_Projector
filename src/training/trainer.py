@@ -157,6 +157,8 @@ class Trainer:
                 now=OmegaConf.to_container(config.training,resolve=True)[key]
                 if old['config']['training'][key]!=now:raise ValueError(f'Resume changed training setting: {key}')
             if old['config']['seed']!=config.seed:raise ValueError('Resume changed seed')
+            if old['config']['training'].get('early_stopping_enabled',True)!=config.training.get('early_stopping_enabled',True):
+                raise ValueError('Resume changed training setting: early_stopping_enabled')
             self.state=old['state']
             if self.plan:
                 self.state['schedule']=self.plan.to_dict()
@@ -203,7 +205,9 @@ class Trainer:
 
     def train(self):
         c=self.config;micro=c.training.microbatch_per_device
-        if self.state['global_step']>=self.total_steps or self.state['bad_epochs']>=c.training.early_stopping_patience:
+        early_stopping=c.training.get('early_stopping_enabled',True)
+        diagnostics_enabled=c.training.get('log_optimizer_diagnostics',False)
+        if self.state['global_step']>=self.total_steps or (early_stopping and self.state['bad_epochs']>=c.training.early_stopping_patience):
             return self.state
         log_path=self.output/'train.jsonl'
         start_epoch=self.state['epoch']
@@ -256,13 +260,21 @@ class Trainer:
                     projector_tokens+=sum(result['projector_token_counts'])
                     del loss,result
                 parameters=[p for p in self.model.parameters() if p.requires_grad]
+                diagnostics=None
+                if diagnostics_enabled and self.rank==0:
+                    from src.training.diagnostics import OptimizerDiagnostics
+                    diagnostics=OptimizerDiagnostics(self.optimizer)
                 norm=torch.nn.utils.clip_grad_norm_(parameters,c.training.grad_clip_norm,error_if_nonfinite=True)
+                if diagnostics is not None:diagnostics.after_clip()
                 self.optimizer.step();self.scheduler.step()
+                component_diagnostics=diagnostics.after_step() if diagnostics is not None else None
+                del diagnostics
                 self.state.update(epoch=epoch,next_window=windex+1,global_step=self.state['global_step']+1)
                 summed=torch.tensor([loss_total,float(len(indices)),encoder_tokens,projector_tokens],device=self.device,dtype=torch.float64)
                 if self.world>1:dist.all_reduce(summed)
                 torch.cuda.synchronize(self.device)
                 record={'step':self.state['global_step'],'epoch':epoch,'answer_ce':float(summed[0]/count),
+                    'answer_loss_sum':float(summed[0]),
                     'answer_tokens':count,'actual_samples':int(summed[1]),'sampler_repeats_this_epoch':repeats,
                     'encoder_tokens':int(summed[2]),'projector_tokens':int(summed[3]),
                     'mean_encoder_tokens':float(summed[2]/summed[1]),
@@ -287,6 +299,14 @@ class Trainer:
                                   expected_output_tokens=budget.expected_output_tokens,
                                   budget_version=budget.version)
                 if self.rank==0:
+                    if component_diagnostics is not None:
+                        record['optimizer_diagnostics']=component_diagnostics
+                        with (self.output/'optimizer_diagnostics.jsonl').open('a') as handle:
+                            handle.write(json.dumps({'step':record['step'],'epoch':epoch+1,
+                                'phase':used_phase,'learning_rates':used_lrs,
+                                'global_grad_norm_pre_clip':float(norm),
+                                'clip_threshold':c.training.grad_clip_norm,
+                                'components':component_diagnostics})+'\n')
                     with log_path.open('a') as handle:handle.write(json.dumps(record)+'\n')
                     steps.set_postfix(loss=f'{record["answer_ce"]:.4f}',grad=f'{record["grad_norm"]:.3f}',
                                       tok=record['answer_tokens'],mem=f'{record["peak_allocated_bytes"]/2**30:.1f}G')
@@ -315,11 +335,12 @@ class Trainer:
             if self.plan:
                 improved=update_joint_validation(self.state,metrics['answer_ce'],
                     eligible=full_epoch and self.state['global_step']>self.plan.cosine_start,
-                    min_delta=c.training.early_stopping_min_delta,patience=c.training.early_stopping_patience)
+                    min_delta=c.training.early_stopping_min_delta,patience=c.training.early_stopping_patience,
+                    enabled=early_stopping)
                 if self.state['stop_reason'] is None and self.state['global_step']>=self.total_steps:
                     self.state['stop_reason']='max_steps' if c.training.max_steps else 'max_epochs'
                     self.state['stop_step']=self.state['global_step']
-                metrics.update(early_stop_reference=self.state['early_stop_reference'],
+                metrics.update(early_stopping_enabled=early_stopping,early_stop_reference=self.state['early_stop_reference'],
                                bad_epochs=self.state['bad_epochs'],stop_reason=self.state['stop_reason'])
             else:
                 improved=metrics['answer_ce']<self.state['best_val_ce']
@@ -327,15 +348,25 @@ class Trainer:
                 else:self.state['bad_epochs']+=1
             if full_epoch:self.state.update(epoch=epoch+1,next_window=0)
             if self.rank==0:
+                if diagnostics_enabled:
+                    from src.training.diagnostics import epoch_training_summary
+                    summary=epoch_training_summary(log_path,epoch)
+                    summary.update(full_epoch=full_epoch,validation_answer_ce=metrics['answer_ce'],
+                                   validation_samples=metrics['samples'],
+                                   validation_answer_tokens=metrics['answer_tokens'])
+                    with (self.output/'epoch_metrics.jsonl').open('a') as handle:
+                        handle.write(json.dumps(summary)+'\n')
                 with (self.output/'validation.jsonl').open('a') as handle:
                     handle.write(json.dumps({'step':self.state['global_step'],**metrics})+'\n')
                 if self.plan:
                     (self.output/'training_state.json').write_text(json.dumps(self.state,indent=2))
             if improved:self.save('best.pt')
+            if full_epoch and epoch+1 in c.training.get('checkpoint_epochs',[]):
+                self.save(f'epoch_{epoch+1:02d}.pt')
             if self.rank==0:
                 epochs.set_postfix(val_ce=f'{metrics["answer_ce"]:.4f}',best=f'{self.state["best_val_ce"]:.4f}',
                                    bad_epochs=f'{self.state["bad_epochs"]}/{c.training.early_stopping_patience}')
             self.save('last.pt')
-            if self.state['bad_epochs']>=c.training.early_stopping_patience:break
+            if early_stopping and self.state['bad_epochs']>=c.training.early_stopping_patience:break
             if c.training.max_steps and self.state['global_step']>=c.training.max_steps:break
         return self.state

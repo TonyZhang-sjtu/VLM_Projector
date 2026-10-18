@@ -16,7 +16,7 @@ import sys
 
 from omegaconf import OmegaConf
 
-from src.config import ROOT, load_config, save_config, validate
+from src.config import ROOT, digest, load_config, save_config, validate
 from src.models.projectors.specs import DEFAULTS
 
 
@@ -125,7 +125,7 @@ def build_plan(args):
         if not re.fullmatch(r'cpu|cuda:\d+', scoring_device):
             raise ValueError('--scoring-device must be cpu or cuda:N')
         if samples is None:
-            samples, _ = load_manifests(config)
+            samples, manifest_summary = load_manifests(config)
             train = select_training_samples(config, samples['train'], 'train')
             val = select_training_samples(config, samples['val'], 'val')
             if not train or not val:
@@ -158,6 +158,10 @@ def build_plan(args):
             'config': OmegaConf.to_container(config, resolve=True),
             'budget': OmegaConf.to_container(config.projector.resolved_budget, resolve=True),
             'train_samples': len(train), 'val_samples': len(val),
+            'manifest_summary': manifest_summary,
+            'data_identity': {'train_ids_sha256': digest([s.id for s in train]),
+                              'val_ids_sha256': digest([s.id for s in val]),
+                              'evaluation_ids_sha256': digest([s.id for s in selected])},
             'updates_per_epoch': windows, 'schedule': schedule,
             'evaluation_samples': len(selected), 'evaluation_population': len(samples[args.eval_split]),
             'evaluation_scope': 'full_split' if len(selected) == len(samples[args.eval_split]) else 'fractional_sample',

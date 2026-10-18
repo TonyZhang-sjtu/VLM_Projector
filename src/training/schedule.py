@@ -30,8 +30,8 @@ class JointSchedule:
                              'and at least 2 joint cosine updates')
         if (type(self.cosine_min_lr_ratio) not in (int, float)
                 or not math.isfinite(self.cosine_min_lr_ratio)
-                or not 0 <= self.cosine_min_lr_ratio < 1):
-            raise ValueError('cosine_min_lr_ratio must be finite and between 0 (inclusive) and 1')
+                or not 0 <= self.cosine_min_lr_ratio <= 1):
+            raise ValueError('cosine_min_lr_ratio must be finite and between 0 and 1 (inclusive)')
         if self.joint_warmup_projector_mode not in ('restart', 'hold_peak'):
             raise ValueError('joint_warmup_projector_mode must be restart or hold_peak')
 
@@ -107,14 +107,14 @@ def resolve_joint_schedule(training, total_steps):
                          training.get('projector_hold_steps', 0))
 
 
-def update_joint_validation(state, value, *, eligible, min_delta, patience):
+def update_joint_validation(state, value, *, eligible, min_delta, patience, enabled=True):
     """Best checkpoint and cumulative meaningful improvement are independent."""
     if not math.isfinite(value):
         raise FloatingPointError('Nonfinite validation CE')
     improved = value < state['best_val_ce']
     if improved:
         state['best_val_ce'] = value
-    if eligible:
+    if eligible and enabled:
         reference = state.get('early_stop_reference')
         if reference is None or value < reference - min_delta:
             state['early_stop_reference'] = value

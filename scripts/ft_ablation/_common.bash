@@ -1,8 +1,9 @@
-# Shared implementation sourced by e1.sh-e6.sh.
+# Shared implementation sourced by e1.sh-e6.sh and n1.sh-n6.sh.
 # The baseline sweep runs training first and full test evaluation after success.
 run_ft_ablation() {
   local ft_root ft_python ft_local_config
   local -a ft_path_args=()
+  local -a ft_recipe_args=()
   ft_root="$(cd -- "$ft_script_dir/../.." && pwd)"
   cd -- "$ft_root"
 
@@ -39,10 +40,19 @@ run_ft_ablation() {
     return 2
   fi
 
+  if [[ -n "${ft_cosine_min_lr_ratio:-}" ]]; then
+    ft_recipe_args=(
+      --set "training.cosine_min_lr_ratio=$ft_cosine_min_lr_ratio"
+      --set "training.early_stopping_enabled=$ft_early_stopping_enabled"
+      --set "training.checkpoint_epochs=$ft_checkpoint_epochs"
+      --set "training.log_optimizer_diagnostics=true"
+    )
+  fi
+
   # Script parameters are visible in each eN.sh; --set can override them for a
   # deliberately renamed experiment. Final evaluation is always full test/all.
   # --resume-run reuses a saved plan; the full-test guard also checks that plan.
-  exec "$ft_python" -u -m src.cli.baseline_sweep \
+  exec "$ft_python" -u -m "${ft_cli_module:-src.cli.baseline_sweep}" \
     "${ft_path_args[@]}" \
     --config "$ft_root/configs/ft_ablation/avgpool3d_r8.yaml" \
     --run-tag "$ft_run_tag" \
@@ -54,6 +64,7 @@ run_ft_ablation() {
     --set "training.projector_hold_steps=$ft_projector_hold_steps" \
     --set "training.joint_warmup_steps=$ft_joint_warmup_steps" \
     --set "training.max_epochs=$ft_max_epochs" \
+    "${ft_recipe_args[@]}" \
     "$@" \
     --projector avgpool3d --ratios 8 \
     --eval-split test --metrics all --eval-sample-fraction 1.0 \

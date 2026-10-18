@@ -145,7 +145,8 @@ def load_checkpoint(path,model,mode='evaluate',optimizer=None,scheduler=None,exp
                     raise ValueError(f'Resume changed training setting: {key}')
             for key, original_default in (('cosine_min_lr_ratio',0.0),
                                           ('joint_warmup_projector_mode','restart'),
-                                          ('projector_hold_steps',0)):
+                                          ('projector_hold_steps',0),
+                                          ('early_stopping_enabled',True)):
                 if checkpoint['config']['training'].get(key,original_default)!=model.config.training.get(key,original_default):
                     raise ValueError(f'Resume changed training setting: {key}')
             if optimizer is None or [g['param_names'] for g in optimizer.param_groups]!=[

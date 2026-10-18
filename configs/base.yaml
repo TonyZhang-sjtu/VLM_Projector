@@ -77,6 +77,7 @@ training:
   cosine_min_lr_ratio: 0.0
   joint_warmup_projector_mode: restart
   max_epochs: 10
+  early_stopping_enabled: true
   early_stopping_patience: 3
   early_stopping_min_delta: 0.0
   grad_clip_norm: 1.0
@@ -93,6 +94,8 @@ training:
   val_ids_file: null
   validation_generation_samples: 14
   save_every_steps: 0
+  checkpoint_epochs: []  # One-based completed epochs; independent of best.pt.
+  log_optimizer_diagnostics: false
   lora:
     rank: 8
     alpha: 16

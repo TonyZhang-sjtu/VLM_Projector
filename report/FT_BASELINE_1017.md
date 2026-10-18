@@ -2,6 +2,8 @@
 
 更新日期：2026-10-17。适用方法：AvgPool3D，压缩率 8×。基于此前的 c26bde010e12988f8c29997e57044ed936cc49c4 增加本轮功能。
 
+2026-10-18 增补：**新一轮 N1–N6 的配置与跨服务器部署见第 12 节**。第 1–11 节保留 E1–E6 发布时的实验定义与历史验证记录。
+
 **交付状态：本轮实现和发布前验证已完成，用户已授权上传。六组正式配置 dry-run、六组真实模型短步训练、checkpoint 核对及 2 条 test 样本的全部指标评测均通过，详见第 11 节。尚未启动正式 10/20 epoch 实验。** 文中正式预算和阶段边界不代表已经跑完正式实验；smoke 数值不作为实验结果。发布 commit 以源服务器回复和 Git 历史为准，可用 `git log -1 --format=%H -- report/FT_BASELINE_1017.md` 查询本文档最近提交。
 
 ## 1. 已确认的实验定义
@@ -440,3 +442,105 @@ CUDA_VISIBLE_DEVICES='' PYTHONNOUSERSITE=1 OMP_NUM_THREADS=4 \
 同日用户直接运行时发现：tmux 的 `CONDA_PREFIX` 已指向 projector，但 `command -v python` 仍返回缺少 OmegaConf 的 base Python。此前真实 smoke 显式设置了 `PROJECTOR_PYTHON`，未覆盖这种环境组合。
 
 共享入口现优先选择已激活 Conda 环境的解释器，并保留显式覆盖优先级。新增相关回归检查后，启动脚本测试 **8 项通过**；在用户原来的 `ft01` 窗口执行 E1 正式配置 `--dry-run`，退出码为 0，解释器、1960/268/560 样本数、2460 steps 和 test split 均核对正确。此检查未启动正式训练。
+
+## 12. N1–N6：恒定 LR、模块 LR 分配与 cosine 下限（2026-10-18）
+
+### 已确认配置
+
+历史对照为 Exp1018.6：Projector/LoRA 均为 5e-5，cosine 下限 0.2，10 epochs。
+
+| 入口 | 默认物理卡号（可改） | Projector LR | LoRA LR | 下限比例 | 总 epochs / updates | CE 早停 | 保存并评测 |
+| --- | ---: | ---: | ---: | ---: | --- | --- | --- |
+| `scripts/ft_ablation/n1.sh` | 0 | 5e-5 | 5e-5 | 1.0 | 20 / 2460 | 关闭 | epoch 5/10/15/20、best |
+| `scripts/ft_ablation/n2.sh` | 1 | 1e-4 | 1e-4 | 1.0 | 20 / 2460 | 关闭 | epoch 5/10/15/20、best |
+| `scripts/ft_ablation/n3.sh` | 2 | 2e-4 | 2e-4 | 1.0 | 20 / 2460 | 关闭 | epoch 5/10/15/20、best |
+| `scripts/ft_ablation/n4.sh` | 3 | 5e-5 | 4e-5 | 0.2 | 10 / 1230 | patience=3，min_delta=0.005 | epoch 10、best |
+| `scripts/ft_ablation/n5.sh` | 4 | 5e-5 | 2e-5 | 0.2 | 10 / 1230 | patience=3，min_delta=0.005 | epoch 10、best |
+| `scripts/ft_ablation/n6.sh` | 5 | 5e-5 | 5e-5 | 0.5 | 10 / 1230 | patience=3，min_delta=0.005 | epoch 10、best |
+
+所有入口都是独立单卡任务。GPU 编号应按执行服务器修改；例如只有 0–3 号 GPU 的机器，运行 N5/N6 前需修改默认值或用环境变量覆盖。
+
+共同设置沿用 `configs/ft_ablation/avgpool3d_r8.yaml`：AvgPool3D 8×、seed=42、AdamW、microbatch=1、effective batch=16、LoRA rank=16/alpha=32、hold=0。每组从预训练资产独立初始化，`resume=null`、`init_checkpoint=null`。
+
+- 第 1–77 次更新：Projector LR 由 0 升至峰值，LoRA 冻结。
+- 第 78–154 次更新：Projector 保持峰值，LoRA 从 0 升至自己的峰值。
+- 第 155 次更新起：N1–N3 保持各自峰值；其他组执行带下限 cosine。
+- 阶段切换保持同一 AdamW 实例和动量。比例 1.0 使用原有公式，自然退化为常数；日志阶段名仍为 `joint_cosine`。
+- N1–N3 的恒定阶段为 2306 updates；N4–N6 的 cosine 阶段为 1076 updates。
+- 同预算比较直接用 `epoch_10.pt`，不另选“前 10 轮 best”。每轮完整 validation CE 仍选择全程 `best.pt`。
+- N4–N6 若第 10 轮前早停，汇总标记 `epoch_10: not_reached`，继续评测 best，不能把 best 冒充第 10 轮。
+
+### 一键运行与恢复
+
+激活训练环境后，在各自 tmux 窗口运行，例如：
+
+```bash
+CUDA_VISIBLE_DEVICES=0 bash scripts/ft_ablation/n1.sh --dry-run
+CUDA_VISIBLE_DEVICES=0 bash scripts/ft_ablation/n1.sh
+```
+
+也可修改脚本顶部的卡号，直接 `bash scripts/ft_ablation/n1.sh`；已导出的 `CUDA_VISIBLE_DEVICES` 优先于脚本默认值。
+
+解释器优先级：显式 `PROJECTOR_PYTHON` → `$CONDA_PREFIX/bin/python` → PATH 上的 Python。tmux 若残留错误的 `PROJECTOR_PYTHON`，先取消该变量或改为当前训练环境的绝对 Python 路径。
+
+默认输出为 `runs/baselines/ft_nN_..._v1/`。已有同名目录会拒绝覆盖。独立重跑用新的 `FT_RUN_TAG`。训练正常结束、仅评测中断时，可继续本实验的评测：
+
+```bash
+CUDA_VISIBLE_DEVICES=0 bash scripts/ft_ablation/n1.sh --resume-run runs/baselines/本实验目录
+```
+
+该选项审阅训练和评测身份后复用已完成结果。训练中断时不会自动恢复训练；应通过通用训练入口显式指定本实验的 last.pt 并保持原配置。各组不能从其他实验 checkpoint 初始化。
+
+### 输出文件与口径
+
+以下路径相对于每组的 `r8/`：
+
+| 路径 | 内容 |
+| --- | --- |
+| `joint_lora/checkpoints/epoch_05.pt` 等 | 固定 epoch 权重、AdamW、调度器、RNG 和训练状态 |
+| `joint_lora/checkpoints/best.pt` | 全程最低完整 validation CE 对应的模型 |
+| `joint_lora/optimizer_diagnostics.jsonl` | 每步两模块裁剪前/后梯度范数、参数范数、实际更新范数、相对更新幅度与 LR |
+| `joint_lora/train.jsonl` | 逐步 CE、answer loss sum/token 数、阶段、LR 与相同模块诊断 |
+| `joint_lora/epoch_metrics.jsonl` | 每轮 token 加权 Train CE、完整 Val CE、实际 token 和更新数 |
+| `joint_lora/validation.jsonl` | 每轮完整验证与固定 14 条生成监控 |
+| `evaluation/epoch_10_test/metric.json` 等 | 完整 test、全部 11 个结果字段、各指标覆盖信息 |
+| `evaluation/*_test/generation_green_diagnostics.json` | 生成长度、空回答/截断、GREEN 成功/失败数和六类错误均值 |
+| `evaluation/*_test/generation_green_samples.csv` | 逐样本生成长度、GREEN 匹配与六类错误，失败分数留空 |
+| `checkpoint_results.json`、`checkpoint_results.csv` | 所有指定 checkpoint 的结果及身份映射，按指标键名取值 |
+
+诊断日志与 epoch 汇总的 epoch 从 1 开始；历史 `train.jsonl` 的 epoch 保持从 0 开始。`encoder` 诊断只覆盖优化器中的视觉 LoRA，不包含冻结视觉主干。
+
+相对更新幅度为 `||theta_after - theta_before||_2 / ||theta_before||_2`，包含 AdamW weight decay 和实际存储精度影响。分母为 0 时记录 null；冻结 LoRA 的更新范数为 0。诊断不抽样、不改动参数/梯度、不消耗 RNG，只复制优化器参数，不复制冻结 LLM。
+
+固定 epoch 5/10/15/20 对应 step 615/1230/1845/2460。训练结束后依次评测指定 checkpoint 和 best，均为完整 test（当前 560 条）及全部指标。模型与评分器分进程顺序加载。
+
+如果 best 与某个固定 epoch 的配置、step、预训练 contract 和全部 Projector/LoRA 权重完全相同，复用该评测。对应目录写 `alias.json` 指向真实 `metric.json`；汇总同时记录请求 checkpoint SHA256 与实际评测 SHA256，不伪造独立评测。last.pt 和 boundary checkpoint 继续作为恢复辅助保留，不增加正式结果组。
+
+GREEN 沿用现有评测模型与协议。格式失败样本排除在 GREEN 均值之外并记录分母，不填 0。诊断核对六类计数与 GREEN 公式，不修改评审输出。
+
+### 另一台服务器部署说明
+
+1. 在当地仓库查看 `git status --short --untracked-files=all` 和 `git diff`，保留本地改动。当地模型、数据、缓存位置放进 Git 忽略的 `configs/local_paths.yaml`，备份原文件；不要复制源服务器绝对路径。必要时对已审阅的代码改动用有名字的 stash/备份，不能 reset --hard、clean 或整体覆盖本地文件。
+2. 执行 `git fetch origin main`、`git pull --ff-only origin main`、`git rev-parse HEAD`；核对提供的发布 commit 是 HEAD 或其祖先。不能快进时先审阅分叉，保留本地工作后合并。
+3. 阅读本节。确认 local_paths.yaml 仍被忽略且原路径有效；保留当地 `assets/models/evaluation`、`third_party/evaluation` 等评测资产。模型、数据、checkpoint、Excel 和结果均不通过 Git 同步。
+4. 激活当地训练环境，核对实际解释器。通过 `CUDA_VISIBLE_DEVICES` 分配当地可用 GPU；可用 `PROJECTOR_OUTPUT_ROOT` 指定当地输出位置。
+5. 逐个执行 n1.sh 至 n6.sh 的 --dry-run，每条显式指定当地可用 GPU。核对本节表中的 LR、预算、下限、早停、checkpoint；核对 1960/268/560、123 updates/epoch、77/0/77、hold_peak、test/full_split/all 和计划中的数据身份摘要。
+6. 预检通过后报告启动命令，正式训练由用户在 tmux 手动启动。六组独立从相同预训练资产启动。
+
+标准划分 ID 列表摘要（按清单顺序，算法 src.config.digest）：
+
+```text
+train: b60c751801325bed594b142e0662233202fce2915273fa9ea259667cc0a22698
+val:   4d3176b18672d466be6e0f3a239166f057d4fa9c10ba3bb95f23c0d0d32c5e9e
+test:  69bcaa3c89157310951f55ae7ed6fc2ec691ea554024ea770a780ea8257b1462
+```
+
+### N 系列发布前验证
+
+- 相关测试 **170 项通过**：六入口参数、真实 AdamW 全预算 LR 轨迹、阶段动量保持、关闭/保留早停、实际 Trainer 循环的固定 epoch/best 保存、模块诊断无副作用、token 加权 CE、完整评测约束、重复 checkpoint 复用、失败中止与评测恢复、旧 E 系列回归。
+- N1–N6 六个 Bash 的正式配置均使用本机真实清单和 MRI 头信息完成 dry-run。1960/268/560、123 updates/epoch、总预算、阶段边界、早停和保存列表均与本节表一致，三份 ID 摘要一致；未生成正式运行目录。
+- 新诊断读取已有 E4/E5/E6 的全部 1680 条 test 逐样本记录，核对 checkpoint/划分身份、有效 GREEN 均值和计数公式。成功数为 557/556/557，失败数为 3/4/3，与原评分一致；原实验文件保持原样。
+- GREEN、RadGraph、RaTEScore、BERTScore 的本机依赖和模型文件 SHA256 检查通过。
+- 证据保存在 Git 忽略的 `results/FT_N_series_preflight_20261018/`，包含 pytest.log、六份 dry-run 计划、摘要、已有结果复核和评测资产记录。
+
+本轮 Trainer 集成验证使用小型 CPU 模型；没有运行新的完整 VLM 训练或新评分推理。六组正式训练仍由用户手动在 tmux 启动，当前验证不预言高 LR 的实际收敛质量。

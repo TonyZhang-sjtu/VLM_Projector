@@ -142,14 +142,23 @@ def validate(c):
     delta=c.training.get('early_stopping_min_delta',0.0)
     if type(delta) not in (int,float) or not math.isfinite(delta) or delta<0:
         raise ValueError('early_stopping_min_delta must be finite and nonnegative')
+    for key, default in (('early_stopping_enabled', True), ('log_optimizer_diagnostics', False)):
+        if type(c.training.get(key, default)) is not bool:
+            raise ValueError(f'{key} must be boolean')
+    epochs=c.training.get('checkpoint_epochs', [])
+    if not OmegaConf.is_list(epochs) and not isinstance(epochs, list):
+        raise ValueError('checkpoint_epochs must be a list')
+    if (any(type(epoch) is not int or not 1<=epoch<=c.training.max_epochs for epoch in epochs)
+            or len(epochs)!=len(set(epochs)) or list(epochs)!=sorted(epochs)):
+        raise ValueError('checkpoint_epochs must be unique ascending epochs within max_epochs')
     if c.training.stage=='joint_lora':
         if c.training.init_checkpoint:
             raise ValueError('joint_lora starts from pretrained assets or same-run resume, not Stage A initialization')
         if c.training.warmup_steps is not None or c.training.warmup_ratio!=0:
             raise ValueError('joint_lora uses two warm-ups; set legacy warmup_steps=null and warmup_ratio=0')
         floor=c.training.get('cosine_min_lr_ratio',0.0)
-        if type(floor) not in (int,float) or not math.isfinite(floor) or not 0<=floor<1:
-            raise ValueError('cosine_min_lr_ratio must be finite and between 0 (inclusive) and 1')
+        if type(floor) not in (int,float) or not math.isfinite(floor) or not 0<=floor<=1:
+            raise ValueError('cosine_min_lr_ratio must be finite and between 0 and 1 (inclusive)')
         mode=c.training.get('joint_warmup_projector_mode','restart')
         if mode not in ('restart','hold_peak'):
             raise ValueError('joint_warmup_projector_mode must be restart or hold_peak')
