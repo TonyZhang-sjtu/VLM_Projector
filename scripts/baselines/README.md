@@ -1,5 +1,109 @@
 # BraTS baseline 一键训练与评测
 
+## 2026-10-19：恒定 LR 首轮入口
+
+以下新增入口使用 `configs/training/constant_lr.yaml` 和
+`scripts/ft_ablation/_constant_lr.bash`，复用现有 `src.cli.baseline_sweep`。
+本节描述新增的 `*_constant_lr.sh`；后面的原始入口说明仍对应旧配置。
+
+| 入口（位于 `scripts/ft_ablation/`） | 方法 | 默认压缩率 | Projector / LoRA LR |
+| --- | --- | --- | --- |
+| `run_mlp2x_constant_lr.sh` | MLP | 1× | 2e-4 / 2e-4 |
+| `run_avgpool3d_constant_lr.sh` | AvgPool3D | 4、8、16、32× | 2e-4 / 2e-4 |
+| `run_concat3d_constant_lr.sh` | Concat3D | 4、8、16、32× | 2e-4 / 2e-4 |
+| `run_local_packer3d_constant_lr.sh` | LocalPacker3D | 4、8、16、32× | 2e-4 / 2e-4 |
+| `run_perceiver_nv_constant_lr.sh` | Perceiver-NV | 4、8、16、32× | 2e-4 / 2e-4 |
+| `run_adaptive_merge3d_constant_lr.sh` | AdaptiveMerge3D | 4、8、16、32× | 2e-4 / 2e-4 |
+| `run_token_select3d_constant_lr.sh` | TokenSelect3D | 4、8、16、32× | 2e-4 / 2e-4 |
+
+上限实验单独使用
+`scripts/ft_ablation/run_avgpool3d_r8_lr4e-4.sh`：AvgPool3D，默认 8×，两组 LR 均为 4e-4。
+七种 baseline 不自动扫描多个 LR；每个入口只使用顶部填写的那一组 LR。
+
+### 在每个 shell 顶部修改实验参数
+
+```bash
+export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0}"
+projector_ratios=(4 8 16 32)  # 例如只跑 8× 时改为 (8)；MLP 必须为 (1)
+projector_lr=2e-4
+encoder_lr=2e-4               # Vision Encoder LoRA LR
+projector_max_epochs=20
+projector_seed=42
+projector_warmup_steps=77
+projector_hold_steps=0
+joint_warmup_steps=77
+joint_warmup_projector_mode=hold_peak
+cosine_min_lr_ratio=1.0
+early_stopping_enabled=true
+early_stopping_patience=3
+early_stopping_min_delta=0.005
+projector_run_tag="${PROJECTOR_RUN_TAG:-}"
+```
+
+默认执行 77 步 projector warm-up，然后执行 77 步 LoRA warm-up；后者期间
+projector 保持峰值。此后两组 LR 恒定，Adam 状态连续保留。
+最多 20 epochs，当前数据每轮 123 updates，总预算上限 2460；各阶段包含在此预算内。
+不额外增加 projector hold，也不保存/评测固定 epoch 的里程碑 checkpoint。
+
+早停监控每轮完整 validation 的 answer CE，在 warm-up 结束后计数。
+`min_delta=0.005` 相对于上次达到有效改善的参考值；连续 3 次验证未达到该门槛即停止。
+`best.pt` 独立按历史最低 validation CE 保存，即使本次下降不足 0.005 也更新。
+训练达到预算或早停后，自动评测该档 `best.pt` 的完整 test split 和全部指标，随后进入下一档。
+每档重新初始化，不继承其他压缩率或旧实验的 projector、LoRA 或优化器状态。
+
+共享配置保留 AdamW、有效 batch size 16（microbatch 1）、LoRA rank 16 / alpha 32、
+BF16、确定性设置及模块级优化器诊断。Perceiver-NV 沿用方法配置的 activation checkpointing。
+日志、最佳/最后 checkpoint、逐样本评测结果均写入独立 run；已有同名 run 会拒绝覆盖。
+默认 run 名包含方法、两组 LR 和 UTC 时间戳；显式指定 run-tag 时使用新名称。
+
+### 使用与预检
+
+```bash
+# 在仓库根目录，先激活本机已有训练环境。
+conda activate projector
+export PROJECTOR_PYTHON="$CONDA_PREFIX/bin/python"
+
+# 根据本机空闲 GPU 修改编号；--dry-run 不训练、不加载模型、不创建 run 目录。
+CUDA_VISIBLE_DEVICES=0 bash scripts/ft_ablation/run_avgpool3d_r8_lr4e-4.sh --dry-run
+CUDA_VISIBLE_DEVICES=0 bash scripts/ft_ablation/run_concat3d_constant_lr.sh --dry-run
+
+# 正式运行由用户在自己的 tmux 窗口手动启动。
+CUDA_VISIBLE_DEVICES=0 bash scripts/ft_ablation/run_avgpool3d_r8_lr4e-4.sh
+CUDA_VISIBLE_DEVICES=1 bash scripts/ft_ablation/run_concat3d_constant_lr.sh
+
+# 也可从命令行缩小压缩率范围；修改 LR 时可直接编辑 shell 顶部。
+CUDA_VISIBLE_DEVICES=1 bash scripts/ft_ablation/run_local_packer3d_constant_lr.sh \
+  --ratios 8 --run-tag local_packer_constlr_r8_v1
+```
+
+默认预检应显示 train/val/test = 1960/268/560，warm-up = 77/77，hold = 0，
+floor ratio = 1.0，早停开启，最终 checkpoint 为 `best.pt`，评测范围为 `test/full_split`，
+指标为 all。`--dry-run` 检查数据与输入几何及命令计划，不代替真实模型显存/训练验收。
+方法、完整 test 范围和全部指标由新入口固定；其余命令行参数可覆盖 shell 默认值。
+更改训练设置应新建实验；显式使用 `--resume-run` 时遵循该 run 已保存的原配置。
+
+### 另一台服务器的同步说明
+
+新入口按仓库相对位置定位代码；Python 依次使用 `PROJECTOR_PYTHON`、已激活 Conda
+环境的 `bin/python`、PATH 中的 Python。数据/模型/缓存路径保存在各服务器自己
+Git 忽略的 `configs/local_paths.yaml`，也可用 `PROJECTOR_LOCAL_CONFIG` 指定。
+输出根目录可用 `PROJECTOR_OUTPUT_ROOT` 覆盖。同步时保留本机这些路径和 GPU 设置；
+不要把另一台服务器的绝对路径直接复制进来。
+
+给另一台服务器 Codex 的操作说明：
+
+1. 以用户提供的已上传发布 commit 为目标。检查 `git status --short --untracked-files=all`
+   和 `git diff`，审阅并保存本地修改，确认路径配置受到 Git 忽略。不要使用 reset --hard、clean。
+2. 执行 `git fetch origin main`、`git pull --ff-only origin main`、`git rev-parse HEAD`，
+   核对发布 commit 已包含在 HEAD 中。不能快进时先审阅差异、保留本地工作后处理，避免覆盖。
+3. 激活该服务器的 projector 环境，确认 `PROJECTOR_PYTHON` 指向该环境，核对本机
+   `configs/local_paths.yaml`、预训练资产、数据和评测资产。
+4. 检查八个新入口顶部设置和本机 GPU，分别执行 `--dry-run`；核对上述样本数、
+   日程、LoRA 配置、完整 test 指标和数据划分身份。不要自动启动正式训练。
+5. 用户在自己的 tmux 中修改 GPU/压缩率后执行对应脚本。每个新 run 从预训练资产独立启动。
+
+## 原始 baseline 入口
+
 BindFormer 入口 `run_bindformer3d.sh`（默认 8/16/32×，GPU 3）和 `run_bindformer3d_2.sh`（默认 4×，GPU 1）也使用此处相同的 `joint_lora` 训练、完整 BraTS test 评测和 `all` 指标协议。其概念记忆和 BindFormer 参数由专用 sweep 配置；训练与评价调度和普通 baseline 对齐。
 
 BindFormer 的几何、包内 SA、局部读取全局和特征重建均已实现，但默认关闭；四角色 query 数默认均为 1。参数、独立消融命令和教师缓存导出方法见[设计文档第 26 节](../../Pipeline_0929/BINDFORMER_DESIGN_AND_IMPLEMENTATION_PLAN.md#26-可选结构与特征重建实现2026-10-16)，测试范围和待决策项见[扩展验收记录](../../Pipeline_0929/BINDFORMER_EXTENSIONS_ACCEPTANCE.md)。`L_text` 暂不实现。
