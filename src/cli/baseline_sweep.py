@@ -18,9 +18,9 @@ from omegaconf import OmegaConf
 
 from src.config import ROOT, digest, load_config, save_config, validate
 from src.models.projectors.specs import DEFAULTS
+from src.models.projectors.budget import DEFAULT_RATIOS, SUPPORTED_RATIOS
 
 
-RATIOS = (4, 8, 16, 32)
 RESERVED = (
     'project_root', 'projector.name', 'projector.target_compression_ratio',
     'projector.resolved_budget', 'projector.params.num_tokens',
@@ -36,7 +36,7 @@ def parser():
     cli.add_argument('--run-tag', help='New directory name; default: method + UTC timestamp')
     cli.add_argument('--output-root', type=Path, default=ROOT / 'runs/baselines')
     cli.add_argument('--ratios', nargs='+', type=int,
-                     help='Default: 4 8 16 32; MLP supports only 1 and runs once')
+                     help='Supports 4 8 16 32 64; default: 4 8 16 32; MLP supports only 1')
     cli.add_argument('--device', help='Training and generation device; default from config (cuda:0), relative to CUDA_VISIBLE_DEVICES')
     cli.add_argument('--scoring-device', help='Offline metrics device; default: same as training')
     cli.add_argument('--eval-split', choices=['val', 'test'], default='test')
@@ -59,8 +59,8 @@ def parser():
 
 def checked_ratios(args):
     ratios = args.ratios if args.ratios is not None else (
-        [1] if args.projector == 'mlp2x_gelu' else list(RATIOS))
-    allowed = {1} if args.projector == 'mlp2x_gelu' else set(RATIOS)
+        [1] if args.projector == 'mlp2x_gelu' else list(DEFAULT_RATIOS))
+    allowed = {1} if args.projector == 'mlp2x_gelu' else set(SUPPORTED_RATIOS)
     if not ratios or len(ratios) != len(set(ratios)) or not set(ratios) <= allowed:
         raise ValueError(f'{args.projector} ratios must be unique values from {sorted(allowed)}')
     return sorted(ratios)

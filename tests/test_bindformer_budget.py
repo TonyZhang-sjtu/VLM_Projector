@@ -7,7 +7,7 @@ from src.models.projectors.budget import resolve_budget
 
 
 @pytest.mark.parametrize('ratio,m,g,k', [(4,2194,550,411), (8,1097,273,206),
-                                      (16,549,137,103), (32,275,67,52)])
+                                      (16,549,137,103), (32,275,67,52), (64,138,34,26)])
 def test_confirmed_budget_table_and_reload(ratio, m, g, k, tmp_path):
     c = load_config(['configs/projector/bindformer3d.yaml'],
                     [f'projector.target_compression_ratio={ratio}'])

@@ -10,6 +10,14 @@
 # Experiment artifacts stay on their original server; retain the shared guide.
 /results/*
 !/results/BASELINE_RESULTS_ENTRY_GUIDE.md
+# Runtime sources required by the isolated role-value-adapter launchers.
+# Keep their established paths; all experiment outputs remain ignored.
+!/results/BindFormer_role_value_adapter_r16/
+/results/BindFormer_role_value_adapter_r16/*
+!/results/BindFormer_role_value_adapter_r16/_launch.bash
+!/results/BindFormer_role_value_adapter_r16/entry.py
+!/results/BindFormer_role_value_adapter_r16/runtime.py
+!/results/BindFormer_role_value_adapter_r16/reader_adapter.py
 
 # Existing local launchers; portable FT entries live in scripts/ft_ablation/.
 /scripts/baselines/run_avgpool3d_r8_lr_floor20_restart.sh

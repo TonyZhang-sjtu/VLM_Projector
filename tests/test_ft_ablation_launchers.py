@@ -20,9 +20,9 @@ def test_entrypoint_arguments_from_another_directory(tmp_path,index,lr,hold,epoc
     local=tmp_path/'local_paths.yaml';local.write_text('{}\n')
     env=dict(os.environ,PROJECTOR_PYTHON=str(capture),PROJECTOR_LOCAL_CONFIG=str(local),
              CUDA_VISIBLE_DEVICES='7',FT_RUN_TAG='portable_test')
-    script=ROOT/f'scripts/ft_ablation/e{index}.sh'
+    script=ROOT/f'scripts/ft_ablation/Exp1018/e{index}.sh'
     subprocess.run(['bash','-n',str(script)],check=True)
-    subprocess.run(['bash','-n',str(script.parent/'_common.bash')],check=True)
+    subprocess.run(['bash','-n',str(script.parent.parent/'_common.bash')],check=True)
     result=subprocess.run(['bash',str(script),'--dry-run'],cwd=tmp_path,env=env,
                           text=True,capture_output=True,check=True)
     value=json.loads(result.stdout);args=value['args']
@@ -52,7 +52,7 @@ def test_conda_python_precedes_path_and_explicit_override_wins(tmp_path,explicit
     env.pop('PROJECTOR_PYTHON',None)
     env.pop('PROJECTOR_LOCAL_CONFIG',None)
     if explicit:env['PROJECTOR_PYTHON']=str(tmp_path/'explicit_python')
-    result=subprocess.run(['bash',str(ROOT/'scripts/ft_ablation/e1.sh'),'--dry-run'],
+    result=subprocess.run(['bash',str(ROOT/'scripts/ft_ablation/Exp1018/e1.sh'),'--dry-run'],
                           cwd=tmp_path,env=env,text=True,capture_output=True,check=True)
     value=json.loads(result.stdout)
     assert value['selected']==('explicit' if explicit else 'conda')

@@ -5,6 +5,10 @@ from .budget import ROLES, allocate_tokens, role_counts
 # Pruned only when equal to these defaults in the provenance contract. This
 # permits old disabled-extension runs to resume without weakening other checks.
 EXTENSION_DEFAULTS = {
+    'router_value_normalization': False, 'router_value_projection': False,
+    'fixed_spatial_regions': False,
+    'spatial_mean_aggregation': False, 'spatial_adaptive_aggregation': False,
+    'spatial_attention_temperature': 1.0,
     'role_query_counts': {r: 1 for r in ROLES},
     'geometry_space': 'grid', 'geometry_hidden_dim': 128,
     'geometry_coordinate_scale': 100.0, 'geometry_volume_scale': 1000.0,
@@ -48,9 +52,18 @@ def validate_params(params):
     if type(params['inner_dim']) is not int or params['inner_dim'] < 1:
         raise ValueError('BindFormer inner_dim must be a positive integer')
     for key in ('background_slot', 'sequence_condition', 'return_auxiliary',
-                'geometry_enabled', 'within_slot_sa', 'local_reads_global'):
+                'geometry_enabled', 'within_slot_sa', 'local_reads_global',
+                'router_value_normalization', 'router_value_projection',
+                'fixed_spatial_regions', 'spatial_mean_aggregation', 'spatial_adaptive_aggregation'):
         if type(params[key]) is not bool:
             raise ValueError(f'{key} must be boolean')
+    aggregators = int(params['spatial_mean_aggregation']) + int(params['spatial_adaptive_aggregation'])
+    if aggregators != int(params['fixed_spatial_regions']):
+        raise ValueError('fixed_spatial_regions requires exactly one of spatial_mean_aggregation/'
+                         'spatial_adaptive_aggregation; both must be false when regions are disabled')
+    temperature = params['spatial_attention_temperature']
+    if type(temperature) not in (int, float) or not math.isfinite(temperature) or temperature <= 0:
+        raise ValueError('spatial_attention_temperature must be positive and finite')
     eps = params['slot_epsilon']
     if type(eps) not in (int, float) or not math.isfinite(eps) or not 0 < eps < 1:
         raise ValueError('slot_epsilon must be finite and in (0,1)')

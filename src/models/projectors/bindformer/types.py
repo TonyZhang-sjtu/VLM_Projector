@@ -19,6 +19,10 @@ class BindFormerAuxiliary:
     patch_volumes: Tensor | None = None
     geometry_centers: Tensor | None = None
     geometry_space: str | None = None
+    evidence_weights: Tensor | None = None  # [N,K], normalized per slot; distinct from occupancy
+    region_indices: Tensor | None = None
+    region_valid: Tensor | None = None
+    reader_role_tokens: Tensor | None = None  # before SA and global-to-local CA
 
 
 class GeometryProvider(Protocol):

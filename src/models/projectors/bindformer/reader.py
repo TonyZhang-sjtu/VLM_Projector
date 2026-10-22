@@ -36,12 +36,42 @@ class SupportReader(nn.Module):
                 dropout_p=self.dropout if self.training else 0.)
         return attended.transpose(1,2).reshape(k_slots,roles,dim)
 
-    def forward(self, queries, visual, assignments):
+    def _attend_regions(self, query, keys, values, support, valid):
+        slots, roles, dim = query.shape
+        q = query.reshape(slots, roles, self.heads, dim//self.heads).transpose(1, 2)
+        k, v = [x.reshape(slots, -1, self.heads, dim//self.heads).transpose(1, 2)
+                for x in (keys, values)]
+        with torch.autocast(device_type=query.device.type, enabled=False):
+            bias = (support.to(accumulation_dtype(support))+self.epsilon).log()[:, None, :]
+            bias = bias*self.support_beta.float()[None, :, None]
+            # Apply hard mask AFTER beta multiplication, including beta=0.
+            bias = bias.masked_fill(~valid[:, None, :], -torch.inf)[:, None].to(query.dtype)
+        context = sdpa_kernel(SDPBackend.MATH) if torch.are_deterministic_algorithms_enabled() else nullcontext()
+        with context:
+            attended = F.scaled_dot_product_attention(
+                q, k, v, attn_mask=bias, dropout_p=self.dropout if self.training else 0.)
+        return attended.transpose(1, 2).reshape(slots, roles, dim)
+
+    def forward(self, queries, visual, assignments, regions=None):
         k_slots, roles, dim = queries.shape
         if assignments.shape != (len(visual),k_slots) or roles != len(self.support_beta):
             raise ValueError('SupportReader requires [N,K] support for [K,R,d] queries')
         query = self.to_q(self.norm_query(queries))
         keys,values = self.to_kv(self.norm_visual(visual)).chunk(2,-1)
+        if regions is not None:
+            outputs = []
+            count = max(1, self.chunk_size//roles)
+            for start in range(0, k_slots, count):
+                ids, valid = regions.indices[start:start+count], regions.valid[start:start+count]
+                columns = torch.arange(start, start+len(ids), device=ids.device)[:, None]
+                args = (query[start:start+count], keys[ids], values[ids],
+                        assignments[ids, columns], valid)
+                if self.checkpoint_blocks and self.training and torch.is_grad_enabled():
+                    outputs.append(checkpoint(self._attend_regions, *args, use_reentrant=False))
+                else:
+                    outputs.append(self._attend_regions(*args))
+            tokens = self.to_out(torch.cat(outputs, dim=0))
+            return tokens+self.ffn(tokens)
         keys,values = [x.reshape(1,-1,self.heads,dim//self.heads).transpose(1,2) for x in (keys,values)]
         count = max(1,self.chunk_size//roles)
         outputs = []

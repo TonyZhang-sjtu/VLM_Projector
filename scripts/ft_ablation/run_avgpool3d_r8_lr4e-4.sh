@@ -5,7 +5,7 @@ set -Eeuo pipefail
 # ===== 本次实验设置；可直接修改，命令行 --set / --ratios 也可覆盖 =====
 export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0}"
 projector_method=avgpool3d
-projector_ratios=(8)  # 上限实验默认 8x；压缩率可改为 (4 8 16 32)。
+projector_ratios=(8)  # 支持 (64)、(32 64) 或原有倍率；也可用 --ratios 覆盖。
 projector_lr=4e-4
 encoder_lr=4e-4  # Vision Encoder LoRA LR
 projector_max_epochs=20

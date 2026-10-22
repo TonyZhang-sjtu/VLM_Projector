@@ -41,6 +41,14 @@ class StructuredProjector(Projector):
                              **details, **output_info(self.budget, len(features), len(output))}
         return ProjectedVolume(output, len(features), len(output), info, auxiliary).validate(self.output_dim)
 
+    def partition(self, grid, metadata):
+        """Use the preflight grid verbatim; manual mode keeps its original policy."""
+        from src.models.projectors.geometry import grid_groups, partition
+        if self.budget:
+            output = tuple(self.budget['output_grid_dhw'])
+            return output, grid_groups(tuple(grid), output)
+        return partition(grid, metadata, self.params['num_tokens'], self.params['budget_policy'])
+
 
 class QueryBlock(nn.Module):
     """Pre-norm cross-attention and FFN. Optional latent K/V enables query interaction."""

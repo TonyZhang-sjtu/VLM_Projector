@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch.utils.checkpoint import checkpoint
 from src.models.projectors.common import StructuredProjector, QueryBlock, mapping_head
-from src.models.projectors.geometry import partition, pack_groups, group_metadata
+from src.models.projectors.geometry import pack_groups, group_metadata
 
 
 class LocalPacker3D(StructuredProjector):
@@ -17,7 +17,7 @@ class LocalPacker3D(StructuredProjector):
 
     def forward(self,features,coords,metadata):
         grid=self.inputs(features,coords,metadata)
-        output_grid,groups=partition(grid,metadata,self.params['num_tokens'],self.params['budget_policy'])
+        output_grid,groups=self.partition(grid,metadata)
         memory,valid=pack_groups(self.adapt(features),groups)
         queries=(memory.float().sum(1)/valid.sum(1)[:,None]).to(memory.dtype).unsqueeze(1)
         for layer in self.layers:

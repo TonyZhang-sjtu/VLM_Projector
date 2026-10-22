@@ -24,7 +24,7 @@
 
 ```bash
 export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0}"
-projector_ratios=(4 8 16 32)  # 例如只跑 8× 时改为 (8)；MLP 必须为 (1)
+projector_ratios=(4 8 16 32)  # 可改为 (64) 或 (32 64)；MLP 必须为 (1)
 projector_lr=2e-4
 encoder_lr=2e-4               # Vision Encoder LoRA LR
 projector_max_epochs=20

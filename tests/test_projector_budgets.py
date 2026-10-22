@@ -20,6 +20,7 @@ EXPECTED = {
     8: (1097, 1100, (10, 10, 11), 1125, (8, 1, 1)),
     16: (549, 550, (5, 10, 11), 525, (6, 1, 3)),
     32: (275, 275, (5, 5, 11), 280, (6, 2, 3)),
+    64: (138, 144, (4, 6, 6), 140, (6, 3, 4)),
 }
 METHODS = sorted(GRID_METHODS | EXACT_METHODS | {'concat3d'})
 
@@ -157,7 +158,8 @@ def test_preflight_mixed_geometry_rejected(monkeypatch):
 
 
 @pytest.mark.parametrize('name', ['avgpool3d', 'concat3d', 'perceiver_nv'])
-def test_checkpoint_budget_preserved_and_other_ratio_rejected(name, tmp_path):
+@pytest.mark.parametrize('ratio', [8, 64])
+def test_checkpoint_budget_preserved_and_other_ratio_rejected(name, ratio, tmp_path):
     from src.training.checkpoint import save_checkpoint, load_checkpoint
     def model(ratio):
         c = ratio_config(name, ratio, ['projector.hidden_size=16'])
@@ -166,9 +168,9 @@ def test_checkpoint_budget_preserved_and_other_ratio_rejected(name, tmp_path):
         m.projector = build_projector(c, 8, 16)
         m.encoder = nn.Linear(8,8); m.encoder.requires_grad_(False); m.encoder.lora_targets = []
         return m
-    m = model(8); p = tmp_path/'checkpoint.pt'
+    m = model(ratio); p = tmp_path/'checkpoint.pt'
     save_checkpoint(p, m, None, None, {}, {})
-    restored = model(8); load_checkpoint(p, restored)
+    restored = model(ratio); load_checkpoint(p, restored)
     for a,b in zip(m.projector.parameters(), restored.projector.parameters()):
         torch.testing.assert_close(a,b,rtol=0,atol=0)
     with pytest.raises(ValueError, match='projector configuration'):

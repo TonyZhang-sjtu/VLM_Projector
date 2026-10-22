@@ -4,7 +4,7 @@ run_ft_ablation() {
   local ft_root ft_python ft_local_config
   local -a ft_path_args=()
   local -a ft_recipe_args=()
-  ft_root="$(cd -- "$ft_script_dir/../.." && pwd)"
+  ft_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
   cd -- "$ft_root"
 
   if [[ ! "$CUDA_VISIBLE_DEVICES" =~ ^[0-9]+$ ]]; then

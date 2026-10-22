@@ -10,7 +10,7 @@ import torch
 from src.config import ROOT, load_config
 from src.data.manifest import load_manifests
 from src.models.multimodal import MultimodalModel
-from src.models.projectors.budget import prepare_budget
+from src.models.projectors.budget import SUPPORTED_RATIOS, prepare_budget
 from src.preprocessing.registry import build_preprocessor
 from src.training.checkpoint import provenance
 from src.training.optim import build_optimizer
@@ -21,7 +21,7 @@ from src.training.trainer import seed_all
 def main():
     cli=argparse.ArgumentParser(__doc__)
     cli.add_argument('--device',required=True)
-    cli.add_argument('--ratio',type=int,choices=(4,8,16,32),default=32)
+    cli.add_argument('--ratio',type=int,choices=SUPPORTED_RATIOS,default=32)
     cli.add_argument('--output',default='runs/bindformer_acceptance/runtime.json')
     args=cli.parse_args()
     config=load_config([ROOT/'configs/training/stage_a.yaml',

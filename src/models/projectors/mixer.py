@@ -3,7 +3,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 from src.models.projectors.common import StructuredProjector, mapping_head
-from src.models.projectors.geometry import partition, grid_mean, group_metadata
+from src.models.projectors.geometry import grid_mean, group_metadata
 
 
 class WindowMixerBlock(nn.Module):
@@ -49,7 +49,7 @@ class Mixer3D(StructuredProjector):
 
     def forward(self,features,coords,metadata):
         grid=self.inputs(features,coords,metadata)
-        output_grid,groups=partition(grid,metadata,self.params['num_tokens'],self.params['budget_policy'])
+        output_grid,groups=self.partition(grid,metadata)
         x=self.adapt(features)
         x=self.blocks(x.reshape(*grid,x.shape[-1])).reshape(len(features),-1)
         return self.finish(self.head(grid_mean(x,groups)),features,metadata,output_grid=list(output_grid),

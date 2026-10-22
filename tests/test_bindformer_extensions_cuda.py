@@ -11,7 +11,7 @@ DEVICE=os.getenv('PROJECTOR_TEST_DEVICE')
 pytestmark=pytest.mark.skipif(DEVICE is None,reason='Set PROJECTOR_TEST_DEVICE explicitly')
 
 
-@pytest.mark.parametrize('ratio,expected',[(4,2194),(8,1097),(16,549),(32,275)])
+@pytest.mark.parametrize('ratio,expected',[(4,2194),(8,1097),(16,549),(32,275),(64,138)])
 @pytest.mark.parametrize('deterministic',[True,False])
 def test_full_grid_all_extensions_bf16(ratio,expected,deterministic):
     device=torch.device(DEVICE);torch.cuda.set_device(device)

@@ -18,5 +18,5 @@ ft_run_tag="${FT_RUN_TAG:-ft1017_e2_avgpool3d_r8_lr2e-5_p500_ep10_v1}"
 # Shared settings: LoRA rank=16/alpha=32; hold_peak; cosine floor=0.2.
 # Shared runner includes --eval-split test --metrics all --require-full-test.
 ft_script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-source "$ft_script_dir/_common.bash"
+source "$ft_script_dir/../_common.bash"
 run_ft_ablation "$@"

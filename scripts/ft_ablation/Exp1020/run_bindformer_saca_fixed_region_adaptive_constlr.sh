@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# SA+CA, fixed spatial regions + adaptive evidence aggregation (former R3).
+set -Eeuo pipefail
+
+# ===== 训练参数：可直接编辑；外部 CUDA_VISIBLE_DEVICES 优先 =====
+export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-3}"
+projector_method=bindformer3d
+projector_ratios=(8 16 32)  # 支持 (64)、(32 64) 或原有倍率；也可用 --ratios 覆盖。
+projector_lr=2e-4
+encoder_lr=2e-4  # Vision Encoder LoRA LR
+projector_max_epochs=20
+projector_seed=42
+projector_effective_batch_size=16
+projector_microbatch_per_device=1
+encoder_lora_rank=16
+encoder_lora_alpha=32
+projector_warmup_steps=77
+projector_hold_steps=0
+joint_warmup_steps=77
+joint_warmup_projector_mode=hold_peak
+cosine_min_lr_ratio=1.0  # 两段预热后恒定 LR
+early_stopping_enabled=true
+early_stopping_patience=3
+early_stopping_min_delta=0.005  # 完整 validation CE
+projector_run_tag="${PROJECTOR_RUN_TAG:-}"  # 留空：自动生成独立名称；可自定义。
+
+# ===== BindFormer 结构：SA/CA 可分别开关；均 false 即 vanilla 交互路径 =====
+routing_variant=fixed_region_adaptive
+bind_variant="saca_${routing_variant}"  # 改 SA/CA 时可同步改名称，或自定义 run tag。
+bind_within_slot_sa=true
+bind_local_reads_global=true
+bind_within_slot_sa_depth=1
+bind_local_global_depth=1
+bind_local_global_gate_init=0.1
+bind_global_fraction=0.25
+bind_slot_iterations=3
+bind_knowledge_mode=name_definition
+bind_geometry_enabled=false
+bind_feature_loss_weight=0.0  # 当前 CE-only；已有 feature loss 是全 token 重建。
+bind_head_type=mlp  # mlp: Linear–GELU–Linear；可改为 linear。
+
+# ===== 固定空间区域 + 区域内自适应 evidence；区域边界固定，仅聚合权重学习 =====
+# BIND_* 环境变量优先于下列默认值；命令行 --set 的优先级最高。
+routing_value_normalization="${BIND_ROUTER_VALUE_NORMALIZATION:-true}"
+routing_value_projection="${BIND_ROUTER_VALUE_PROJECTION:-false}"
+routing_fixed_regions="${BIND_FIXED_SPATIAL_REGIONS:-true}"
+routing_mean="${BIND_SPATIAL_MEAN_AGGREGATION:-false}"
+routing_adaptive="${BIND_SPATIAL_ADAPTIVE_AGGREGATION:-true}"
+routing_attention_temperature="${BIND_SPATIAL_TEMPERATURE:-1.0}"
+# fixed_regions=true 时 mean/adaptive 必须恰有一个 true；false 时两者均 false。
+# 四角色各 1 query；其余辅助损失为 0；UMLS 范围 brats_train。
+# 每个 ratio 从头训练，再对 best.pt 自动执行完整 test/all 评测。
+# 机器路径沿用 configs/local_paths.yaml；Python 可由 PROJECTOR_PYTHON 指定。
+
+routing_script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+source "$routing_script_dir/_common_constlr.bash"
+run_bindformer_routing_constlr "$@"

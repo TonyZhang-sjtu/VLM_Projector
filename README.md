@@ -8,6 +8,9 @@
 [环境与迁移说明](docs/ENVIRONMENT_AND_MIGRATION.md)。Git 不包含数据、标注、模型、缓存、
 训练输出或登录 token。仓库 checkout 路径由 `project_root: null` 自动识别。
 
+已有服务器同步本轮 64× / BindFormer 更新并验证运行，见
+[第二台服务器操作 prompt](docs/SERVER2_SYNC_64X_20261021.md)，沿用各机自己的路径配置。
+
 ```bash
 source /home/mingjie/anaconda3/etc/profile.d/conda.sh
 conda activate projector
@@ -56,7 +59,9 @@ bash scripts/train_projector.sh avgpool3d joint_lora runs/baselines/avgpool3d/r8
   --set training.device=cuda:1 --set projector.target_compression_ratio=8
 ```
 
-压缩入口支持目标 `N/M=4/8/16/32`，各方法保留原机制：网格方法按最近网格取整，Query/Merge/Selection 直接使用 `ceil(N/r)`，Concat 使用已确认的 BraTS 固定分块。实际 M 不强制相同。自动预检当前支持 NeuroVFM 的 `native_grid + minimal_pad`、完整 patch 网格；在加载模型前检查选定 MRI 文件头，运行时再次核对几何与输出。旧的显式 `projector.params.num_tokens/group_size` 模式仍可用，但不能与 ratio 同时指定。完整表格和恢复规则见 [baseline 文档第15节](Pipeline_0929/PROJECTOR_ROUTES_AND_BASELINES.md)。
+压缩入口支持目标 `N/M=4/8/16/32/64`。4/8/16/32 保持原预算；64× 在当前 BraTS 网格 `[39,15,15]`、物理范围 `[156,240,240]` mm 下，AvgPool/ConvPool/Mixer/LocalPacker 使用 `[4,6,6]` 输出网格（144 token，60.938×），Concat 使用 `[6,3,4]` 固定块（140 token，62.679×），BindFormer/Query/Merge/Selection 输出 `ceil(8775/64)=138`（63.587×）。BindFormer 默认分配为 `34+26×4`。实际 M 不强制相同。
+
+可直接把压缩方法脚本顶部改为 `projector_ratios=(64)` 或 `(32 64)`，也可传 `--ratios 64`；其余训练参数和原默认倍率列表不变，MLP 仍只支持 1×。自动预检当前支持 NeuroVFM 的 `native_grid + minimal_pad`、完整 patch 网格；在加载模型前检查选定 MRI 文件头，运行时再次核对几何与输出。64× 网格预设和 Concat 预设对其他输入几何明确报错。旧的显式 `projector.params.num_tokens/group_size` 模式仍可用，但不能与 ratio 同时指定。原四档表格和恢复规则见 [baseline 文档第15节](Pipeline_0929/PROJECTOR_ROUTES_AND_BASELINES.md)。
 
 ```bash
 python -m src.cli.config --set projector.name=concat3d \

@@ -141,6 +141,8 @@ def write_summary(run, entries):
 
 
 def execute_plan(plan, resume=False):
+    from src.cli.ft_evaluation_policy import apply_policy
+    apply_policy(plan)
     sweep.validate_full_test_plan(plan)
     if plan.get('runner') != 'ft_experiments' or len(plan['runs']) != 1:
         raise ValueError('Not an N-series experiment plan')
@@ -172,6 +174,14 @@ def execute_plan(plan, resume=False):
             sweep.run_logged(run['train_command'], Path(run['directory']) / 'train_console.log', append=resume)
         if not sweep.training_finished(best):
             raise ValueError('Training completion and best.pt are required before test evaluation')
+        # Re-read only the evaluation selection at the training/evaluation
+        # boundary. This never alters the saved training config or checkpoint.
+        if apply_policy(plan):
+            sweep.write_json(root / 'evaluation_plan.json', {
+                'training_plan': str(root / 'sweep_plan.json'),
+                'evaluation_checkpoint_epochs': run['evaluation_checkpoint_epochs'],
+                'evaluations': run['evaluations'],
+            })
         training_state = json.loads((best.parent.parent / 'training_state.json').read_text())
         for job in run['evaluations']:
             state.update(phase='evaluation', active_checkpoint=job['label'])
@@ -259,6 +269,8 @@ def main():
                 if args.resume_run else build_plan(args))
         if plan.get('runner') != 'ft_experiments':
             raise ValueError('Use the matching launcher to resume this plan')
+        from src.cli.ft_evaluation_policy import apply_policy
+        apply_policy(plan)
         sweep.validate_full_test_plan(plan)
     except (ValueError, FileExistsError, FileNotFoundError) as exc:
         cli.error(str(exc))

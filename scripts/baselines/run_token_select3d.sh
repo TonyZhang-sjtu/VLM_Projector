@@ -3,7 +3,7 @@
 set -Eeuo pipefail
 
 # ===== 本次实验设置 =====
-projector_ratios=(8 16)    # 只跑 8×、16×；也可以写 (8)、(16)、(4 8 16 32)
+projector_ratios=(8 16)  # 支持 (64)、(32 64) 或原有倍率；也可用 --ratios 覆盖。
 projector_run_tag="token_select_r8_r16"      # 留空：自动生成时间戳名称；也可填 token_select_r8_r16
 
 export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-3}"

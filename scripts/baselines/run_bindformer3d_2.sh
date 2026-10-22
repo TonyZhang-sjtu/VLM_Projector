@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # BindFormer joint-LoRA baseline sweep; default ratio 4 on GPU 1.
 set -Eeuo pipefail
-projector_ratios=(4)
+projector_ratios=(4)  # 支持 (64)、(32 64) 或原有倍率；也可用 --ratios 覆盖。
 export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-1}"
 projector_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
 projector_python="${PROJECTOR_PYTHON:-/mnt/sda/mingjie/conda_envs/projector/bin/python}"

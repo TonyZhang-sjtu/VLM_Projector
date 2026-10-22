@@ -3,7 +3,7 @@
 set -Eeuo pipefail
 
 # ===== 本次实验设置；命令行 --ratios / --run-tag 可覆盖 =====
-projector_ratios=(4 8 16 32)    # 可改为 (8)、(16)、(8 16) 等
+projector_ratios=(4 8 16 32)  # 支持 (64)、(32 64) 或原有倍率；也可用 --ratios 覆盖。
 projector_run_tag=""    # 留空自动生成时间戳；手动指定时每次使用新名称
 
 export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-3}"

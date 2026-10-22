@@ -22,15 +22,15 @@ from src.cli.baseline_sweep import (
 )
 from src.cli.evaluate_checkpoint import metric_selection, select_samples
 from src.config import ROOT, load_config, validate
-from src.models.projectors.budget import prepare_budget, resolve_budget
+from src.models.projectors.budget import DEFAULT_RATIOS, SUPPORTED_RATIOS, prepare_budget, resolve_budget
 from src.training.schedule import resolve_joint_schedule
 from src.training.trainer import training_budget, select_training_samples
 
 
 def parser():
     cli = argparse.ArgumentParser(description=__doc__)
-    cli.add_argument('--ratios', nargs='+', type=int, choices=(4, 8, 16, 32),
-                     default=[4, 8, 16, 32])
+    cli.add_argument('--ratios', nargs='+', type=int, choices=SUPPORTED_RATIOS,
+                     default=list(DEFAULT_RATIOS))
     cli.add_argument('--global-fraction', type=float, default=0.25)
     cli.add_argument('--slot-iterations', type=int, default=3)
     for role in ('finding','location_laterality','signal','morphology_extent'):

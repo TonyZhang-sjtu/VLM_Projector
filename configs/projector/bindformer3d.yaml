@@ -18,6 +18,14 @@ projector:
     head_type: mlp
     slot_iterations: 3
     background_slot: true
+    # Routing ablations: all disabled preserves the original competitive path.
+    router_value_normalization: false
+    router_value_projection: false
+    fixed_spatial_regions: false
+    # With fixed regions enabled, select exactly one aggregation method.
+    spatial_mean_aggregation: false
+    spatial_adaptive_aggregation: false
+    spatial_attention_temperature: 1.0
     position_mode: grid_fourier
     sequence_condition: true
     knowledge_mode: name_definition

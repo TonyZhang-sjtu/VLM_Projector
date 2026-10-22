@@ -212,6 +212,10 @@ def main():
                      help='Reuse validated generation files in an existing output directory and rerun scoring')
     cli.add_argument('--dry-run', action='store_true', help='Check checkpoint metadata/manifests and display plan without loading VLM/scorers')
     args = cli.parse_args()
+    # An already running N-series launcher may retain an obsolete evaluation
+    # list. Honor a run-local best-only override before allocating any model.
+    from src.cli.ft_evaluation_policy import legacy_handoff
+    legacy_handoff(args)
     try:
         args.metrics = metric_selection(args.metrics)
     except ValueError as exc:

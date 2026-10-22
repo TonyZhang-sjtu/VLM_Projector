@@ -31,7 +31,7 @@ def test_n_launcher_and_real_adamw_rates(tmp_path, index, plr, llr, floor, epoch
     local = tmp_path / 'local paths.yaml'; local.write_text('{}\n')
     env = dict(os.environ, PROJECTOR_PYTHON=str(capture), PROJECTOR_LOCAL_CONFIG=str(local),
                CUDA_VISIBLE_DEVICES='2', PROJECTOR_OUTPUT_ROOT=str(tmp_path / 'outputs'))
-    script = ROOT / f'scripts/ft_ablation/n{index}.sh'
+    script = ROOT / f'scripts/ft_ablation/Exp1018/n{index}.sh'
     subprocess.run(['bash', '-n', str(script)], check=True)
     result = subprocess.run(['bash', str(script), '--dry-run'], env=env, cwd=tmp_path,
                             capture_output=True, text=True, check=True)
@@ -41,7 +41,7 @@ def test_n_launcher_and_real_adamw_rates(tmp_path, index, plr, llr, floor, epoch
     parsed = ft.parser().parse_args(args[3:])
     assert parsed.require_full_test and parsed.eval_split == 'test'
     assert parsed.eval_sample_fraction == 1 and parsed.metrics == ['all']
-    assert parsed.eval_checkpoint_epochs == ([10] if index <= 3 else [])
+    assert parsed.eval_checkpoint_epochs == []
     c = load_config([ROOT / 'configs/training/joint_lora.yaml', *parsed.config], parsed.overrides)
     t = c.training
     assert (t.projector_lr, t.encoder_lr, t.cosine_min_lr_ratio, t.max_epochs,

@@ -9,11 +9,20 @@ from collections import Counter
 from omegaconf import OmegaConf
 
 VERSION = 'method_native_ratio_v1'
+DEFAULT_RATIOS = (4, 8, 16, 32)
+SUPPORTED_RATIOS = (*DEFAULT_RATIOS, 64)
 GRID_METHODS = frozenset(('avgpool3d', 'convpool3d', 'mixer3d', 'local_packer3d'))
 EXACT_METHODS = frozenset(('bindformer3d', 'attention_pool', 'perceiver_nv', 'perceiver_flamingo',
                            'adaptive_merge3d', 'token_select3d'))
-CONCAT_GROUPS = {4: (4, 1, 1), 8: (8, 1, 1), 16: (6, 1, 3), 32: (6, 2, 3)}
+CONCAT_GROUPS = {4: (4, 1, 1), 8: (8, 1, 1), 16: (6, 1, 3), 32: (6, 2, 3),
+                 64: (6, 3, 4)}
 TOLERANCE = 0.05
+
+
+def brats_native_geometry(grid, extent):
+    return tuple(grid) == (39, 15, 15) and all(
+        math.isclose(a, b, rel_tol=1e-6, abs_tol=1e-6)
+        for a, b in zip(extent, (156, 240, 240)))
 
 
 def ratio_value(projector):
@@ -42,16 +51,24 @@ def derive_budget(name, ratio, grid, extent, params=None):
             raise ValueError('Uncompressed MLP supports only ratio 1 (or manual mode)')
         actual, kind = n, 'uncompressed'
     elif name in GRID_METHODS:
-        output_grid = list(choose_grid(grid, raw, extent, 'nearest'))
-        actual, kind = math.prod(output_grid), 'grid_nearest'
+        if ratio == 64:
+            if not brats_native_geometry(grid, extent):
+                raise ValueError('64x grid preset requires BraTS grid [39,15,15] and extent [156,240,240] mm; review a new preset for other geometry')
+            # Approved 64x geometry: nearly isotropic 39x40x40 mm cells.
+            # Keep the raw request (138) and the actual count (144) distinct.
+            # Older ratios and manual nearest-grid budgets remain unchanged.
+            output_grid, kind = [4, 6, 6], 'fixed_grid_brats_r64_v1'
+        else:
+            output_grid = list(choose_grid(grid, raw, extent, 'nearest'))
+            kind = 'grid_nearest'
+        actual = math.prod(output_grid)
     elif name in EXACT_METHODS:
         actual, kind = raw, 'exact_count'
     elif name == 'concat3d':
-        if grid != (39, 15, 15) or any(not math.isclose(a, b, rel_tol=1e-6, abs_tol=1e-6)
-                                                       for a, b in zip(extent, (156, 240, 240))):
+        if not brats_native_geometry(grid, extent):
             raise ValueError('Concat ratio preset requires BraTS grid [39,15,15] and extent [156,240,240] mm; review a new preset for other geometry')
         if ratio not in CONCAT_GROUPS:
-            raise ValueError('Concat ratio preset supports only 4, 8, 16, 32')
+            raise ValueError(f'Concat ratio preset supports only {", ".join(map(str, CONCAT_GROUPS))}')
         group = list(CONCAT_GROUPS[ratio])
         output_grid = [math.ceil(g/k) for g, k in zip(grid, group)]
         actual, kind = math.prod(output_grid), 'fixed_concat_brats_native_v1'

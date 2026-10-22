@@ -109,9 +109,15 @@ bash scripts/train_projector.sh avgpool3d joint_lora runs/brats_avgpool_r8 \
   --set projector.target_compression_ratio=8
 ```
 
-Use 4, 8, 16 or 32; Concat groups are `[4,1,1]`, `[8,1,1]`, `[6,1,3]`,
-`[6,2,3]`. Grid methods retain their existing partitions; query, merge and
-selection methods use `ceil(N/r)`. No common output count is imposed. The
+Use 4, 8, 16, 32 or 64; Concat groups are `[4,1,1]`, `[8,1,1]`, `[6,1,3]`,
+`[6,2,3]`, `[6,3,4]`, respectively. For 64x on the BraTS native geometry,
+grid methods use the approved `[4,6,6]` output grid (144 tokens), Concat outputs
+140 tokens, and query/merge/selection/BindFormer use `ceil(N/r)=138`.
+BindFormer defaults to 34 global tokens plus 26 four-role bundles.
+Older ratios and manual grid policies retain their existing partitions.
+Edit `projector_ratios=(64)` or `(32 64)` in an existing compression launcher,
+or pass `--ratios 64`; training recipes and default ratio lists are unchanged.
+MLP remains uncompressed at ratio 1. No common output count is imposed. The
 automatic geometry adapter currently requires dense NeuroVFM native-grid inputs
 with minimal padding and one geometry per run. It checks all selected train/val
 headers before model allocation and validates actual geometry again at forward.

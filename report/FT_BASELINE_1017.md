@@ -451,9 +451,9 @@ CUDA_VISIBLE_DEVICES='' PYTHONNOUSERSITE=1 OMP_NUM_THREADS=4 \
 
 | 入口 | 默认物理卡号（可改） | Projector LR | LoRA LR | 下限比例 | 总 epochs / updates | CE 早停 | 保存 checkpoint | 自动评测 |
 | --- | ---: | ---: | ---: | ---: | --- | --- | --- | --- |
-| `scripts/ft_ablation/n1.sh` | 0 | 5e-5 | 5e-5 | 1.0 | 20 / 2460 | 关闭 | epoch 5/10/15/20、best | 仅 epoch 10、best |
-| `scripts/ft_ablation/n2.sh` | 1 | 1e-4 | 1e-4 | 1.0 | 20 / 2460 | 关闭 | epoch 5/10/15/20、best | 仅 epoch 10、best |
-| `scripts/ft_ablation/n3.sh` | 2 | 2e-4 | 2e-4 | 1.0 | 20 / 2460 | 关闭 | epoch 5/10/15/20、best | 仅 epoch 10、best |
+| `scripts/ft_ablation/n1.sh` | 0 | 5e-5 | 5e-5 | 1.0 | 20 / 2460 | 关闭 | epoch 5/10/15/20、best | 仅 best |
+| `scripts/ft_ablation/n2.sh` | 1 | 1e-4 | 1e-4 | 1.0 | 20 / 2460 | 关闭 | epoch 5/10/15/20、best | 仅 best |
+| `scripts/ft_ablation/n3.sh` | 2 | 2e-4 | 2e-4 | 1.0 | 20 / 2460 | 关闭 | epoch 5/10/15/20、best | 仅 best |
 | `scripts/ft_ablation/n4.sh` | 3 | 5e-5 | 4e-5 | 0.2 | 10 / 1230 | patience=3，min_delta=0.005 | epoch 10、best | 仅 best |
 | `scripts/ft_ablation/n5.sh` | 4 | 5e-5 | 2e-5 | 0.2 | 10 / 1230 | patience=3，min_delta=0.005 | epoch 10、best | 仅 best |
 | `scripts/ft_ablation/n6.sh` | 5 | 5e-5 | 5e-5 | 0.5 | 10 / 1230 | patience=3，min_delta=0.005 | epoch 10、best | 仅 best |
@@ -467,7 +467,7 @@ CUDA_VISIBLE_DEVICES='' PYTHONNOUSERSITE=1 OMP_NUM_THREADS=4 \
 - 第 155 次更新起：N1–N3 保持各自峰值；其他组执行带下限 cosine。
 - 阶段切换保持同一 AdamW 实例和动量。比例 1.0 使用原有公式，自然退化为常数；日志阶段名仍为 `joint_cosine`。
 - N1–N3 的恒定阶段为 2306 updates；N4–N6 的 cosine 阶段为 1076 updates。
-- N1–N3 的同预算比较直接用 `epoch_10.pt`，不另选“前 10 轮 best”；N4–N6 只汇报 best。每轮完整 validation CE 仍选择全程 `best.pt`。
+- N1–N6 当前均只自动评测最终 `best.pt`。N1–N3 保留 `epoch_10.pt`，暂不做该轮 test 评测；同轮训练/验证 CE 仍可比较。每轮完整 validation CE 选择全程 `best.pt`。
 - N4–N6 无论达到上限还是提前停止，都只评测 best；即使存在 epoch_10.pt，也不创建第 10 轮的评测任务或汇总行。
 
 ### 一键运行与恢复
@@ -489,9 +489,9 @@ CUDA_VISIBLE_DEVICES=0 bash scripts/ft_ablation/n1.sh
 CUDA_VISIBLE_DEVICES=0 bash scripts/ft_ablation/n1.sh --resume-run runs/baselines/本实验目录
 ```
 
-该选项沿用原训练配置与 checkpoint，并按当前入口的 `ft_eval_checkpoint_epochs` 选择评测范围。N1–N3 为 `(10)`，N4–N6 为 `()`（只评测 best）。实际评测选择写入运行根目录的 `evaluation_plan.json`，原 `sweep_plan.json` 保留；已有直接结果或 best 别名通过身份校验后复用。训练中断时不会自动恢复训练；应通过通用训练入口显式指定本实验的 last.pt 并保持原配置。各组不能从其他实验 checkpoint 初始化。
+该选项沿用原训练配置与 checkpoint，并按当前入口的 `ft_eval_checkpoint_epochs` 选择评测范围。N1–N6 当前均为 `()`（只评测 best）。实际评测选择写入运行根目录的 `evaluation_plan.json`，原 `sweep_plan.json` 保留；已有直接结果或 best 别名通过身份校验后复用。训练中断时不会自动恢复训练；应通过通用训练入口显式指定本实验的 last.pt 并保持原配置。各组不能从其他实验 checkpoint 初始化。
 
-Git 更新不会改变已经启动的 Python 进程内存中的旧评测列表。若已有任务运行，应先查看状态；不要为了修改评测范围重复启动训练。训练完成后可以用上述 `--resume-run` 按新范围继续评测。
+Git 更新不会改变已经启动的 Python 进程内存中的旧评测列表。已有任务需单独设置运行目录的评测策略，详见本节最后的运行中切换说明；不要为了修改评测范围重复启动训练。训练完成后可以用上述 `--resume-run` 按新范围继续评测。
 
 ### 输出文件与口径
 
@@ -508,7 +508,7 @@ Git 更新不会改变已经启动的 Python 进程内存中的旧评测列表�
 | `evaluation/epoch_10_test/metric.json` 等 | 完整 test、全部 11 个结果字段、各指标覆盖信息 |
 | `evaluation/*_test/generation_green_diagnostics.json` | 生成长度、空回答/截断、GREEN 成功/失败数和六类错误均值 |
 | `evaluation/*_test/generation_green_samples.csv` | 逐样本生成长度、GREEN 匹配与六类错误，失败分数留空 |
-| `checkpoint_results.json`、`checkpoint_results.csv` | N1–N3 为 epoch_10/best 两项；N4–N6 仅 best 一项，按指标键名取值 |
+| `checkpoint_results.json`、`checkpoint_results.csv` | N1–N6 均仅 best 一项，按指标键名取值 |
 
 诊断日志与 epoch 汇总的 epoch 从 1 开始；历史 `train.jsonl` 的 epoch 保持从 0 开始。`encoder` 诊断只覆盖优化器中的视觉 LoRA，不包含冻结视觉主干。
 
@@ -526,7 +526,7 @@ GREEN 沿用现有评测模型与协议。格式失败样本排除在 GREEN 均�
 2. 执行 `git fetch origin main`、`git pull --ff-only origin main`、`git rev-parse HEAD`；核对提供的发布 commit 是 HEAD 或其祖先。不能快进时先审阅分叉，保留本地工作后合并。
 3. 阅读本节。确认 local_paths.yaml 仍被忽略且原路径有效；保留当地 `assets/models/evaluation`、`third_party/evaluation` 等评测资产。模型、数据、checkpoint、Excel 和结果均不通过 Git 同步。
 4. 激活当地训练环境，核对实际解释器。通过 `CUDA_VISIBLE_DEVICES` 分配当地可用 GPU；可用 `PROJECTOR_OUTPUT_ROOT` 指定当地输出位置。
-5. 逐个执行 n1.sh 至 n6.sh 的 --dry-run，每条显式指定当地可用 GPU。核对本节表中的 LR、预算、下限、早停、保存列表，以及 evaluations 在 N1–N3 为 epoch_10/best、N4–N6 仅为 best；核对 1960/268/560、123 updates/epoch、77/0/77、hold_peak、test/full_split/all 和计划中的数据身份摘要。
+5. 逐个执行 n1.sh 至 n6.sh 的 --dry-run，每条显式指定当地可用 GPU。核对本节表中的 LR、预算、下限、早停、保存列表，以及 evaluations 在 N1–N6 均仅为 best；核对 1960/268/560、123 updates/epoch、77/0/77、hold_peak、test/full_split/all 和计划中的数据身份摘要。
 6. 预检通过后报告启动命令，正式训练由用户在 tmux 手动启动。六组独立从相同预训练资产启动。
 
 标准划分 ID 列表摘要（按清单顺序，算法 src.config.digest）：
@@ -553,7 +553,7 @@ test:  69bcaa3c89157310951f55ae7ed6fc2ec691ea554024ea770a780ea8257b1462
 
 修订后相关测试 **173 项通过**。新增覆盖 best 来自第 10 轮时复用、best 来自第 15 轮时单独评测、失败后恢复，以及第 5/15/20 轮文件存在但不产生独立评测目录。六个入口的真实数据 dry-run 再次全部通过，参数和样本身份一致；未启动正式训练。该版验证记录位于 Git 忽略的 `results/FT_N_series_eval_policy_20261018/`，其中六份计划同时列出保存列表与两项评测任务。
 
-### 最终分组评测规则（2026-10-18）
+### 历史分组评测规则（f1761fa，已由下节 best-only 请求替代）
 
 - **N1–N3：自动评测 epoch_10.pt 和 best.pt。** 保存第 5/10/15/20 轮和 best。
 - **N4–N6：只自动评测 best.pt。** 不创建 epoch_10 的评测任务或结果行；原 checkpoint 保存配置保留。
@@ -561,3 +561,18 @@ test:  69bcaa3c89157310951f55ae7ed6fc2ec691ea554024ea770a780ea8257b1462
 - `--resume-run` 按当前入口选择评测，保持原训练配置和原始 sweep_plan.json；实际范围记录在 evaluation_plan.json。旧版已有 best 评测或指向第 10 轮结果的 best 别名，均核对身份后复用。
 
 本次相关测试 **176 项通过**，覆盖六入口参数、N4–N6 正常结束/早停后均只评测 best、N1–N3 的双 checkpoint 评测和复用、旧计划变更评测范围而不更改训练配置，以及旧别名复用。六个实际 Bash 入口的真实数据 dry-run 全部通过：N1–N3 的 evaluations 为 `[epoch_10, best]`，N4–N6 为 `[best]`；训练参数、保存列表和数据身份保持一致。证据位于 Git 忽略的 `results/FT_N_series_best_only_20261018/`。本次未启动正式训练。
+
+### 当前规则：N1–N3 训练中切换为仅评测 best（2026-10-18 晚）
+
+用户要求暂不评测 epoch 10。N1–N3 脚本已改为 `ft_eval_checkpoint_epochs=()`，保存第5/10/15/20轮及 best 的规则保持原样。N4–N6 原本已只评测 best。
+
+本机正在运行的 N1–N3 已设置 Git 忽略的运行目录 `evaluation_policy.json`：只允许 best，并绑定原始 `sweep_plan.json` 的 SHA256。只修改评测选择，不修改训练配置或原始训练计划。新版本调度器在训练结束后重新读取该策略。
+
+本次三个旧调度器已经把双 checkpoint 列表读入内存，因此使用兼容交接：
+
+1. 训练进程按原计划完成；不发送信号、不停止或恢复训练。
+2. 旧调度器启动第10轮评测入口时，该入口在加载模型前读取策略，跳过该任务，以约定退出码 **75** 结束。
+3. 独立交接进程等待旧调度器退出，检查训练已完成，然后以 `--resume-run`、空评测 epoch 列表继续，仅评测最终 best。沿用该任务原 GPU 环境。
+4. 旧 tmux 中可能出现 exit 75 / CalledProcessError，这是评测交接提示；不是训练中断。旧窗口可能返回 shell；后续评测日志位于运行根目录 `evaluation_best_only_handoff.log`，状态为 `evaluation_handoff.json`。最终结果仍写入 `r8/evaluation/best_test/` 和 `r8/checkpoint_results.json/csv`。
+
+审阅与 dry-run 证据：`results/FT_N123_best_only_switch_20261018/`。三组已核对 best-only 计划、第10轮入口在 dry-run 下被跳过、560条 full test、原训练配置不变。此次未提前运行正式评测。另一服务器已启动的任务不能仅靠修改 Bash 热更新，应按本机绑定运行目录的策略机制另行部署。
