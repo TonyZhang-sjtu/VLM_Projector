@@ -36,7 +36,7 @@ def parser():
     cli.add_argument('--run-tag', help='New directory name; default: method + UTC timestamp')
     cli.add_argument('--output-root', type=Path, default=ROOT / 'runs/baselines')
     cli.add_argument('--ratios', nargs='+', type=int,
-                     help='Supports 4 8 16 32 64; default: 4 8 16 32; MLP supports only 1')
+                     help='Supports 4 8 16 32 64 128 256; default: 4 8 16 32; MLP supports only 1')
     cli.add_argument('--device', help='Training and generation device; default from config (cuda:0), relative to CUDA_VISIBLE_DEVICES')
     cli.add_argument('--scoring-device', help='Offline metrics device; default: same as training')
     cli.add_argument('--eval-split', choices=['val', 'test'], default='test')

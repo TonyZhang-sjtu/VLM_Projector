@@ -967,6 +967,8 @@ bash scripts/train_projector.sh avgpool3d joint_lora runs/brats_avgpool_r8 \
 
 前一版“严格共同 M”、变桶 Concat 适配和“所有局部方法改用 Concat 分块”的建议已撤销。后续新增方法应明确自己的预算解析规则，在同目标倍数下报告真实成本与质量。
 
+128×／256× 的新增预算、分割选择和验收见 [Projector Baseline 128× / 256× 实现](PROJECTOR_R128_R256_IMPLEMENTATION.md)。本节原有四档表格保留其最初协议与验收记录。
+
 ### 15.6 压缩档位的文献依据（对前次调研的记录）
 
 下表数字对应指定设置，倍数统一按 N/M 换算。固定输出预算不等于固定倍数；不同论文的图像尺寸、预训练规模、LLM 是否更新、输入信息路径均有差异，不能据此直接预测本实验效果。

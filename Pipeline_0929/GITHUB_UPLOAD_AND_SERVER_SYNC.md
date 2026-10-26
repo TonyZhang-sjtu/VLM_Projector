@@ -1,5 +1,7 @@
 # GitHub 上传与两台服务器同步流程
 
+> 最新发布：`sync-20261026-r128-r256`（128×／256× 扩展），本轮同步请使用文末第十节。下文原 `sync-20261026` 是上一次发布，保留为历史记录及通用环境/资产核对流程。
+
 本轮日期：2026-10-26。源仓库：`/mnt/sda/jyzhang/VLM_Projector`。
 GitHub 私有仓库：[TonyZhang-sjtu/VLM_Projector](https://github.com/TonyZhang-sjtu/VLM_Projector)，分支 `main`，本轮固定发布标签 `sync-20261026`。
 最终提交 SHA 以源服务器发布回复及远端该标签的解析结果为准；不要把后续变化的 `main` 当成本轮固定版本。
@@ -330,3 +332,43 @@ CUDA_VISIBLE_DEVICES=3 bash scripts/ft_ablation/Exp1024/run_1024_4.sh
 - 暂存区扫描无凭据、患者明细或大文件误入；20份 shell 语法检查通过。标准 `git diff --cached --check` 仅报告新增 `experiments/report_output_v1/schema.py` 末尾已有空行，保留当前源码字节；排除 blank-at-eof 提示后的空白检查通过。
 - 源机验证日志和隔离副本：`.tmp/github_sync_20261026/`（Git 忽略）。
 - 第二台服务器未在本轮被连接或执行命令，需按 prompt 完成验收；显卡数值差异按用户要求不作为失败条件。
+
+
+## 十、2026-10-26 后续发布：128×／256×
+
+固定标签：`sync-20261026-r128-r256`。父提交：`1eb140c2cd496dacb9bec19ba9209c12e6d9b72f`。完整发布 SHA 以本轮回复和标签解析结果为准；不要再用前文旧标签同步这次扩展。
+
+本轮上传 `src/models/projectors/budget.py`、`src/cli/baseline_sweep.py`、相关测试与说明文档；新增128×／256×预算，原倍率默认数组和训练/评测流程保持原样。设计与资源约束见 [扩展实现记录](PROJECTOR_R128_R256_IMPLEMENTATION.md)。当前打开的 `scripts/baselines/run_local_packer3d.sh` 本身没有新增改动，它通过共享预算实现支持新倍率。
+
+目标机仓库已知位置为 `/home/mingjie/jyzhang/VLM_Projector`。先检查本地修改、备份本机路径配置；有任务正在使用当前源码时使用独立 worktree，参照第三节。工作区可安全快进时：
+
+```bash
+cd /home/mingjie/jyzhang/VLM_Projector
+git status --short --untracked-files=all
+# 确认无需要保留/整理的代码改动，且没有任务依赖待更新的当前 checkout 后执行。
+git fetch origin main tag sync-20261026-r128-r256
+git merge --ff-only refs/tags/sync-20261026-r128-r256
+test "$(git rev-parse HEAD)" = "$(git rev-parse 'refs/tags/sync-20261026-r128-r256^{commit}')"
+git rev-parse HEAD
+```
+
+若不能快进或 SHA 不同，停止该工作区的后续运行，按第三节创建固定标签的独立 worktree，保留本机改动；不要 `reset --hard` 或强推。上面的 fetch/merge/test 任一步失败都不能继续假定同步成功。
+
+使用本机已核对的 projector 环境和本机路径，做最小验收：
+
+```bash
+conda activate projector
+export PROJECTOR_PYTHON="$(command -v python)"
+export PROJECTOR_LOCAL_CONFIG="$PWD/configs/local_paths.yaml"
+export PYTHONNOUSERSITE=1
+test -x "$PROJECTOR_PYTHON"
+test -f "$PROJECTOR_LOCAL_CONFIG"
+env -u PROJECTOR_TEST_DEVICE CUDA_VISIBLE_DEVICES='' OMP_NUM_THREADS=2 MKL_NUM_THREADS=2   "$PROJECTOR_PYTHON" -m pytest -q tests/test_projector_budgets.py
+CUDA_VISIBLE_DEVICES=0 bash scripts/baselines/run_local_packer3d.sh   --config "$PROJECTOR_LOCAL_CONFIG" --ratios 128 256 --dry-run
+```
+
+注意：该旧 baseline shell **不会自动读取 `PROJECTOR_LOCAL_CONFIG`**，必须像上面一样显式传 `--config`；`PROJECTOR_PYTHON` 也必须指向本机解释器，以覆盖源机默认绝对路径。本地配置文件若放在其他位置，将环境变量改为本机实际位置。
+
+LocalPacker 预期128×／256×分别输出72／36 tokens，train/val/test=1960/268/560，保持完整 test 评测；默认倍率仍为4/8/16/32，要运行新倍率必须传 `--ratios 128 256`。上述 dry-run 不启动训练。资产和环境继续按第五、六节核对；Git 更新不传数据、模型、知识库、checkpoint 或本机配置。无需迁移/复用旧 checkpoint。
+
+本次发布前实际验证：隔离源码副本执行 budget、64×兼容、几何、baseline/BindFormer sweep、契约与启动器回归，**314 passed / 16 skipped**（16项为显式GPU opt-in测试）；源目录及不带本机 local_paths.yaml 的另一根路径源码副本各完成 LocalPacker 128×／256×真实数据预检。规范化本机路径后，两份配置、预算、样本身份、调度及训练/评测命令全部一致。未启动正式训练，也没有连接第二台服务器执行命令。日志保留在源机 `.tmp/github_sync_r128_r256_20261026/`。

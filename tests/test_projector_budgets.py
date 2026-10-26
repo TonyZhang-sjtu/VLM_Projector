@@ -11,6 +11,7 @@ from src.models.projectors.budget import (
     geometry_from_header, check_input, output_info,
 )
 from src.models.projectors.registry import build_projector
+from src.models.projectors.geometry import choose_grid, grid_groups
 
 N = 8775
 GRID = (39, 15, 15)
@@ -21,8 +22,21 @@ EXPECTED = {
     16: (549, 550, (5, 10, 11), 525, (6, 1, 3)),
     32: (275, 275, (5, 5, 11), 280, (6, 2, 3)),
     64: (138, 144, (4, 6, 6), 140, (6, 3, 4)),
+    128: (69, 72, (3, 4, 6), 72, (13, 2, 5)),
+    256: (35, 36, (3, 4, 3), 36, (13, 4, 5)),
 }
 METHODS = sorted(GRID_METHODS | EXACT_METHODS | {'concat3d'})
+
+
+def test_high_ratios_are_available_in_both_sweep_entrypoints():
+    from src.cli import baseline_sweep, bindformer_sweep
+    args = baseline_sweep.parser().parse_args([
+        '--projector', 'avgpool3d', '--ratios', '128', '256'])
+    assert baseline_sweep.checked_ratios(args) == [128, 256]
+    assert bindformer_sweep.parser().parse_args(['--ratios', '128', '256']).ratios == [128, 256]
+    with pytest.raises(ValueError, match='ratios'):
+        baseline_sweep.checked_ratios(baseline_sweep.parser().parse_args([
+            '--projector', 'mlp2x_gelu', '--ratios', '128']))
 
 
 def ratio_config(name='avgpool3d', ratio=8, extra=()):
@@ -63,6 +77,47 @@ def test_approved_matrix_and_saved_config_roundtrip(name, ratio, tmp_path):
     restored = load_config([p])
     assert OmegaConf.to_container(restored) == OmegaConf.to_container(c)
     assert resolve_budget(restored.projector, GRID, EXTENT) == b
+
+
+@pytest.mark.parametrize('ratio', [128, 256])
+def test_high_ratio_spatial_presets_cover_every_patch_and_reject_other_geometry(ratio):
+    raw, expected, output_grid, concat_expected, group = EXPECTED[ratio]
+    assert choose_grid(GRID, raw, EXTENT) != output_grid
+    groups = grid_groups(GRID, output_grid)
+    assert len(groups) == expected
+    assert min(map(len, groups)) > 0
+    assert torch.equal(torch.cat(groups).sort().values, torch.arange(N))
+    concat = derive_budget('concat3d', ratio, GRID, EXTENT)
+    assert concat['output_grid_dhw'] == [math.ceil(n/k) for n, k in zip(GRID, group)]
+    assert concat['expected_output_tokens'] == concat_expected
+    assert concat_expected * math.prod(group) - N == 585
+    for name in (*GRID_METHODS, 'concat3d'):
+        with pytest.raises(ValueError, match='requires BraTS'):
+            derive_budget(name, ratio, GRID, (312., 240., 240.))
+
+
+@pytest.mark.parametrize('ratio', [128, 256])
+@pytest.mark.parametrize('name', sorted(GRID_METHODS | {'concat3d', 'attention_pool'}))
+def test_high_ratio_lightweight_forward_backward(name, ratio):
+    overrides = [f'projector.target_compression_ratio={ratio}', 'projector.hidden_size=16']
+    if name in {'convpool3d', 'mixer3d', 'local_packer3d', 'attention_pool'}:
+        overrides.append('projector.params.inner_dim=8')
+    if name in {'local_packer3d', 'attention_pool'}:
+        overrides.append('projector.params.num_heads=2')
+    if name == 'concat3d':
+        overrides.append('projector.params.head_type=linear')
+    c = load_config([ROOT/f'configs/projector/{name}.yaml'], overrides)
+    budget = resolve_budget(c.projector, GRID, EXTENT)
+    model = build_projector(c, 8, 16)
+    x = torch.randn(N, 8, requires_grad=True)
+    coords = torch.cartesian_prod(*(torch.arange(n) for n in GRID))
+    result = model(x, coords, metadata())
+    assert result.embeddings.shape == (budget['expected_output_tokens'], 16)
+    assert result.metadata['projector']['actual_ratio'] == pytest.approx(budget['actual_ratio'])
+    result.embeddings.square().mean().backward()
+    assert torch.isfinite(x.grad).all() and x.grad.abs().sum() > 0
+    assert all(p.grad is not None and torch.isfinite(p.grad).all()
+               for p in model.parameters() if p.requires_grad)
 
 
 @pytest.mark.parametrize('extra', [
@@ -158,7 +213,7 @@ def test_preflight_mixed_geometry_rejected(monkeypatch):
 
 
 @pytest.mark.parametrize('name', ['avgpool3d', 'concat3d', 'perceiver_nv'])
-@pytest.mark.parametrize('ratio', [8, 64])
+@pytest.mark.parametrize('ratio', [8, 64, 128, 256])
 def test_checkpoint_budget_preserved_and_other_ratio_rejected(name, ratio, tmp_path):
     from src.training.checkpoint import save_checkpoint, load_checkpoint
     def model(ratio):

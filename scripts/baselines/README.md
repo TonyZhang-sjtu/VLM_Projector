@@ -1,5 +1,14 @@
 # BraTS baseline 一键训练与评测
 
+## 128× / 256× 扩展（2026-10-26）
+
+压缩方法现支持 `--ratios 128 256`，默认倍率数组仍由各入口顶部设置；MLP 仍为 1×。BraTS `39×15×15` 输入下，网格方法与 Concat 分别输出 72／36 token，Query／Merge／Selection／BindFormer 分别输出 69／35 token。实际倍数与固定分割见 [实现记录](../../Pipeline_0929/PROJECTOR_R128_R256_IMPLEMENTATION.md)。新实验先做 `--dry-run`；Concat 256× 的原映射头和 AdamW 状态加上 BF16 LLM 已超过本机 24 GiB 单卡容量，正式训练需另定资源方案。
+
+```bash
+bash scripts/ft_ablation/run_avgpool3d_constant_lr.sh --ratios 128 256 --dry-run
+bash scripts/ft_ablation/run_concat3d_constant_lr.sh --ratios 128 256 --dry-run
+```
+
 ## 2026-10-19：恒定 LR 首轮入口
 
 以下新增入口使用 `configs/training/constant_lr.yaml` 和
@@ -170,7 +179,7 @@ GPU 外部选择优先于文件中的默认值；模型内部继续使用逻辑 
 ```bash
 cd /mnt/sda/jyzhang/VLM_Projector
 
-# 只预检真实 train/val 清单、MRI headers、四档预算及训练日程。
+# 只预检真实 train/val 清单、MRI headers、所选倍率预算及训练日程。
 # 不加载模型、不使用 GPU、不创建实验目录。
 bash scripts/baselines/run_avgpool3d.sh --dry-run
 
@@ -197,7 +206,7 @@ CUDA_VISIBLE_DEVICES=3 bash scripts/baselines/run_local_packer3d.sh --run-tag lo
 ```
 
 省略 `--run-tag` 时自动使用方法名与 UTC 时间戳。已有 run-tag 一律拒绝覆盖。
-`--ratios` 可以选择四档的子集；程序按升序执行。MLP 仅接受省略此参数或 `--ratios 1`。
+`--ratios` 可以选择 4/8/16/32/64/128/256 中的任意档位；程序按升序执行。MLP 仅接受省略此参数或 `--ratios 1`。
 这些入口为单 GPU 顺序运行脚本；DDP 继续使用 `scripts/launch_ddp.sh`。
 单卡默认设备在 `configs/base.yaml` 中统一为 `cuda:0`。11 个脚本继承外部的 `CUDA_VISIBLE_DEVICES`，
 不会在内部设置或覆盖该变量。只暴露 GPU 3 时，程序内部编号为 `cuda:0`，省略 `--device` 即可；

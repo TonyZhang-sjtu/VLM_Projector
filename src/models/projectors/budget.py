@@ -10,12 +10,13 @@ from omegaconf import OmegaConf
 
 VERSION = 'method_native_ratio_v1'
 DEFAULT_RATIOS = (4, 8, 16, 32)
-SUPPORTED_RATIOS = (*DEFAULT_RATIOS, 64)
+SUPPORTED_RATIOS = (*DEFAULT_RATIOS, 64, 128, 256)
 GRID_METHODS = frozenset(('avgpool3d', 'convpool3d', 'mixer3d', 'local_packer3d'))
 EXACT_METHODS = frozenset(('bindformer3d', 'attention_pool', 'perceiver_nv', 'perceiver_flamingo',
                            'adaptive_merge3d', 'token_select3d'))
 CONCAT_GROUPS = {4: (4, 1, 1), 8: (8, 1, 1), 16: (6, 1, 3), 32: (6, 2, 3),
-                 64: (6, 3, 4)}
+                 64: (6, 3, 4), 128: (13, 2, 5), 256: (13, 4, 5)}
+BRATS_FIXED_GRIDS = {64: (4, 6, 6), 128: (3, 4, 6), 256: (3, 4, 3)}
 TOLERANCE = 0.05
 
 
@@ -51,13 +52,12 @@ def derive_budget(name, ratio, grid, extent, params=None):
             raise ValueError('Uncompressed MLP supports only ratio 1 (or manual mode)')
         actual, kind = n, 'uncompressed'
     elif name in GRID_METHODS:
-        if ratio == 64:
+        if ratio in BRATS_FIXED_GRIDS:
             if not brats_native_geometry(grid, extent):
-                raise ValueError('64x grid preset requires BraTS grid [39,15,15] and extent [156,240,240] mm; review a new preset for other geometry')
-            # Approved 64x geometry: nearly isotropic 39x40x40 mm cells.
-            # Keep the raw request (138) and the actual count (144) distinct.
-            # Older ratios and manual nearest-grid budgets remain unchanged.
-            output_grid, kind = [4, 6, 6], 'fixed_grid_brats_r64_v1'
+                raise ValueError(f'{ratio}x grid preset requires BraTS grid [39,15,15] and extent [156,240,240] mm; review a new preset for other geometry')
+            # These presets prioritize balanced physical cells within 5% of the
+            # requested ratio. Keep raw and actual output counts distinct.
+            output_grid, kind = list(BRATS_FIXED_GRIDS[ratio]), f'fixed_grid_brats_r{ratio}_v1'
         else:
             output_grid = list(choose_grid(grid, raw, extent, 'nearest'))
             kind = 'grid_nearest'

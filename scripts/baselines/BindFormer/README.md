@@ -27,9 +27,10 @@
 两组默认只改变同槽角色 SA 与门控读取全局 CA：各 1 层，CA 门控初值 0.1。
 两组都保留 UMLS name_definition、brats_train 范围、四角色各 1 query、global_fraction=0.25、
 slot_iterations=3；geometry 与 feature/text/tuple/binding/concept 辅助损失均关闭。
-SA/CA 不改变输出 token 数。按脚本顶部的 `projector_ratios` 升序执行，支持 4/8/16/32/64。
+SA/CA 不改变输出 token 数。按脚本顶部的 `projector_ratios` 升序执行，支持 4/8/16/32/64/128/256。
 可直接填写 `(64)` 或 `(32 64)`，也可传 `--ratios 64`；其余训练参数不变。
 当前 BraTS 输入下，64× 输出 138 token，其中全局 34 个、26 个 slot 各输出四个角色 token。
+128× 和 256× 也可用 `--ratios 128 256` 启动；分别输出 69 和 35 token，默认分配为 17+13×4 和 7+7×4。预算与实际倍率见 [扩展实现记录](../../../Pipeline_0929/PROJECTOR_R128_R256_IMPLEMENTATION.md)。
 
 ## 启动
 
