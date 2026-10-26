@@ -1,6 +1,6 @@
 # GitHub 上传与两台服务器同步流程
 
-> 最新发布：`sync-20261026-r128-r256`（128×／256× 扩展），本轮同步请使用文末第十节。下文原 `sync-20261026` 是上一次发布，保留为历史记录及通用环境/资产核对流程。
+> 最新发布：`sync-20261026-r128-r256-launcher`（含 Exp1026 Baseline A 入口），请使用文末第十一节同步。第十节的 `sync-20261026-r128-r256` 及更早的 `sync-20261026` 保留为历史版本；通用环境/资产核对流程继续适用。
 
 本轮日期：2026-10-26。源仓库：`/mnt/sda/jyzhang/VLM_Projector`。
 GitHub 私有仓库：[TonyZhang-sjtu/VLM_Projector](https://github.com/TonyZhang-sjtu/VLM_Projector)，分支 `main`，本轮固定发布标签 `sync-20261026`。
@@ -372,3 +372,40 @@ CUDA_VISIBLE_DEVICES=0 bash scripts/baselines/run_local_packer3d.sh   --config "
 LocalPacker 预期128×／256×分别输出72／36 tokens，train/val/test=1960/268/560，保持完整 test 评测；默认倍率仍为4/8/16/32，要运行新倍率必须传 `--ratios 128 256`。上述 dry-run 不启动训练。资产和环境继续按第五、六节核对；Git 更新不传数据、模型、知识库、checkpoint 或本机配置。无需迁移/复用旧 checkpoint。
 
 本次发布前实际验证：隔离源码副本执行 budget、64×兼容、几何、baseline/BindFormer sweep、契约与启动器回归，**314 passed / 16 skipped**（16项为显式GPU opt-in测试）；源目录及不带本机 local_paths.yaml 的另一根路径源码副本各完成 LocalPacker 128×／256×真实数据预检。规范化本机路径后，两份配置、预算、样本身份、调度及训练/评测命令全部一致。未启动正式训练，也没有连接第二台服务器执行命令。日志保留在源机 `.tmp/github_sync_r128_r256_20261026/`。
+
+
+## 十一、补充发布：Exp1026 Baseline A 入口
+
+固定标签：`sync-20261026-r128-r256-launcher`。父提交：`1f4ddf85cb3dc54217e665d8db21b0d6436a140f`。用户已确认将新出现的 `scripts/Exp1026/run_baseline_a_r128_r256.sh` 一起上传；该版本包含第十节全部扩展和这个入口。
+
+脚本依次启动 Baseline A 的128×、256×独立实验，复用 `Exp1020/run_bindformer_va_fixed_region_mean_constlr.sh` 的恒定LR配方和完整test评测。默认物理GPU为0，可由 `CUDA_VISIBLE_DEVICES` 覆盖；Python默认仍为源机路径，目标机必须显式设置 `PROJECTOR_PYTHON`。脚本固定Baseline A的routing开关，防止shell中遗留的 `BIND_*` 环境变量改变架构。它不是Exp1024的cosine下限0.3队列。
+
+确认目标工作区可安全快进（本机修改已保留，且没有运行任务依赖该源码目录）后：
+
+```bash
+cd /home/mingjie/jyzhang/VLM_Projector
+git status --short --untracked-files=all
+git fetch origin main tag sync-20261026-r128-r256-launcher
+git merge --ff-only refs/tags/sync-20261026-r128-r256-launcher
+test "$(git rev-parse HEAD)" = "$(git rev-parse 'refs/tags/sync-20261026-r128-r256-launcher^{commit}')"
+git rev-parse HEAD
+```
+
+任何一步失败都先检查原因；有本机代码分叉或任务占用时按第三节使用独立worktree，不强制重置。不改动、不上传本机路径配置、模型、数据或结果。
+
+用目标机自己的环境和路径做预检：
+
+```bash
+conda activate projector
+export PROJECTOR_PYTHON="$(command -v python)"
+export PROJECTOR_LOCAL_CONFIG="$PWD/configs/local_paths.yaml"
+export PYTHONNOUSERSITE=1
+test -x "$PROJECTOR_PYTHON"
+test -f "$PROJECTOR_LOCAL_CONFIG"
+CUDA_VISIBLE_DEVICES=0 bash scripts/Exp1026/run_baseline_a_r128_r256.sh \
+  --config "$PROJECTOR_LOCAL_CONFIG" --dry-run
+```
+
+预期128×／256×分别为69／35 tokens，train/val/test=1960/268/560，fixed-region mean routing、全新初始化、恒定LR配方、完整test。正式训练由用户另行决定；本同步流程只做dry-run，不复用现有checkpoint。
+
+补充发布检查：最终脚本通过 `bash -n`；分别在源目录（故意设置相反的 `BIND_*` 变量）和不带源机路径配置的另一根路径源码副本中完成两个倍率的真实数据dry-run。两份计划规范化路径后与上一轮已验证的Baseline A计划完全一致；最终默认GPU改为0后，另验证默认卡选择和外部覆盖均生效（真实dry-run使用显式GPU 0）；对应检查记录保存在 `.tmp/github_sync_r128_r256_20261026/launcher_followup/`。主实现沿用第十节314 passed / 16 skipped的验证结果，本次不重复运行无改动的主实现测试。
