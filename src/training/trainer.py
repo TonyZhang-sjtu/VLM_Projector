@@ -235,9 +235,12 @@ class Trainer:
                 local_tokens=sum(self.model.decoder.answer_count(self.train_data.samples[i]) for i in indices)
                 count=global_answer_tokens(local_tokens,self.device)
                 feature_weight=float(c.projector.params.get('feature_loss_weight',0.))
-                sample_count=global_sample_count(len(indices),self.device) if feature_weight else None
+                extra_objectives=getattr(self.model,'uses_auxiliary_objectives',False)
+                sample_count=global_sample_count(len(indices),self.device) if feature_weight or extra_objectives else None
+                if extra_objectives:self.model.set_supervision_step(self.state['global_step'])
                 self.optimizer.zero_grad(set_to_none=True)
                 loss_total=0.;encoder_tokens=0;projector_tokens=0
+                extra_totals={}
                 feature_total=0.;feature_cosine=0.;feature_patches=0
                 start=time.perf_counter();torch.cuda.reset_peak_memory_stats(self.device)
                 batches=[indices[i:i+micro] for i in range(0,len(indices),micro)]
@@ -251,6 +254,8 @@ class Trainer:
                         if not torch.isfinite(result['loss_sum']):raise FloatingPointError('Nonfinite training loss')
                         loss=combined_loss(result,count,self.world,feature_weight,sample_count)
                     loss.backward();loss_total+=float(result['loss_sum'].detach())
+                    for key,value in result.get('auxiliary_metrics',{}).items():
+                        extra_totals[key]=extra_totals.get(key,0.)+float(value)
                     if feature_weight:
                         if result['feature_samples']!=len(ids):raise ValueError('Incomplete reconstruction supervision')
                         feature_total+=float(result['feature_loss_sum'].detach())
@@ -298,6 +303,14 @@ class Trainer:
                                   raw_num_tokens=budget.raw_num_tokens,
                                   expected_output_tokens=budget.expected_output_tokens,
                                   budget_version=budget.version)
+                if extra_objectives:
+                    # Metrics are sums over samples; missing labels contribute
+                    # zero. Eligible-label counts are logged separately.
+                    keys=sorted(extra_totals)
+                    values=torch.tensor([extra_totals[k] for k in keys],device=self.device,dtype=torch.float64)
+                    if self.world>1:dist.all_reduce(values)
+                    record['auxiliary']={k:float(v/sample_count) for k,v in zip(keys,values)}
+                    record['total_objective']=record.get('total_objective',record['answer_ce'])+record['auxiliary'].get('weighted_loss',0.)
                 if self.rank==0:
                     if component_diagnostics is not None:
                         record['optimizer_diagnostics']=component_diagnostics

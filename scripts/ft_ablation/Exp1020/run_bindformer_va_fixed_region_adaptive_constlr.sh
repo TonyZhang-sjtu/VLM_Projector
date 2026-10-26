@@ -3,9 +3,9 @@
 set -Eeuo pipefail
 
 # ===== 训练参数：可直接编辑；外部 CUDA_VISIBLE_DEVICES 优先 =====
-export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-3}"
+export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-1}"
 projector_method=bindformer3d
-projector_ratios=(32)  # 支持 (64)、(32 64) 或原有倍率；也可用 --ratios 覆盖。
+projector_ratios=(64)  # 支持 (64)、(32 64) 或原有倍率；也可用 --ratios 覆盖。
 projector_lr=2e-4
 encoder_lr=2e-4  # Vision Encoder LoRA LR
 projector_max_epochs=20

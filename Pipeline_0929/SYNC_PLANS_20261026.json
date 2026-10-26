@@ -1,0 +1,5307 @@
+{
+  "format": "exp1024_sync_plans_v1",
+  "queues": {
+    "1": [
+      {
+        "budget": {
+          "actual_global_fraction": 0.24363636363636362,
+          "actual_ratio": 31.90909090909091,
+          "allocation_version": "bindformer_nearest_fraction_v1",
+          "expected_output_tokens": 275,
+          "global_fraction": 0.25,
+          "global_tokens": 67,
+          "group_size": null,
+          "input_extent_mm_dhw": [
+            156.0,
+            240.0,
+            240.0
+          ],
+          "input_grid_dhw": [
+            39,
+            15,
+            15
+          ],
+          "input_tokens": 8775,
+          "kind": "exact_count",
+          "local_tokens": 208,
+          "max_relative_error": 0.05,
+          "method": "bindformer3d",
+          "num_roles": 4,
+          "num_slots": 52,
+          "output_grid_dhw": null,
+          "raw_num_tokens": 275,
+          "relative_error": 0.0028409090909090606,
+          "target_ratio": 32,
+          "version": "method_native_ratio_v1"
+        },
+        "config": {
+          "data": {
+            "annotation_root": "<LOCAL_PATH>",
+            "datasets": [
+              "brats"
+            ],
+            "manifest_dir": "<LOCAL_PATH>",
+            "review_policy": "include_with_flag",
+            "root": "<LOCAL_PATH>",
+            "sampling": "uniform_sequence",
+            "target_version": "single_sequence_findings_coref_v2"
+          },
+          "decoder": {
+            "attention": "sdpa",
+            "ce_chunk_size": 64,
+            "frozen": true,
+            "gradient_checkpointing": true,
+            "name": "llama",
+            "path": "<LOCAL_PATH>",
+            "quantization": "none",
+            "weight_dtype": "bfloat16"
+          },
+          "encoder": {
+            "attention": "flash",
+            "batch_mode": "independent",
+            "name": "neurovfm",
+            "params": {},
+            "path": "<LOCAL_PATH>"
+          },
+          "evaluation": {
+            "batch_size": 1,
+            "bootstrap_repeats": 1000,
+            "checkpoint": null,
+            "datasets": null,
+            "output_dir": null,
+            "review_exclusion_file": null,
+            "split": "val"
+          },
+          "generation": {
+            "batch_mode": "independent",
+            "do_sample": false,
+            "max_new_tokens": 192,
+            "num_beams": 1
+          },
+          "preprocessing": {
+            "boundary_policy": "minimal_pad",
+            "cache_dir": "<LOCAL_PATH>",
+            "cache_enabled": true,
+            "image_interpolation": "bspline",
+            "inplane_mm": 1.0,
+            "intensity_percentiles": [
+              0.5,
+              99.5
+            ],
+            "mri_mean": 0.3141,
+            "mri_std": 0.2623,
+            "name": "neurovfm",
+            "orientation": "RPI",
+            "params": {},
+            "patch_size_dhw": [
+              4,
+              16,
+              16
+            ],
+            "slice_axis_policy": "official",
+            "spacing_policy": "native_grid",
+            "throughplane_mm": 4.0,
+            "token_filter_policy": "none"
+          },
+          "project_root": "<LOCAL_PATH>",
+          "projector": {
+            "bias": true,
+            "hidden_size": 4096,
+            "name": "bindformer3d",
+            "params": {
+              "background_slot": true,
+              "binding_loss_weight": 0.0,
+              "checkpoint_blocks": true,
+              "concept_bank": "<LOCAL_PATH>",
+              "concept_loss_weight": 0.0,
+              "dropout": 0.0,
+              "feature_inner_dim": 256,
+              "feature_loss_weight": 0.0,
+              "feature_num_heads": 4,
+              "feature_query_chunk_size": 128,
+              "feature_samples": 512,
+              "feature_target": "frozen_base_cache",
+              "feature_target_cache": "<LOCAL_PATH>",
+              "ffn_expansion": 4,
+              "fixed_spatial_regions": true,
+              "geometry_coordinate_scale": 100.0,
+              "geometry_enabled": false,
+              "geometry_hidden_dim": 128,
+              "geometry_space": "grid",
+              "geometry_volume_scale": 1000.0,
+              "global_depth": 1,
+              "global_fraction": 0.25,
+              "head_type": "mlp",
+              "inner_dim": 768,
+              "knowledge_mode": "name_definition",
+              "local_global_depth": 1,
+              "local_global_gate_init": 0.1,
+              "local_reads_global": false,
+              "num_heads": 8,
+              "num_tokens": 275,
+              "position_frequencies": 8,
+              "position_mode": "grid_fourier",
+              "reader_chunk_size": 128,
+              "return_auxiliary": false,
+              "role_query_counts": {
+                "finding": 1,
+                "location_laterality": 1,
+                "morphology_extent": 1,
+                "signal": 1
+              },
+              "roles": [
+                "finding",
+                "location_laterality",
+                "signal",
+                "morphology_extent"
+              ],
+              "router_value_normalization": true,
+              "router_value_projection": false,
+              "sequence_condition": true,
+              "slot_epsilon": 1e-06,
+              "slot_iterations": 3,
+              "spatial_adaptive_aggregation": false,
+              "spatial_attention_temperature": 1.0,
+              "spatial_mean_aggregation": true,
+              "support_beta": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ],
+              "text_loss_weight": 0.0,
+              "tuple_loss_weight": 0.0,
+              "vocabulary_scope": "brats_train",
+              "within_slot_sa": false,
+              "within_slot_sa_depth": 1
+            },
+            "resolved_budget": {
+              "actual_global_fraction": 0.24363636363636362,
+              "actual_ratio": 31.90909090909091,
+              "allocation_version": "bindformer_nearest_fraction_v1",
+              "expected_output_tokens": 275,
+              "global_fraction": 0.25,
+              "global_tokens": 67,
+              "group_size": null,
+              "input_extent_mm_dhw": [
+                156.0,
+                240.0,
+                240.0
+              ],
+              "input_grid_dhw": [
+                39,
+                15,
+                15
+              ],
+              "input_tokens": 8775,
+              "kind": "exact_count",
+              "local_tokens": 208,
+              "max_relative_error": 0.05,
+              "method": "bindformer3d",
+              "num_roles": 4,
+              "num_slots": 52,
+              "output_grid_dhw": null,
+              "raw_num_tokens": 275,
+              "relative_error": 0.0028409090909090606,
+              "target_ratio": 32,
+              "version": "method_native_ratio_v1"
+            },
+            "target_compression_ratio": 32
+          },
+          "seed": 42,
+          "task": {
+            "name": "single_sequence_findings",
+            "prompt_version": "single_sequence_findings_v2",
+            "truncate_inputs": false
+          },
+          "training": {
+            "betas": [
+              0.9,
+              0.999
+            ],
+            "checkpoint_epochs": [],
+            "cosine_min_lr_ratio": 0.3,
+            "deterministic": true,
+            "device": "cuda:0",
+            "distributed": "none",
+            "early_stopping_enabled": true,
+            "early_stopping_min_delta": 0.005,
+            "early_stopping_patience": 3,
+            "effective_batch_size": 16,
+            "encoder_lr": 0.0002,
+            "eps": 1e-08,
+            "feature_cache": false,
+            "feature_cache_dir": "<LOCAL_PATH>",
+            "grad_clip_norm": 1.0,
+            "init_checkpoint": null,
+            "joint_warmup_projector_mode": "hold_peak",
+            "joint_warmup_ratio": 0.0625,
+            "joint_warmup_steps": 77,
+            "log_optimizer_diagnostics": true,
+            "lora": {
+              "alpha": 32,
+              "bias": "none",
+              "dropout": 0.05,
+              "rank": 16
+            },
+            "max_epochs": 20,
+            "max_steps": null,
+            "microbatch_per_device": 1,
+            "mixed_precision": "bf16",
+            "num_workers": 0,
+            "projector_hold_steps": 0,
+            "projector_lr": 0.0002,
+            "projector_warmup_ratio": 0.0625,
+            "projector_warmup_steps": 77,
+            "required_visual_tokens": null,
+            "resume": null,
+            "run_dir": "<LOCAL_PATH>",
+            "save_every_steps": 0,
+            "stage": "joint_lora",
+            "train_ids_file": null,
+            "train_limit": null,
+            "val_ids_file": null,
+            "val_limit": null,
+            "validation_generation_samples": 14,
+            "warmup_ratio": 0.0,
+            "warmup_steps": null,
+            "weight_decay": 0.01
+          }
+        },
+        "data_identity": {
+          "evaluation_ids_sha256": "69bcaa3c89157310951f55ae7ed6fc2ec691ea554024ea770a780ea8257b1462",
+          "train_ids_sha256": "b60c751801325bed594b142e0662233202fce2915273fa9ea259667cc0a22698",
+          "val_ids_sha256": "4d3176b18672d466be6e0f3a239166f057d4fa9c10ba3bb95f23c0d0d32c5e9e"
+        },
+        "eval_command": [
+          "<PYTHON>",
+          "-u",
+          "-m",
+          "src.cli.evaluate_checkpoint",
+          "--checkpoint",
+          "<LOCAL_PATH>",
+          "--output-dir",
+          "<LOCAL_PATH>",
+          "--split",
+          "test",
+          "--device",
+          "cuda:0",
+          "--scoring-device",
+          "cuda:0",
+          "--metrics",
+          "bleu4",
+          "rougeL",
+          "green",
+          "radgraph",
+          "rate",
+          "bertscore",
+          "answer_ce",
+          "--repeats",
+          "1000",
+          "--sample-fraction",
+          "1.0",
+          "--sample-seed",
+          "42"
+        ],
+        "evaluation_population": 560,
+        "evaluation_protocol": {
+          "eval_split": "test",
+          "metrics": [
+            "bleu4",
+            "rougeL",
+            "green",
+            "radgraph",
+            "rate",
+            "bertscore",
+            "answer_ce"
+          ],
+          "require_full_test": true
+        },
+        "evaluation_samples": 560,
+        "evaluation_scope": "full_split",
+        "manifest_summary": {
+          "test": {
+            "cases": 140,
+            "cohorts": {
+              "BraTS_GLI": 184,
+              "BraTS_MEN": 180,
+              "BraTS_MET": 196
+            },
+            "dataset_counts": {
+              "brats": 560
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 140,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 556,
+              "requires_review": 4
+            },
+            "samples": 560,
+            "sha256": "42aa134d92e30ad724504560d63636c40fbe0f84396ea89a9feba56edfb86d9c"
+          },
+          "train": {
+            "cases": 490,
+            "cohorts": {
+              "BraTS_GLI": 644,
+              "BraTS_MEN": 656,
+              "BraTS_MET": 660
+            },
+            "dataset_counts": {
+              "brats": 1960
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 484,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 1932,
+              "requires_review": 28
+            },
+            "samples": 1960,
+            "sha256": "7ee9e46f17c3d2a9915d1c451d42a60bcaa6d4b5296e6f88a7d1bc7e87675c65"
+          },
+          "val": {
+            "cases": 67,
+            "cohorts": {
+              "BraTS_GLI": 92,
+              "BraTS_MEN": 84,
+              "BraTS_MET": 92
+            },
+            "dataset_counts": {
+              "brats": 268
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 67,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 267,
+              "requires_review": 1
+            },
+            "samples": 268,
+            "sha256": "1210b27cc631e70a92d441737d3552380d52889b8ee1c5f977d331ab947777c8"
+          }
+        },
+        "ratio": 32,
+        "schedule": {
+          "cosine_min_lr_ratio": 0.3,
+          "cosine_steps": 2306,
+          "endpoints": "inclusive",
+          "joint_source": "steps",
+          "joint_steps": 77,
+          "joint_warmup_projector_mode": "hold_peak",
+          "phase_ranges": [
+            {
+              "end_step": 77,
+              "phase": "projector_warmup",
+              "start_step": 1,
+              "steps": 77
+            },
+            {
+              "end_step": 154,
+              "phase": "joint_warmup",
+              "start_step": 78,
+              "steps": 77
+            },
+            {
+              "end_step": 2460,
+              "phase": "joint_cosine",
+              "start_step": 155,
+              "steps": 2306
+            }
+          ],
+          "projector_hold_steps": 0,
+          "projector_source": "steps",
+          "projector_steps": 77,
+          "step_unit": "optimizer_update",
+          "total_steps": 2460
+        },
+        "train_command": [
+          "<PYTHON>",
+          "-u",
+          "-m",
+          "src.cli.train",
+          "--config",
+          "<LOCAL_PATH>"
+        ],
+        "train_samples": 1960,
+        "updates_per_epoch": 123,
+        "val_samples": 268
+      },
+      {
+        "budget": {
+          "actual_global_fraction": 0.2463768115942029,
+          "actual_ratio": 63.58695652173913,
+          "allocation_version": "bindformer_nearest_fraction_v1",
+          "expected_output_tokens": 138,
+          "global_fraction": 0.25,
+          "global_tokens": 34,
+          "group_size": null,
+          "input_extent_mm_dhw": [
+            156.0,
+            240.0,
+            240.0
+          ],
+          "input_grid_dhw": [
+            39,
+            15,
+            15
+          ],
+          "input_tokens": 8775,
+          "kind": "exact_count",
+          "local_tokens": 104,
+          "max_relative_error": 0.05,
+          "method": "bindformer3d",
+          "num_roles": 4,
+          "num_slots": 26,
+          "output_grid_dhw": null,
+          "raw_num_tokens": 138,
+          "relative_error": 0.006453804347826053,
+          "target_ratio": 64,
+          "version": "method_native_ratio_v1"
+        },
+        "config": {
+          "data": {
+            "annotation_root": "<LOCAL_PATH>",
+            "datasets": [
+              "brats"
+            ],
+            "manifest_dir": "<LOCAL_PATH>",
+            "review_policy": "include_with_flag",
+            "root": "<LOCAL_PATH>",
+            "sampling": "uniform_sequence",
+            "target_version": "single_sequence_findings_coref_v2"
+          },
+          "decoder": {
+            "attention": "sdpa",
+            "ce_chunk_size": 64,
+            "frozen": true,
+            "gradient_checkpointing": true,
+            "name": "llama",
+            "path": "<LOCAL_PATH>",
+            "quantization": "none",
+            "weight_dtype": "bfloat16"
+          },
+          "encoder": {
+            "attention": "flash",
+            "batch_mode": "independent",
+            "name": "neurovfm",
+            "params": {},
+            "path": "<LOCAL_PATH>"
+          },
+          "evaluation": {
+            "batch_size": 1,
+            "bootstrap_repeats": 1000,
+            "checkpoint": null,
+            "datasets": null,
+            "output_dir": null,
+            "review_exclusion_file": null,
+            "split": "val"
+          },
+          "generation": {
+            "batch_mode": "independent",
+            "do_sample": false,
+            "max_new_tokens": 192,
+            "num_beams": 1
+          },
+          "preprocessing": {
+            "boundary_policy": "minimal_pad",
+            "cache_dir": "<LOCAL_PATH>",
+            "cache_enabled": true,
+            "image_interpolation": "bspline",
+            "inplane_mm": 1.0,
+            "intensity_percentiles": [
+              0.5,
+              99.5
+            ],
+            "mri_mean": 0.3141,
+            "mri_std": 0.2623,
+            "name": "neurovfm",
+            "orientation": "RPI",
+            "params": {},
+            "patch_size_dhw": [
+              4,
+              16,
+              16
+            ],
+            "slice_axis_policy": "official",
+            "spacing_policy": "native_grid",
+            "throughplane_mm": 4.0,
+            "token_filter_policy": "none"
+          },
+          "project_root": "<LOCAL_PATH>",
+          "projector": {
+            "bias": true,
+            "hidden_size": 4096,
+            "name": "bindformer3d",
+            "params": {
+              "background_slot": true,
+              "binding_loss_weight": 0.0,
+              "checkpoint_blocks": true,
+              "concept_bank": "<LOCAL_PATH>",
+              "concept_loss_weight": 0.0,
+              "dropout": 0.0,
+              "feature_inner_dim": 256,
+              "feature_loss_weight": 0.0,
+              "feature_num_heads": 4,
+              "feature_query_chunk_size": 128,
+              "feature_samples": 512,
+              "feature_target": "frozen_base_cache",
+              "feature_target_cache": "<LOCAL_PATH>",
+              "ffn_expansion": 4,
+              "fixed_spatial_regions": true,
+              "geometry_coordinate_scale": 100.0,
+              "geometry_enabled": false,
+              "geometry_hidden_dim": 128,
+              "geometry_space": "grid",
+              "geometry_volume_scale": 1000.0,
+              "global_depth": 1,
+              "global_fraction": 0.25,
+              "head_type": "mlp",
+              "inner_dim": 768,
+              "knowledge_mode": "name_definition",
+              "local_global_depth": 1,
+              "local_global_gate_init": 0.1,
+              "local_reads_global": false,
+              "num_heads": 8,
+              "num_tokens": 138,
+              "position_frequencies": 8,
+              "position_mode": "grid_fourier",
+              "reader_chunk_size": 128,
+              "return_auxiliary": false,
+              "role_query_counts": {
+                "finding": 1,
+                "location_laterality": 1,
+                "morphology_extent": 1,
+                "signal": 1
+              },
+              "roles": [
+                "finding",
+                "location_laterality",
+                "signal",
+                "morphology_extent"
+              ],
+              "router_value_normalization": true,
+              "router_value_projection": false,
+              "sequence_condition": true,
+              "slot_epsilon": 1e-06,
+              "slot_iterations": 3,
+              "spatial_adaptive_aggregation": false,
+              "spatial_attention_temperature": 1.0,
+              "spatial_mean_aggregation": true,
+              "support_beta": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ],
+              "text_loss_weight": 0.0,
+              "tuple_loss_weight": 0.0,
+              "vocabulary_scope": "brats_train",
+              "within_slot_sa": false,
+              "within_slot_sa_depth": 1
+            },
+            "resolved_budget": {
+              "actual_global_fraction": 0.2463768115942029,
+              "actual_ratio": 63.58695652173913,
+              "allocation_version": "bindformer_nearest_fraction_v1",
+              "expected_output_tokens": 138,
+              "global_fraction": 0.25,
+              "global_tokens": 34,
+              "group_size": null,
+              "input_extent_mm_dhw": [
+                156.0,
+                240.0,
+                240.0
+              ],
+              "input_grid_dhw": [
+                39,
+                15,
+                15
+              ],
+              "input_tokens": 8775,
+              "kind": "exact_count",
+              "local_tokens": 104,
+              "max_relative_error": 0.05,
+              "method": "bindformer3d",
+              "num_roles": 4,
+              "num_slots": 26,
+              "output_grid_dhw": null,
+              "raw_num_tokens": 138,
+              "relative_error": 0.006453804347826053,
+              "target_ratio": 64,
+              "version": "method_native_ratio_v1"
+            },
+            "target_compression_ratio": 64
+          },
+          "seed": 42,
+          "task": {
+            "name": "single_sequence_findings",
+            "prompt_version": "single_sequence_findings_v2",
+            "truncate_inputs": false
+          },
+          "training": {
+            "betas": [
+              0.9,
+              0.999
+            ],
+            "checkpoint_epochs": [],
+            "cosine_min_lr_ratio": 0.3,
+            "deterministic": true,
+            "device": "cuda:0",
+            "distributed": "none",
+            "early_stopping_enabled": true,
+            "early_stopping_min_delta": 0.005,
+            "early_stopping_patience": 3,
+            "effective_batch_size": 16,
+            "encoder_lr": 0.0002,
+            "eps": 1e-08,
+            "feature_cache": false,
+            "feature_cache_dir": "<LOCAL_PATH>",
+            "grad_clip_norm": 1.0,
+            "init_checkpoint": null,
+            "joint_warmup_projector_mode": "hold_peak",
+            "joint_warmup_ratio": 0.0625,
+            "joint_warmup_steps": 77,
+            "log_optimizer_diagnostics": true,
+            "lora": {
+              "alpha": 32,
+              "bias": "none",
+              "dropout": 0.05,
+              "rank": 16
+            },
+            "max_epochs": 20,
+            "max_steps": null,
+            "microbatch_per_device": 1,
+            "mixed_precision": "bf16",
+            "num_workers": 0,
+            "projector_hold_steps": 0,
+            "projector_lr": 0.0002,
+            "projector_warmup_ratio": 0.0625,
+            "projector_warmup_steps": 77,
+            "required_visual_tokens": null,
+            "resume": null,
+            "run_dir": "<LOCAL_PATH>",
+            "save_every_steps": 0,
+            "stage": "joint_lora",
+            "train_ids_file": null,
+            "train_limit": null,
+            "val_ids_file": null,
+            "val_limit": null,
+            "validation_generation_samples": 14,
+            "warmup_ratio": 0.0,
+            "warmup_steps": null,
+            "weight_decay": 0.01
+          }
+        },
+        "data_identity": {
+          "evaluation_ids_sha256": "69bcaa3c89157310951f55ae7ed6fc2ec691ea554024ea770a780ea8257b1462",
+          "train_ids_sha256": "b60c751801325bed594b142e0662233202fce2915273fa9ea259667cc0a22698",
+          "val_ids_sha256": "4d3176b18672d466be6e0f3a239166f057d4fa9c10ba3bb95f23c0d0d32c5e9e"
+        },
+        "eval_command": [
+          "<PYTHON>",
+          "-u",
+          "-m",
+          "src.cli.evaluate_checkpoint",
+          "--checkpoint",
+          "<LOCAL_PATH>",
+          "--output-dir",
+          "<LOCAL_PATH>",
+          "--split",
+          "test",
+          "--device",
+          "cuda:0",
+          "--scoring-device",
+          "cuda:0",
+          "--metrics",
+          "bleu4",
+          "rougeL",
+          "green",
+          "radgraph",
+          "rate",
+          "bertscore",
+          "answer_ce",
+          "--repeats",
+          "1000",
+          "--sample-fraction",
+          "1.0",
+          "--sample-seed",
+          "42"
+        ],
+        "evaluation_population": 560,
+        "evaluation_protocol": {
+          "eval_split": "test",
+          "metrics": [
+            "bleu4",
+            "rougeL",
+            "green",
+            "radgraph",
+            "rate",
+            "bertscore",
+            "answer_ce"
+          ],
+          "require_full_test": true
+        },
+        "evaluation_samples": 560,
+        "evaluation_scope": "full_split",
+        "manifest_summary": {
+          "test": {
+            "cases": 140,
+            "cohorts": {
+              "BraTS_GLI": 184,
+              "BraTS_MEN": 180,
+              "BraTS_MET": 196
+            },
+            "dataset_counts": {
+              "brats": 560
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 140,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 556,
+              "requires_review": 4
+            },
+            "samples": 560,
+            "sha256": "42aa134d92e30ad724504560d63636c40fbe0f84396ea89a9feba56edfb86d9c"
+          },
+          "train": {
+            "cases": 490,
+            "cohorts": {
+              "BraTS_GLI": 644,
+              "BraTS_MEN": 656,
+              "BraTS_MET": 660
+            },
+            "dataset_counts": {
+              "brats": 1960
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 484,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 1932,
+              "requires_review": 28
+            },
+            "samples": 1960,
+            "sha256": "7ee9e46f17c3d2a9915d1c451d42a60bcaa6d4b5296e6f88a7d1bc7e87675c65"
+          },
+          "val": {
+            "cases": 67,
+            "cohorts": {
+              "BraTS_GLI": 92,
+              "BraTS_MEN": 84,
+              "BraTS_MET": 92
+            },
+            "dataset_counts": {
+              "brats": 268
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 67,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 267,
+              "requires_review": 1
+            },
+            "samples": 268,
+            "sha256": "1210b27cc631e70a92d441737d3552380d52889b8ee1c5f977d331ab947777c8"
+          }
+        },
+        "ratio": 64,
+        "schedule": {
+          "cosine_min_lr_ratio": 0.3,
+          "cosine_steps": 2306,
+          "endpoints": "inclusive",
+          "joint_source": "steps",
+          "joint_steps": 77,
+          "joint_warmup_projector_mode": "hold_peak",
+          "phase_ranges": [
+            {
+              "end_step": 77,
+              "phase": "projector_warmup",
+              "start_step": 1,
+              "steps": 77
+            },
+            {
+              "end_step": 154,
+              "phase": "joint_warmup",
+              "start_step": 78,
+              "steps": 77
+            },
+            {
+              "end_step": 2460,
+              "phase": "joint_cosine",
+              "start_step": 155,
+              "steps": 2306
+            }
+          ],
+          "projector_hold_steps": 0,
+          "projector_source": "steps",
+          "projector_steps": 77,
+          "step_unit": "optimizer_update",
+          "total_steps": 2460
+        },
+        "train_command": [
+          "<PYTHON>",
+          "-u",
+          "-m",
+          "src.cli.train",
+          "--config",
+          "<LOCAL_PATH>"
+        ],
+        "train_samples": 1960,
+        "updates_per_epoch": 123,
+        "val_samples": 268
+      },
+      {
+        "budget": {
+          "actual_global_fraction": 0.2463768115942029,
+          "actual_ratio": 63.58695652173913,
+          "allocation_version": "bindformer_nearest_fraction_v1",
+          "expected_output_tokens": 138,
+          "global_fraction": 0.25,
+          "global_tokens": 34,
+          "group_size": null,
+          "input_extent_mm_dhw": [
+            156.0,
+            240.0,
+            240.0
+          ],
+          "input_grid_dhw": [
+            39,
+            15,
+            15
+          ],
+          "input_tokens": 8775,
+          "kind": "exact_count",
+          "local_tokens": 104,
+          "max_relative_error": 0.05,
+          "method": "bindformer3d",
+          "num_roles": 4,
+          "num_slots": 26,
+          "output_grid_dhw": null,
+          "raw_num_tokens": 138,
+          "relative_error": 0.006453804347826053,
+          "target_ratio": 64,
+          "version": "method_native_ratio_v1"
+        },
+        "config": {
+          "data": {
+            "annotation_root": "<LOCAL_PATH>",
+            "datasets": [
+              "brats"
+            ],
+            "manifest_dir": "<LOCAL_PATH>",
+            "review_policy": "include_with_flag",
+            "root": "<LOCAL_PATH>",
+            "sampling": "uniform_sequence",
+            "target_version": "single_sequence_findings_coref_v2"
+          },
+          "decoder": {
+            "attention": "sdpa",
+            "ce_chunk_size": 64,
+            "frozen": true,
+            "gradient_checkpointing": true,
+            "name": "llama",
+            "path": "<LOCAL_PATH>",
+            "quantization": "none",
+            "weight_dtype": "bfloat16"
+          },
+          "encoder": {
+            "attention": "flash",
+            "batch_mode": "independent",
+            "name": "neurovfm",
+            "params": {},
+            "path": "<LOCAL_PATH>"
+          },
+          "evaluation": {
+            "batch_size": 1,
+            "bootstrap_repeats": 1000,
+            "checkpoint": null,
+            "datasets": null,
+            "output_dir": null,
+            "review_exclusion_file": null,
+            "split": "val"
+          },
+          "generation": {
+            "batch_mode": "independent",
+            "do_sample": false,
+            "max_new_tokens": 192,
+            "num_beams": 1
+          },
+          "preprocessing": {
+            "boundary_policy": "minimal_pad",
+            "cache_dir": "<LOCAL_PATH>",
+            "cache_enabled": true,
+            "image_interpolation": "bspline",
+            "inplane_mm": 1.0,
+            "intensity_percentiles": [
+              0.5,
+              99.5
+            ],
+            "mri_mean": 0.3141,
+            "mri_std": 0.2623,
+            "name": "neurovfm",
+            "orientation": "RPI",
+            "params": {},
+            "patch_size_dhw": [
+              4,
+              16,
+              16
+            ],
+            "slice_axis_policy": "official",
+            "spacing_policy": "native_grid",
+            "throughplane_mm": 4.0,
+            "token_filter_policy": "none"
+          },
+          "project_root": "<LOCAL_PATH>",
+          "projector": {
+            "bias": true,
+            "hidden_size": 4096,
+            "name": "bindformer3d",
+            "params": {
+              "background_slot": true,
+              "binding_loss_weight": 0.0,
+              "checkpoint_blocks": true,
+              "concept_bank": "<LOCAL_PATH>",
+              "concept_loss_weight": 0.0,
+              "dropout": 0.0,
+              "feature_inner_dim": 256,
+              "feature_loss_weight": 0.0,
+              "feature_num_heads": 4,
+              "feature_query_chunk_size": 128,
+              "feature_samples": 512,
+              "feature_target": "frozen_base_cache",
+              "feature_target_cache": "<LOCAL_PATH>",
+              "ffn_expansion": 4,
+              "fixed_spatial_regions": true,
+              "geometry_coordinate_scale": 100.0,
+              "geometry_enabled": false,
+              "geometry_hidden_dim": 128,
+              "geometry_space": "grid",
+              "geometry_volume_scale": 1000.0,
+              "global_depth": 1,
+              "global_fraction": 0.25,
+              "head_type": "mlp",
+              "inner_dim": 768,
+              "knowledge_mode": "name_definition",
+              "local_global_depth": 1,
+              "local_global_gate_init": 0.1,
+              "local_reads_global": false,
+              "num_heads": 8,
+              "num_tokens": 138,
+              "position_frequencies": 8,
+              "position_mode": "grid_fourier",
+              "reader_chunk_size": 128,
+              "report_output": {
+                "enabled": true,
+                "fields": [
+                  "edema",
+                  "laterality",
+                  "site",
+                  "signal"
+                ],
+                "group_every_steps": 1,
+                "group_weight": 0.1,
+                "margin": 0.2,
+                "path": "<LOCAL_PATH>",
+                "save_best_facts": true,
+                "span_weight": 0.1,
+                "validation_enabled": true,
+                "validation_every_epochs": 1,
+                "validation_limit": 0,
+                "version": "report_output_v1",
+                "warmup_steps": 77
+              },
+              "return_auxiliary": false,
+              "role_query_counts": {
+                "finding": 1,
+                "location_laterality": 1,
+                "morphology_extent": 1,
+                "signal": 1
+              },
+              "roles": [
+                "finding",
+                "location_laterality",
+                "signal",
+                "morphology_extent"
+              ],
+              "router_value_normalization": true,
+              "router_value_projection": false,
+              "sequence_condition": true,
+              "slot_epsilon": 1e-06,
+              "slot_iterations": 3,
+              "spatial_adaptive_aggregation": false,
+              "spatial_attention_temperature": 1.0,
+              "spatial_mean_aggregation": true,
+              "support_beta": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ],
+              "text_loss_weight": 0.0,
+              "tuple_loss_weight": 0.0,
+              "vocabulary_scope": "brats_train",
+              "within_slot_sa": false,
+              "within_slot_sa_depth": 1
+            },
+            "resolved_budget": {
+              "actual_global_fraction": 0.2463768115942029,
+              "actual_ratio": 63.58695652173913,
+              "allocation_version": "bindformer_nearest_fraction_v1",
+              "expected_output_tokens": 138,
+              "global_fraction": 0.25,
+              "global_tokens": 34,
+              "group_size": null,
+              "input_extent_mm_dhw": [
+                156.0,
+                240.0,
+                240.0
+              ],
+              "input_grid_dhw": [
+                39,
+                15,
+                15
+              ],
+              "input_tokens": 8775,
+              "kind": "exact_count",
+              "local_tokens": 104,
+              "max_relative_error": 0.05,
+              "method": "bindformer3d",
+              "num_roles": 4,
+              "num_slots": 26,
+              "output_grid_dhw": null,
+              "raw_num_tokens": 138,
+              "relative_error": 0.006453804347826053,
+              "target_ratio": 64,
+              "version": "method_native_ratio_v1"
+            },
+            "target_compression_ratio": 64
+          },
+          "seed": 42,
+          "task": {
+            "name": "single_sequence_findings",
+            "prompt_version": "single_sequence_findings_v2",
+            "truncate_inputs": false
+          },
+          "training": {
+            "betas": [
+              0.9,
+              0.999
+            ],
+            "checkpoint_epochs": [],
+            "cosine_min_lr_ratio": 0.3,
+            "deterministic": true,
+            "device": "cuda:0",
+            "distributed": "none",
+            "early_stopping_enabled": true,
+            "early_stopping_min_delta": 0.005,
+            "early_stopping_patience": 3,
+            "effective_batch_size": 16,
+            "encoder_lr": 0.0002,
+            "eps": 1e-08,
+            "feature_cache": false,
+            "feature_cache_dir": "<LOCAL_PATH>",
+            "grad_clip_norm": 1.0,
+            "init_checkpoint": null,
+            "joint_warmup_projector_mode": "hold_peak",
+            "joint_warmup_ratio": 0.0625,
+            "joint_warmup_steps": 77,
+            "log_optimizer_diagnostics": true,
+            "lora": {
+              "alpha": 32,
+              "bias": "none",
+              "dropout": 0.05,
+              "rank": 16
+            },
+            "max_epochs": 20,
+            "max_steps": null,
+            "microbatch_per_device": 1,
+            "mixed_precision": "bf16",
+            "num_workers": 0,
+            "projector_hold_steps": 0,
+            "projector_lr": 0.0002,
+            "projector_warmup_ratio": 0.0625,
+            "projector_warmup_steps": 77,
+            "required_visual_tokens": null,
+            "resume": null,
+            "run_dir": "<LOCAL_PATH>",
+            "save_every_steps": 0,
+            "stage": "joint_lora",
+            "train_ids_file": null,
+            "train_limit": null,
+            "val_ids_file": null,
+            "val_limit": null,
+            "validation_generation_samples": 14,
+            "warmup_ratio": 0.0,
+            "warmup_steps": null,
+            "weight_decay": 0.01
+          }
+        },
+        "data_identity": {
+          "evaluation_ids_sha256": "69bcaa3c89157310951f55ae7ed6fc2ec691ea554024ea770a780ea8257b1462",
+          "train_ids_sha256": "b60c751801325bed594b142e0662233202fce2915273fa9ea259667cc0a22698",
+          "val_ids_sha256": "4d3176b18672d466be6e0f3a239166f057d4fa9c10ba3bb95f23c0d0d32c5e9e"
+        },
+        "eval_command": [
+          "<PYTHON>",
+          "-u",
+          "experiments/report_output_v1/entry.py",
+          "src.cli.evaluate_checkpoint",
+          "--checkpoint",
+          "<LOCAL_PATH>",
+          "--output-dir",
+          "<LOCAL_PATH>",
+          "--split",
+          "test",
+          "--device",
+          "cuda:0",
+          "--scoring-device",
+          "cuda:0",
+          "--metrics",
+          "bleu4",
+          "rougeL",
+          "green",
+          "radgraph",
+          "rate",
+          "bertscore",
+          "answer_ce",
+          "--repeats",
+          "1000",
+          "--sample-fraction",
+          "1.0",
+          "--sample-seed",
+          "42"
+        ],
+        "evaluation_population": 560,
+        "evaluation_protocol": {
+          "eval_split": "test",
+          "metrics": [
+            "bleu4",
+            "rougeL",
+            "green",
+            "radgraph",
+            "rate",
+            "bertscore",
+            "answer_ce"
+          ],
+          "require_full_test": true
+        },
+        "evaluation_samples": 560,
+        "evaluation_scope": "full_split",
+        "manifest_summary": {
+          "test": {
+            "cases": 140,
+            "cohorts": {
+              "BraTS_GLI": 184,
+              "BraTS_MEN": 180,
+              "BraTS_MET": 196
+            },
+            "dataset_counts": {
+              "brats": 560
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 140,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 556,
+              "requires_review": 4
+            },
+            "samples": 560,
+            "sha256": "42aa134d92e30ad724504560d63636c40fbe0f84396ea89a9feba56edfb86d9c"
+          },
+          "train": {
+            "cases": 490,
+            "cohorts": {
+              "BraTS_GLI": 644,
+              "BraTS_MEN": 656,
+              "BraTS_MET": 660
+            },
+            "dataset_counts": {
+              "brats": 1960
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 484,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 1932,
+              "requires_review": 28
+            },
+            "samples": 1960,
+            "sha256": "7ee9e46f17c3d2a9915d1c451d42a60bcaa6d4b5296e6f88a7d1bc7e87675c65"
+          },
+          "val": {
+            "cases": 67,
+            "cohorts": {
+              "BraTS_GLI": 92,
+              "BraTS_MEN": 84,
+              "BraTS_MET": 92
+            },
+            "dataset_counts": {
+              "brats": 268
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 67,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 267,
+              "requires_review": 1
+            },
+            "samples": 268,
+            "sha256": "1210b27cc631e70a92d441737d3552380d52889b8ee1c5f977d331ab947777c8"
+          }
+        },
+        "ratio": 64,
+        "schedule": {
+          "cosine_min_lr_ratio": 0.3,
+          "cosine_steps": 2306,
+          "endpoints": "inclusive",
+          "joint_source": "steps",
+          "joint_steps": 77,
+          "joint_warmup_projector_mode": "hold_peak",
+          "phase_ranges": [
+            {
+              "end_step": 77,
+              "phase": "projector_warmup",
+              "start_step": 1,
+              "steps": 77
+            },
+            {
+              "end_step": 154,
+              "phase": "joint_warmup",
+              "start_step": 78,
+              "steps": 77
+            },
+            {
+              "end_step": 2460,
+              "phase": "joint_cosine",
+              "start_step": 155,
+              "steps": 2306
+            }
+          ],
+          "projector_hold_steps": 0,
+          "projector_source": "steps",
+          "projector_steps": 77,
+          "step_unit": "optimizer_update",
+          "total_steps": 2460
+        },
+        "train_command": [
+          "<PYTHON>",
+          "-u",
+          "experiments/report_output_v1/entry.py",
+          "src.cli.train",
+          "--config",
+          "<LOCAL_PATH>"
+        ],
+        "train_samples": 1960,
+        "updates_per_epoch": 123,
+        "val_samples": 268
+      }
+    ],
+    "2": [
+      {
+        "budget": {
+          "actual_global_fraction": 0.24363636363636362,
+          "actual_ratio": 31.90909090909091,
+          "allocation_version": "bindformer_nearest_fraction_v1",
+          "expected_output_tokens": 275,
+          "global_fraction": 0.25,
+          "global_tokens": 67,
+          "group_size": null,
+          "input_extent_mm_dhw": [
+            156.0,
+            240.0,
+            240.0
+          ],
+          "input_grid_dhw": [
+            39,
+            15,
+            15
+          ],
+          "input_tokens": 8775,
+          "kind": "exact_count",
+          "local_tokens": 208,
+          "max_relative_error": 0.05,
+          "method": "bindformer3d",
+          "num_roles": 4,
+          "num_slots": 52,
+          "output_grid_dhw": null,
+          "raw_num_tokens": 275,
+          "relative_error": 0.0028409090909090606,
+          "target_ratio": 32,
+          "version": "method_native_ratio_v1"
+        },
+        "config": {
+          "data": {
+            "annotation_root": "<LOCAL_PATH>",
+            "datasets": [
+              "brats"
+            ],
+            "manifest_dir": "<LOCAL_PATH>",
+            "review_policy": "include_with_flag",
+            "root": "<LOCAL_PATH>",
+            "sampling": "uniform_sequence",
+            "target_version": "single_sequence_findings_coref_v2"
+          },
+          "decoder": {
+            "attention": "sdpa",
+            "ce_chunk_size": 64,
+            "frozen": true,
+            "gradient_checkpointing": true,
+            "name": "llama",
+            "path": "<LOCAL_PATH>",
+            "quantization": "none",
+            "weight_dtype": "bfloat16"
+          },
+          "encoder": {
+            "attention": "flash",
+            "batch_mode": "independent",
+            "name": "neurovfm",
+            "params": {},
+            "path": "<LOCAL_PATH>"
+          },
+          "evaluation": {
+            "batch_size": 1,
+            "bootstrap_repeats": 1000,
+            "checkpoint": null,
+            "datasets": null,
+            "output_dir": null,
+            "review_exclusion_file": null,
+            "split": "val"
+          },
+          "generation": {
+            "batch_mode": "independent",
+            "do_sample": false,
+            "max_new_tokens": 192,
+            "num_beams": 1
+          },
+          "preprocessing": {
+            "boundary_policy": "minimal_pad",
+            "cache_dir": "<LOCAL_PATH>",
+            "cache_enabled": true,
+            "image_interpolation": "bspline",
+            "inplane_mm": 1.0,
+            "intensity_percentiles": [
+              0.5,
+              99.5
+            ],
+            "mri_mean": 0.3141,
+            "mri_std": 0.2623,
+            "name": "neurovfm",
+            "orientation": "RPI",
+            "params": {},
+            "patch_size_dhw": [
+              4,
+              16,
+              16
+            ],
+            "slice_axis_policy": "official",
+            "spacing_policy": "native_grid",
+            "throughplane_mm": 4.0,
+            "token_filter_policy": "none"
+          },
+          "project_root": "<LOCAL_PATH>",
+          "projector": {
+            "bias": true,
+            "hidden_size": 4096,
+            "name": "bindformer3d",
+            "params": {
+              "background_slot": true,
+              "binding_loss_weight": 0.0,
+              "checkpoint_blocks": true,
+              "concept_bank": "<LOCAL_PATH>",
+              "concept_loss_weight": 0.0,
+              "dropout": 0.0,
+              "feature_inner_dim": 256,
+              "feature_loss_weight": 0.0,
+              "feature_num_heads": 4,
+              "feature_query_chunk_size": 128,
+              "feature_samples": 512,
+              "feature_target": "frozen_base_cache",
+              "feature_target_cache": "<LOCAL_PATH>",
+              "ffn_expansion": 4,
+              "fixed_spatial_regions": true,
+              "geometry_coordinate_scale": 100.0,
+              "geometry_enabled": false,
+              "geometry_hidden_dim": 128,
+              "geometry_space": "grid",
+              "geometry_volume_scale": 1000.0,
+              "global_depth": 1,
+              "global_fraction": 0.25,
+              "head_type": "mlp",
+              "inner_dim": 768,
+              "knowledge_mode": "name_definition",
+              "local_global_depth": 1,
+              "local_global_gate_init": 0.1,
+              "local_reads_global": false,
+              "num_heads": 8,
+              "num_tokens": 275,
+              "position_frequencies": 8,
+              "position_mode": "grid_fourier",
+              "reader_chunk_size": 128,
+              "return_auxiliary": false,
+              "role_query_counts": {
+                "finding": 1,
+                "location_laterality": 1,
+                "morphology_extent": 1,
+                "signal": 1
+              },
+              "role_value_adapter_alpha": 16,
+              "role_value_adapter_enabled": true,
+              "role_value_adapter_rank": 16,
+              "role_value_implementation": "isolated_role_value_v1",
+              "role_value_reader": true,
+              "roles": [
+                "finding",
+                "location_laterality",
+                "signal",
+                "morphology_extent"
+              ],
+              "router_value_normalization": true,
+              "router_value_projection": false,
+              "sequence_condition": true,
+              "slot_epsilon": 1e-06,
+              "slot_iterations": 3,
+              "spatial_adaptive_aggregation": false,
+              "spatial_attention_temperature": 1.0,
+              "spatial_mean_aggregation": true,
+              "support_beta": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ],
+              "text_loss_weight": 0.0,
+              "tuple_loss_weight": 0.0,
+              "vocabulary_scope": "brats_train",
+              "within_slot_sa": false,
+              "within_slot_sa_depth": 1
+            },
+            "resolved_budget": {
+              "actual_global_fraction": 0.24363636363636362,
+              "actual_ratio": 31.90909090909091,
+              "allocation_version": "bindformer_nearest_fraction_v1",
+              "expected_output_tokens": 275,
+              "global_fraction": 0.25,
+              "global_tokens": 67,
+              "group_size": null,
+              "input_extent_mm_dhw": [
+                156.0,
+                240.0,
+                240.0
+              ],
+              "input_grid_dhw": [
+                39,
+                15,
+                15
+              ],
+              "input_tokens": 8775,
+              "kind": "exact_count",
+              "local_tokens": 208,
+              "max_relative_error": 0.05,
+              "method": "bindformer3d",
+              "num_roles": 4,
+              "num_slots": 52,
+              "output_grid_dhw": null,
+              "raw_num_tokens": 275,
+              "relative_error": 0.0028409090909090606,
+              "target_ratio": 32,
+              "version": "method_native_ratio_v1"
+            },
+            "target_compression_ratio": 32
+          },
+          "seed": 42,
+          "task": {
+            "name": "single_sequence_findings",
+            "prompt_version": "single_sequence_findings_v2",
+            "truncate_inputs": false
+          },
+          "training": {
+            "betas": [
+              0.9,
+              0.999
+            ],
+            "checkpoint_epochs": [],
+            "cosine_min_lr_ratio": 0.3,
+            "deterministic": true,
+            "device": "cuda:0",
+            "distributed": "none",
+            "early_stopping_enabled": true,
+            "early_stopping_min_delta": 0.005,
+            "early_stopping_patience": 3,
+            "effective_batch_size": 16,
+            "encoder_lr": 0.0002,
+            "eps": 1e-08,
+            "feature_cache": false,
+            "feature_cache_dir": "<LOCAL_PATH>",
+            "grad_clip_norm": 1.0,
+            "init_checkpoint": null,
+            "joint_warmup_projector_mode": "hold_peak",
+            "joint_warmup_ratio": 0.0625,
+            "joint_warmup_steps": 77,
+            "log_optimizer_diagnostics": true,
+            "lora": {
+              "alpha": 32,
+              "bias": "none",
+              "dropout": 0.05,
+              "rank": 16
+            },
+            "max_epochs": 20,
+            "max_steps": null,
+            "microbatch_per_device": 1,
+            "mixed_precision": "bf16",
+            "num_workers": 0,
+            "projector_hold_steps": 0,
+            "projector_lr": 0.0002,
+            "projector_warmup_ratio": 0.0625,
+            "projector_warmup_steps": 77,
+            "required_visual_tokens": null,
+            "resume": null,
+            "run_dir": "<LOCAL_PATH>",
+            "save_every_steps": 0,
+            "stage": "joint_lora",
+            "train_ids_file": null,
+            "train_limit": null,
+            "val_ids_file": null,
+            "val_limit": null,
+            "validation_generation_samples": 14,
+            "warmup_ratio": 0.0,
+            "warmup_steps": null,
+            "weight_decay": 0.01
+          }
+        },
+        "data_identity": {
+          "evaluation_ids_sha256": "69bcaa3c89157310951f55ae7ed6fc2ec691ea554024ea770a780ea8257b1462",
+          "train_ids_sha256": "b60c751801325bed594b142e0662233202fce2915273fa9ea259667cc0a22698",
+          "val_ids_sha256": "4d3176b18672d466be6e0f3a239166f057d4fa9c10ba3bb95f23c0d0d32c5e9e"
+        },
+        "eval_command": [
+          "<PYTHON>",
+          "-u",
+          "results/BindFormer_role_value_adapter_r16/entry.py",
+          "src.cli.evaluate_checkpoint",
+          "--checkpoint",
+          "<LOCAL_PATH>",
+          "--output-dir",
+          "<LOCAL_PATH>",
+          "--split",
+          "test",
+          "--device",
+          "cuda:0",
+          "--scoring-device",
+          "cuda:0",
+          "--metrics",
+          "bleu4",
+          "rougeL",
+          "green",
+          "radgraph",
+          "rate",
+          "bertscore",
+          "answer_ce",
+          "--repeats",
+          "1000",
+          "--sample-fraction",
+          "1.0",
+          "--sample-seed",
+          "42"
+        ],
+        "evaluation_population": 560,
+        "evaluation_protocol": {
+          "eval_split": "test",
+          "metrics": [
+            "bleu4",
+            "rougeL",
+            "green",
+            "radgraph",
+            "rate",
+            "bertscore",
+            "answer_ce"
+          ],
+          "require_full_test": true
+        },
+        "evaluation_samples": 560,
+        "evaluation_scope": "full_split",
+        "manifest_summary": {
+          "test": {
+            "cases": 140,
+            "cohorts": {
+              "BraTS_GLI": 184,
+              "BraTS_MEN": 180,
+              "BraTS_MET": 196
+            },
+            "dataset_counts": {
+              "brats": 560
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 140,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 556,
+              "requires_review": 4
+            },
+            "samples": 560,
+            "sha256": "42aa134d92e30ad724504560d63636c40fbe0f84396ea89a9feba56edfb86d9c"
+          },
+          "train": {
+            "cases": 490,
+            "cohorts": {
+              "BraTS_GLI": 644,
+              "BraTS_MEN": 656,
+              "BraTS_MET": 660
+            },
+            "dataset_counts": {
+              "brats": 1960
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 484,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 1932,
+              "requires_review": 28
+            },
+            "samples": 1960,
+            "sha256": "7ee9e46f17c3d2a9915d1c451d42a60bcaa6d4b5296e6f88a7d1bc7e87675c65"
+          },
+          "val": {
+            "cases": 67,
+            "cohorts": {
+              "BraTS_GLI": 92,
+              "BraTS_MEN": 84,
+              "BraTS_MET": 92
+            },
+            "dataset_counts": {
+              "brats": 268
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 67,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 267,
+              "requires_review": 1
+            },
+            "samples": 268,
+            "sha256": "1210b27cc631e70a92d441737d3552380d52889b8ee1c5f977d331ab947777c8"
+          }
+        },
+        "ratio": 32,
+        "schedule": {
+          "cosine_min_lr_ratio": 0.3,
+          "cosine_steps": 2306,
+          "endpoints": "inclusive",
+          "joint_source": "steps",
+          "joint_steps": 77,
+          "joint_warmup_projector_mode": "hold_peak",
+          "phase_ranges": [
+            {
+              "end_step": 77,
+              "phase": "projector_warmup",
+              "start_step": 1,
+              "steps": 77
+            },
+            {
+              "end_step": 154,
+              "phase": "joint_warmup",
+              "start_step": 78,
+              "steps": 77
+            },
+            {
+              "end_step": 2460,
+              "phase": "joint_cosine",
+              "start_step": 155,
+              "steps": 2306
+            }
+          ],
+          "projector_hold_steps": 0,
+          "projector_source": "steps",
+          "projector_steps": 77,
+          "step_unit": "optimizer_update",
+          "total_steps": 2460
+        },
+        "train_command": [
+          "<PYTHON>",
+          "-u",
+          "results/BindFormer_role_value_adapter_r16/entry.py",
+          "src.cli.train",
+          "--config",
+          "<LOCAL_PATH>"
+        ],
+        "train_samples": 1960,
+        "updates_per_epoch": 123,
+        "val_samples": 268
+      },
+      {
+        "budget": {
+          "actual_global_fraction": 0.2463768115942029,
+          "actual_ratio": 63.58695652173913,
+          "allocation_version": "bindformer_nearest_fraction_v1",
+          "expected_output_tokens": 138,
+          "global_fraction": 0.25,
+          "global_tokens": 34,
+          "group_size": null,
+          "input_extent_mm_dhw": [
+            156.0,
+            240.0,
+            240.0
+          ],
+          "input_grid_dhw": [
+            39,
+            15,
+            15
+          ],
+          "input_tokens": 8775,
+          "kind": "exact_count",
+          "local_tokens": 104,
+          "max_relative_error": 0.05,
+          "method": "bindformer3d",
+          "num_roles": 4,
+          "num_slots": 26,
+          "output_grid_dhw": null,
+          "raw_num_tokens": 138,
+          "relative_error": 0.006453804347826053,
+          "target_ratio": 64,
+          "version": "method_native_ratio_v1"
+        },
+        "config": {
+          "data": {
+            "annotation_root": "<LOCAL_PATH>",
+            "datasets": [
+              "brats"
+            ],
+            "manifest_dir": "<LOCAL_PATH>",
+            "review_policy": "include_with_flag",
+            "root": "<LOCAL_PATH>",
+            "sampling": "uniform_sequence",
+            "target_version": "single_sequence_findings_coref_v2"
+          },
+          "decoder": {
+            "attention": "sdpa",
+            "ce_chunk_size": 64,
+            "frozen": true,
+            "gradient_checkpointing": true,
+            "name": "llama",
+            "path": "<LOCAL_PATH>",
+            "quantization": "none",
+            "weight_dtype": "bfloat16"
+          },
+          "encoder": {
+            "attention": "flash",
+            "batch_mode": "independent",
+            "name": "neurovfm",
+            "params": {},
+            "path": "<LOCAL_PATH>"
+          },
+          "evaluation": {
+            "batch_size": 1,
+            "bootstrap_repeats": 1000,
+            "checkpoint": null,
+            "datasets": null,
+            "output_dir": null,
+            "review_exclusion_file": null,
+            "split": "val"
+          },
+          "generation": {
+            "batch_mode": "independent",
+            "do_sample": false,
+            "max_new_tokens": 192,
+            "num_beams": 1
+          },
+          "preprocessing": {
+            "boundary_policy": "minimal_pad",
+            "cache_dir": "<LOCAL_PATH>",
+            "cache_enabled": true,
+            "image_interpolation": "bspline",
+            "inplane_mm": 1.0,
+            "intensity_percentiles": [
+              0.5,
+              99.5
+            ],
+            "mri_mean": 0.3141,
+            "mri_std": 0.2623,
+            "name": "neurovfm",
+            "orientation": "RPI",
+            "params": {},
+            "patch_size_dhw": [
+              4,
+              16,
+              16
+            ],
+            "slice_axis_policy": "official",
+            "spacing_policy": "native_grid",
+            "throughplane_mm": 4.0,
+            "token_filter_policy": "none"
+          },
+          "project_root": "<LOCAL_PATH>",
+          "projector": {
+            "bias": true,
+            "hidden_size": 4096,
+            "name": "bindformer3d",
+            "params": {
+              "background_slot": true,
+              "binding_loss_weight": 0.0,
+              "checkpoint_blocks": true,
+              "concept_bank": "<LOCAL_PATH>",
+              "concept_loss_weight": 0.0,
+              "dropout": 0.0,
+              "feature_inner_dim": 256,
+              "feature_loss_weight": 0.0,
+              "feature_num_heads": 4,
+              "feature_query_chunk_size": 128,
+              "feature_samples": 512,
+              "feature_target": "frozen_base_cache",
+              "feature_target_cache": "<LOCAL_PATH>",
+              "ffn_expansion": 4,
+              "fixed_spatial_regions": true,
+              "geometry_coordinate_scale": 100.0,
+              "geometry_enabled": false,
+              "geometry_hidden_dim": 128,
+              "geometry_space": "grid",
+              "geometry_volume_scale": 1000.0,
+              "global_depth": 1,
+              "global_fraction": 0.25,
+              "head_type": "mlp",
+              "inner_dim": 768,
+              "knowledge_mode": "name_definition",
+              "local_global_depth": 1,
+              "local_global_gate_init": 0.1,
+              "local_reads_global": false,
+              "num_heads": 8,
+              "num_tokens": 138,
+              "position_frequencies": 8,
+              "position_mode": "grid_fourier",
+              "reader_chunk_size": 128,
+              "return_auxiliary": false,
+              "role_query_counts": {
+                "finding": 1,
+                "location_laterality": 1,
+                "morphology_extent": 1,
+                "signal": 1
+              },
+              "role_value_adapter_alpha": 16,
+              "role_value_adapter_enabled": true,
+              "role_value_adapter_rank": 16,
+              "role_value_implementation": "isolated_role_value_v1",
+              "role_value_reader": true,
+              "roles": [
+                "finding",
+                "location_laterality",
+                "signal",
+                "morphology_extent"
+              ],
+              "router_value_normalization": true,
+              "router_value_projection": false,
+              "sequence_condition": true,
+              "slot_epsilon": 1e-06,
+              "slot_iterations": 3,
+              "spatial_adaptive_aggregation": false,
+              "spatial_attention_temperature": 1.0,
+              "spatial_mean_aggregation": true,
+              "support_beta": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ],
+              "text_loss_weight": 0.0,
+              "tuple_loss_weight": 0.0,
+              "vocabulary_scope": "brats_train",
+              "within_slot_sa": false,
+              "within_slot_sa_depth": 1
+            },
+            "resolved_budget": {
+              "actual_global_fraction": 0.2463768115942029,
+              "actual_ratio": 63.58695652173913,
+              "allocation_version": "bindformer_nearest_fraction_v1",
+              "expected_output_tokens": 138,
+              "global_fraction": 0.25,
+              "global_tokens": 34,
+              "group_size": null,
+              "input_extent_mm_dhw": [
+                156.0,
+                240.0,
+                240.0
+              ],
+              "input_grid_dhw": [
+                39,
+                15,
+                15
+              ],
+              "input_tokens": 8775,
+              "kind": "exact_count",
+              "local_tokens": 104,
+              "max_relative_error": 0.05,
+              "method": "bindformer3d",
+              "num_roles": 4,
+              "num_slots": 26,
+              "output_grid_dhw": null,
+              "raw_num_tokens": 138,
+              "relative_error": 0.006453804347826053,
+              "target_ratio": 64,
+              "version": "method_native_ratio_v1"
+            },
+            "target_compression_ratio": 64
+          },
+          "seed": 42,
+          "task": {
+            "name": "single_sequence_findings",
+            "prompt_version": "single_sequence_findings_v2",
+            "truncate_inputs": false
+          },
+          "training": {
+            "betas": [
+              0.9,
+              0.999
+            ],
+            "checkpoint_epochs": [],
+            "cosine_min_lr_ratio": 0.3,
+            "deterministic": true,
+            "device": "cuda:0",
+            "distributed": "none",
+            "early_stopping_enabled": true,
+            "early_stopping_min_delta": 0.005,
+            "early_stopping_patience": 3,
+            "effective_batch_size": 16,
+            "encoder_lr": 0.0002,
+            "eps": 1e-08,
+            "feature_cache": false,
+            "feature_cache_dir": "<LOCAL_PATH>",
+            "grad_clip_norm": 1.0,
+            "init_checkpoint": null,
+            "joint_warmup_projector_mode": "hold_peak",
+            "joint_warmup_ratio": 0.0625,
+            "joint_warmup_steps": 77,
+            "log_optimizer_diagnostics": true,
+            "lora": {
+              "alpha": 32,
+              "bias": "none",
+              "dropout": 0.05,
+              "rank": 16
+            },
+            "max_epochs": 20,
+            "max_steps": null,
+            "microbatch_per_device": 1,
+            "mixed_precision": "bf16",
+            "num_workers": 0,
+            "projector_hold_steps": 0,
+            "projector_lr": 0.0002,
+            "projector_warmup_ratio": 0.0625,
+            "projector_warmup_steps": 77,
+            "required_visual_tokens": null,
+            "resume": null,
+            "run_dir": "<LOCAL_PATH>",
+            "save_every_steps": 0,
+            "stage": "joint_lora",
+            "train_ids_file": null,
+            "train_limit": null,
+            "val_ids_file": null,
+            "val_limit": null,
+            "validation_generation_samples": 14,
+            "warmup_ratio": 0.0,
+            "warmup_steps": null,
+            "weight_decay": 0.01
+          }
+        },
+        "data_identity": {
+          "evaluation_ids_sha256": "69bcaa3c89157310951f55ae7ed6fc2ec691ea554024ea770a780ea8257b1462",
+          "train_ids_sha256": "b60c751801325bed594b142e0662233202fce2915273fa9ea259667cc0a22698",
+          "val_ids_sha256": "4d3176b18672d466be6e0f3a239166f057d4fa9c10ba3bb95f23c0d0d32c5e9e"
+        },
+        "eval_command": [
+          "<PYTHON>",
+          "-u",
+          "results/BindFormer_role_value_adapter_r16/entry.py",
+          "src.cli.evaluate_checkpoint",
+          "--checkpoint",
+          "<LOCAL_PATH>",
+          "--output-dir",
+          "<LOCAL_PATH>",
+          "--split",
+          "test",
+          "--device",
+          "cuda:0",
+          "--scoring-device",
+          "cuda:0",
+          "--metrics",
+          "bleu4",
+          "rougeL",
+          "green",
+          "radgraph",
+          "rate",
+          "bertscore",
+          "answer_ce",
+          "--repeats",
+          "1000",
+          "--sample-fraction",
+          "1.0",
+          "--sample-seed",
+          "42"
+        ],
+        "evaluation_population": 560,
+        "evaluation_protocol": {
+          "eval_split": "test",
+          "metrics": [
+            "bleu4",
+            "rougeL",
+            "green",
+            "radgraph",
+            "rate",
+            "bertscore",
+            "answer_ce"
+          ],
+          "require_full_test": true
+        },
+        "evaluation_samples": 560,
+        "evaluation_scope": "full_split",
+        "manifest_summary": {
+          "test": {
+            "cases": 140,
+            "cohorts": {
+              "BraTS_GLI": 184,
+              "BraTS_MEN": 180,
+              "BraTS_MET": 196
+            },
+            "dataset_counts": {
+              "brats": 560
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 140,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 556,
+              "requires_review": 4
+            },
+            "samples": 560,
+            "sha256": "42aa134d92e30ad724504560d63636c40fbe0f84396ea89a9feba56edfb86d9c"
+          },
+          "train": {
+            "cases": 490,
+            "cohorts": {
+              "BraTS_GLI": 644,
+              "BraTS_MEN": 656,
+              "BraTS_MET": 660
+            },
+            "dataset_counts": {
+              "brats": 1960
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 484,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 1932,
+              "requires_review": 28
+            },
+            "samples": 1960,
+            "sha256": "7ee9e46f17c3d2a9915d1c451d42a60bcaa6d4b5296e6f88a7d1bc7e87675c65"
+          },
+          "val": {
+            "cases": 67,
+            "cohorts": {
+              "BraTS_GLI": 92,
+              "BraTS_MEN": 84,
+              "BraTS_MET": 92
+            },
+            "dataset_counts": {
+              "brats": 268
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 67,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 267,
+              "requires_review": 1
+            },
+            "samples": 268,
+            "sha256": "1210b27cc631e70a92d441737d3552380d52889b8ee1c5f977d331ab947777c8"
+          }
+        },
+        "ratio": 64,
+        "schedule": {
+          "cosine_min_lr_ratio": 0.3,
+          "cosine_steps": 2306,
+          "endpoints": "inclusive",
+          "joint_source": "steps",
+          "joint_steps": 77,
+          "joint_warmup_projector_mode": "hold_peak",
+          "phase_ranges": [
+            {
+              "end_step": 77,
+              "phase": "projector_warmup",
+              "start_step": 1,
+              "steps": 77
+            },
+            {
+              "end_step": 154,
+              "phase": "joint_warmup",
+              "start_step": 78,
+              "steps": 77
+            },
+            {
+              "end_step": 2460,
+              "phase": "joint_cosine",
+              "start_step": 155,
+              "steps": 2306
+            }
+          ],
+          "projector_hold_steps": 0,
+          "projector_source": "steps",
+          "projector_steps": 77,
+          "step_unit": "optimizer_update",
+          "total_steps": 2460
+        },
+        "train_command": [
+          "<PYTHON>",
+          "-u",
+          "results/BindFormer_role_value_adapter_r16/entry.py",
+          "src.cli.train",
+          "--config",
+          "<LOCAL_PATH>"
+        ],
+        "train_samples": 1960,
+        "updates_per_epoch": 123,
+        "val_samples": 268
+      },
+      {
+        "budget": {
+          "actual_global_fraction": 0.2463768115942029,
+          "actual_ratio": 63.58695652173913,
+          "allocation_version": "bindformer_nearest_fraction_v1",
+          "expected_output_tokens": 138,
+          "global_fraction": 0.25,
+          "global_tokens": 34,
+          "group_size": null,
+          "input_extent_mm_dhw": [
+            156.0,
+            240.0,
+            240.0
+          ],
+          "input_grid_dhw": [
+            39,
+            15,
+            15
+          ],
+          "input_tokens": 8775,
+          "kind": "exact_count",
+          "local_tokens": 104,
+          "max_relative_error": 0.05,
+          "method": "bindformer3d",
+          "num_roles": 4,
+          "num_slots": 26,
+          "output_grid_dhw": null,
+          "raw_num_tokens": 138,
+          "relative_error": 0.006453804347826053,
+          "target_ratio": 64,
+          "version": "method_native_ratio_v1"
+        },
+        "config": {
+          "data": {
+            "annotation_root": "<LOCAL_PATH>",
+            "datasets": [
+              "brats"
+            ],
+            "manifest_dir": "<LOCAL_PATH>",
+            "review_policy": "include_with_flag",
+            "root": "<LOCAL_PATH>",
+            "sampling": "uniform_sequence",
+            "target_version": "single_sequence_findings_coref_v2"
+          },
+          "decoder": {
+            "attention": "sdpa",
+            "ce_chunk_size": 64,
+            "frozen": true,
+            "gradient_checkpointing": true,
+            "name": "llama",
+            "path": "<LOCAL_PATH>",
+            "quantization": "none",
+            "weight_dtype": "bfloat16"
+          },
+          "encoder": {
+            "attention": "flash",
+            "batch_mode": "independent",
+            "name": "neurovfm",
+            "params": {},
+            "path": "<LOCAL_PATH>"
+          },
+          "evaluation": {
+            "batch_size": 1,
+            "bootstrap_repeats": 1000,
+            "checkpoint": null,
+            "datasets": null,
+            "output_dir": null,
+            "review_exclusion_file": null,
+            "split": "val"
+          },
+          "generation": {
+            "batch_mode": "independent",
+            "do_sample": false,
+            "max_new_tokens": 192,
+            "num_beams": 1
+          },
+          "preprocessing": {
+            "boundary_policy": "minimal_pad",
+            "cache_dir": "<LOCAL_PATH>",
+            "cache_enabled": true,
+            "image_interpolation": "bspline",
+            "inplane_mm": 1.0,
+            "intensity_percentiles": [
+              0.5,
+              99.5
+            ],
+            "mri_mean": 0.3141,
+            "mri_std": 0.2623,
+            "name": "neurovfm",
+            "orientation": "RPI",
+            "params": {},
+            "patch_size_dhw": [
+              4,
+              16,
+              16
+            ],
+            "slice_axis_policy": "official",
+            "spacing_policy": "native_grid",
+            "throughplane_mm": 4.0,
+            "token_filter_policy": "none"
+          },
+          "project_root": "<LOCAL_PATH>",
+          "projector": {
+            "bias": true,
+            "hidden_size": 4096,
+            "name": "bindformer3d",
+            "params": {
+              "background_slot": true,
+              "binding_loss_weight": 0.0,
+              "checkpoint_blocks": true,
+              "concept_bank": "<LOCAL_PATH>",
+              "concept_loss_weight": 0.0,
+              "dropout": 0.0,
+              "feature_inner_dim": 256,
+              "feature_loss_weight": 0.0,
+              "feature_num_heads": 4,
+              "feature_query_chunk_size": 128,
+              "feature_samples": 512,
+              "feature_target": "frozen_base_cache",
+              "feature_target_cache": "<LOCAL_PATH>",
+              "ffn_expansion": 4,
+              "fixed_spatial_regions": true,
+              "geometry_coordinate_scale": 100.0,
+              "geometry_enabled": false,
+              "geometry_hidden_dim": 128,
+              "geometry_space": "grid",
+              "geometry_volume_scale": 1000.0,
+              "global_depth": 1,
+              "global_fraction": 0.25,
+              "head_type": "mlp",
+              "inner_dim": 768,
+              "knowledge_mode": "name_definition",
+              "local_global_depth": 1,
+              "local_global_gate_init": 0.1,
+              "local_reads_global": false,
+              "num_heads": 8,
+              "num_tokens": 138,
+              "position_frequencies": 8,
+              "position_mode": "grid_fourier",
+              "reader_chunk_size": 128,
+              "report_facts": {
+                "enabled": true,
+                "fact_weight": 0.1,
+                "fields": [
+                  "edema",
+                  "laterality",
+                  "site",
+                  "signal"
+                ],
+                "margin": 0.2,
+                "pair_every_steps": 1,
+                "pair_weight": 0.1,
+                "path": "<LOCAL_PATH>",
+                "positive_ce_weight": 0.25,
+                "version": "report_facts_v1",
+                "warmup_steps": 77
+              },
+              "return_auxiliary": false,
+              "role_query_counts": {
+                "finding": 1,
+                "location_laterality": 1,
+                "morphology_extent": 1,
+                "signal": 1
+              },
+              "roles": [
+                "finding",
+                "location_laterality",
+                "signal",
+                "morphology_extent"
+              ],
+              "router_value_normalization": true,
+              "router_value_projection": false,
+              "sequence_condition": true,
+              "slot_epsilon": 1e-06,
+              "slot_iterations": 3,
+              "spatial_adaptive_aggregation": false,
+              "spatial_attention_temperature": 1.0,
+              "spatial_mean_aggregation": true,
+              "support_beta": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ],
+              "text_loss_weight": 0.0,
+              "tuple_loss_weight": 0.0,
+              "vocabulary_scope": "brats_train",
+              "within_slot_sa": false,
+              "within_slot_sa_depth": 1
+            },
+            "resolved_budget": {
+              "actual_global_fraction": 0.2463768115942029,
+              "actual_ratio": 63.58695652173913,
+              "allocation_version": "bindformer_nearest_fraction_v1",
+              "expected_output_tokens": 138,
+              "global_fraction": 0.25,
+              "global_tokens": 34,
+              "group_size": null,
+              "input_extent_mm_dhw": [
+                156.0,
+                240.0,
+                240.0
+              ],
+              "input_grid_dhw": [
+                39,
+                15,
+                15
+              ],
+              "input_tokens": 8775,
+              "kind": "exact_count",
+              "local_tokens": 104,
+              "max_relative_error": 0.05,
+              "method": "bindformer3d",
+              "num_roles": 4,
+              "num_slots": 26,
+              "output_grid_dhw": null,
+              "raw_num_tokens": 138,
+              "relative_error": 0.006453804347826053,
+              "target_ratio": 64,
+              "version": "method_native_ratio_v1"
+            },
+            "target_compression_ratio": 64
+          },
+          "seed": 42,
+          "task": {
+            "name": "single_sequence_findings",
+            "prompt_version": "single_sequence_findings_v2",
+            "truncate_inputs": false
+          },
+          "training": {
+            "betas": [
+              0.9,
+              0.999
+            ],
+            "checkpoint_epochs": [],
+            "cosine_min_lr_ratio": 0.3,
+            "deterministic": true,
+            "device": "cuda:0",
+            "distributed": "none",
+            "early_stopping_enabled": true,
+            "early_stopping_min_delta": 0.005,
+            "early_stopping_patience": 3,
+            "effective_batch_size": 16,
+            "encoder_lr": 0.0002,
+            "eps": 1e-08,
+            "feature_cache": false,
+            "feature_cache_dir": "<LOCAL_PATH>",
+            "grad_clip_norm": 1.0,
+            "init_checkpoint": null,
+            "joint_warmup_projector_mode": "hold_peak",
+            "joint_warmup_ratio": 0.0625,
+            "joint_warmup_steps": 77,
+            "log_optimizer_diagnostics": true,
+            "lora": {
+              "alpha": 32,
+              "bias": "none",
+              "dropout": 0.05,
+              "rank": 16
+            },
+            "max_epochs": 20,
+            "max_steps": null,
+            "microbatch_per_device": 1,
+            "mixed_precision": "bf16",
+            "num_workers": 0,
+            "projector_hold_steps": 0,
+            "projector_lr": 0.0002,
+            "projector_warmup_ratio": 0.0625,
+            "projector_warmup_steps": 77,
+            "required_visual_tokens": null,
+            "resume": null,
+            "run_dir": "<LOCAL_PATH>",
+            "save_every_steps": 0,
+            "stage": "joint_lora",
+            "train_ids_file": null,
+            "train_limit": null,
+            "val_ids_file": null,
+            "val_limit": null,
+            "validation_generation_samples": 14,
+            "warmup_ratio": 0.0,
+            "warmup_steps": null,
+            "weight_decay": 0.01
+          }
+        },
+        "data_identity": {
+          "evaluation_ids_sha256": "69bcaa3c89157310951f55ae7ed6fc2ec691ea554024ea770a780ea8257b1462",
+          "train_ids_sha256": "b60c751801325bed594b142e0662233202fce2915273fa9ea259667cc0a22698",
+          "val_ids_sha256": "4d3176b18672d466be6e0f3a239166f057d4fa9c10ba3bb95f23c0d0d32c5e9e"
+        },
+        "eval_command": [
+          "<PYTHON>",
+          "-u",
+          "experiments/report_facts_v1/entry.py",
+          "src.cli.evaluate_checkpoint",
+          "--checkpoint",
+          "<LOCAL_PATH>",
+          "--output-dir",
+          "<LOCAL_PATH>",
+          "--split",
+          "test",
+          "--device",
+          "cuda:0",
+          "--scoring-device",
+          "cuda:0",
+          "--metrics",
+          "bleu4",
+          "rougeL",
+          "green",
+          "radgraph",
+          "rate",
+          "bertscore",
+          "answer_ce",
+          "--repeats",
+          "1000",
+          "--sample-fraction",
+          "1.0",
+          "--sample-seed",
+          "42"
+        ],
+        "evaluation_population": 560,
+        "evaluation_protocol": {
+          "eval_split": "test",
+          "metrics": [
+            "bleu4",
+            "rougeL",
+            "green",
+            "radgraph",
+            "rate",
+            "bertscore",
+            "answer_ce"
+          ],
+          "require_full_test": true
+        },
+        "evaluation_samples": 560,
+        "evaluation_scope": "full_split",
+        "manifest_summary": {
+          "test": {
+            "cases": 140,
+            "cohorts": {
+              "BraTS_GLI": 184,
+              "BraTS_MEN": 180,
+              "BraTS_MET": 196
+            },
+            "dataset_counts": {
+              "brats": 560
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 140,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 556,
+              "requires_review": 4
+            },
+            "samples": 560,
+            "sha256": "42aa134d92e30ad724504560d63636c40fbe0f84396ea89a9feba56edfb86d9c"
+          },
+          "train": {
+            "cases": 490,
+            "cohorts": {
+              "BraTS_GLI": 644,
+              "BraTS_MEN": 656,
+              "BraTS_MET": 660
+            },
+            "dataset_counts": {
+              "brats": 1960
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 484,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 1932,
+              "requires_review": 28
+            },
+            "samples": 1960,
+            "sha256": "7ee9e46f17c3d2a9915d1c451d42a60bcaa6d4b5296e6f88a7d1bc7e87675c65"
+          },
+          "val": {
+            "cases": 67,
+            "cohorts": {
+              "BraTS_GLI": 92,
+              "BraTS_MEN": 84,
+              "BraTS_MET": 92
+            },
+            "dataset_counts": {
+              "brats": 268
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 67,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 267,
+              "requires_review": 1
+            },
+            "samples": 268,
+            "sha256": "1210b27cc631e70a92d441737d3552380d52889b8ee1c5f977d331ab947777c8"
+          }
+        },
+        "ratio": 64,
+        "schedule": {
+          "cosine_min_lr_ratio": 0.3,
+          "cosine_steps": 2306,
+          "endpoints": "inclusive",
+          "joint_source": "steps",
+          "joint_steps": 77,
+          "joint_warmup_projector_mode": "hold_peak",
+          "phase_ranges": [
+            {
+              "end_step": 77,
+              "phase": "projector_warmup",
+              "start_step": 1,
+              "steps": 77
+            },
+            {
+              "end_step": 154,
+              "phase": "joint_warmup",
+              "start_step": 78,
+              "steps": 77
+            },
+            {
+              "end_step": 2460,
+              "phase": "joint_cosine",
+              "start_step": 155,
+              "steps": 2306
+            }
+          ],
+          "projector_hold_steps": 0,
+          "projector_source": "steps",
+          "projector_steps": 77,
+          "step_unit": "optimizer_update",
+          "total_steps": 2460
+        },
+        "train_command": [
+          "<PYTHON>",
+          "-u",
+          "experiments/report_facts_v1/entry.py",
+          "src.cli.train",
+          "--config",
+          "<LOCAL_PATH>"
+        ],
+        "train_samples": 1960,
+        "updates_per_epoch": 123,
+        "val_samples": 268
+      }
+    ],
+    "3": [
+      {
+        "budget": {
+          "actual_global_fraction": 0.24363636363636362,
+          "actual_ratio": 31.90909090909091,
+          "allocation_version": "bindformer_nearest_fraction_v1",
+          "expected_output_tokens": 275,
+          "global_fraction": 0.25,
+          "global_tokens": 67,
+          "group_size": null,
+          "input_extent_mm_dhw": [
+            156.0,
+            240.0,
+            240.0
+          ],
+          "input_grid_dhw": [
+            39,
+            15,
+            15
+          ],
+          "input_tokens": 8775,
+          "kind": "exact_count",
+          "local_tokens": 208,
+          "max_relative_error": 0.05,
+          "method": "bindformer3d",
+          "num_roles": 4,
+          "num_slots": 52,
+          "output_grid_dhw": null,
+          "raw_num_tokens": 275,
+          "relative_error": 0.0028409090909090606,
+          "target_ratio": 32,
+          "version": "method_native_ratio_v1"
+        },
+        "config": {
+          "data": {
+            "annotation_root": "<LOCAL_PATH>",
+            "datasets": [
+              "brats"
+            ],
+            "manifest_dir": "<LOCAL_PATH>",
+            "review_policy": "include_with_flag",
+            "root": "<LOCAL_PATH>",
+            "sampling": "uniform_sequence",
+            "target_version": "single_sequence_findings_coref_v2"
+          },
+          "decoder": {
+            "attention": "sdpa",
+            "ce_chunk_size": 64,
+            "frozen": true,
+            "gradient_checkpointing": true,
+            "name": "llama",
+            "path": "<LOCAL_PATH>",
+            "quantization": "none",
+            "weight_dtype": "bfloat16"
+          },
+          "encoder": {
+            "attention": "flash",
+            "batch_mode": "independent",
+            "name": "neurovfm",
+            "params": {},
+            "path": "<LOCAL_PATH>"
+          },
+          "evaluation": {
+            "batch_size": 1,
+            "bootstrap_repeats": 1000,
+            "checkpoint": null,
+            "datasets": null,
+            "output_dir": null,
+            "review_exclusion_file": null,
+            "split": "val"
+          },
+          "generation": {
+            "batch_mode": "independent",
+            "do_sample": false,
+            "max_new_tokens": 192,
+            "num_beams": 1
+          },
+          "preprocessing": {
+            "boundary_policy": "minimal_pad",
+            "cache_dir": "<LOCAL_PATH>",
+            "cache_enabled": true,
+            "image_interpolation": "bspline",
+            "inplane_mm": 1.0,
+            "intensity_percentiles": [
+              0.5,
+              99.5
+            ],
+            "mri_mean": 0.3141,
+            "mri_std": 0.2623,
+            "name": "neurovfm",
+            "orientation": "RPI",
+            "params": {},
+            "patch_size_dhw": [
+              4,
+              16,
+              16
+            ],
+            "slice_axis_policy": "official",
+            "spacing_policy": "native_grid",
+            "throughplane_mm": 4.0,
+            "token_filter_policy": "none"
+          },
+          "project_root": "<LOCAL_PATH>",
+          "projector": {
+            "bias": true,
+            "hidden_size": 4096,
+            "name": "bindformer3d",
+            "params": {
+              "background_slot": true,
+              "binding_loss_weight": 0.0,
+              "checkpoint_blocks": true,
+              "concept_bank": "<LOCAL_PATH>",
+              "concept_loss_weight": 0.0,
+              "dropout": 0.0,
+              "feature_inner_dim": 256,
+              "feature_loss_weight": 0.0,
+              "feature_num_heads": 4,
+              "feature_query_chunk_size": 128,
+              "feature_samples": 512,
+              "feature_target": "frozen_base_cache",
+              "feature_target_cache": "<LOCAL_PATH>",
+              "ffn_expansion": 4,
+              "fixed_spatial_regions": true,
+              "geometry_coordinate_scale": 100.0,
+              "geometry_enabled": false,
+              "geometry_hidden_dim": 128,
+              "geometry_space": "grid",
+              "geometry_volume_scale": 1000.0,
+              "global_depth": 1,
+              "global_fraction": 0.25,
+              "head_type": "mlp",
+              "inner_dim": 768,
+              "knowledge_mode": "name_definition",
+              "local_global_depth": 1,
+              "local_global_gate_init": 0.1,
+              "local_reads_global": false,
+              "num_heads": 8,
+              "num_tokens": 275,
+              "position_frequencies": 8,
+              "position_mode": "grid_fourier",
+              "reader_chunk_size": 128,
+              "report_output": {
+                "enabled": true,
+                "fields": [
+                  "edema",
+                  "laterality",
+                  "site",
+                  "signal"
+                ],
+                "group_every_steps": 1,
+                "group_weight": 0.0,
+                "margin": 0.2,
+                "path": "<LOCAL_PATH>",
+                "save_best_facts": true,
+                "span_weight": 0.1,
+                "validation_enabled": true,
+                "validation_every_epochs": 1,
+                "validation_limit": 0,
+                "version": "report_output_v1",
+                "warmup_steps": 77
+              },
+              "return_auxiliary": false,
+              "role_query_counts": {
+                "finding": 1,
+                "location_laterality": 1,
+                "morphology_extent": 1,
+                "signal": 1
+              },
+              "roles": [
+                "finding",
+                "location_laterality",
+                "signal",
+                "morphology_extent"
+              ],
+              "router_value_normalization": true,
+              "router_value_projection": false,
+              "sequence_condition": true,
+              "slot_epsilon": 1e-06,
+              "slot_iterations": 3,
+              "spatial_adaptive_aggregation": false,
+              "spatial_attention_temperature": 1.0,
+              "spatial_mean_aggregation": true,
+              "support_beta": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ],
+              "text_loss_weight": 0.0,
+              "tuple_loss_weight": 0.0,
+              "vocabulary_scope": "brats_train",
+              "within_slot_sa": false,
+              "within_slot_sa_depth": 1
+            },
+            "resolved_budget": {
+              "actual_global_fraction": 0.24363636363636362,
+              "actual_ratio": 31.90909090909091,
+              "allocation_version": "bindformer_nearest_fraction_v1",
+              "expected_output_tokens": 275,
+              "global_fraction": 0.25,
+              "global_tokens": 67,
+              "group_size": null,
+              "input_extent_mm_dhw": [
+                156.0,
+                240.0,
+                240.0
+              ],
+              "input_grid_dhw": [
+                39,
+                15,
+                15
+              ],
+              "input_tokens": 8775,
+              "kind": "exact_count",
+              "local_tokens": 208,
+              "max_relative_error": 0.05,
+              "method": "bindformer3d",
+              "num_roles": 4,
+              "num_slots": 52,
+              "output_grid_dhw": null,
+              "raw_num_tokens": 275,
+              "relative_error": 0.0028409090909090606,
+              "target_ratio": 32,
+              "version": "method_native_ratio_v1"
+            },
+            "target_compression_ratio": 32
+          },
+          "seed": 42,
+          "task": {
+            "name": "single_sequence_findings",
+            "prompt_version": "single_sequence_findings_v2",
+            "truncate_inputs": false
+          },
+          "training": {
+            "betas": [
+              0.9,
+              0.999
+            ],
+            "checkpoint_epochs": [],
+            "cosine_min_lr_ratio": 0.3,
+            "deterministic": true,
+            "device": "cuda:0",
+            "distributed": "none",
+            "early_stopping_enabled": true,
+            "early_stopping_min_delta": 0.005,
+            "early_stopping_patience": 3,
+            "effective_batch_size": 16,
+            "encoder_lr": 0.0002,
+            "eps": 1e-08,
+            "feature_cache": false,
+            "feature_cache_dir": "<LOCAL_PATH>",
+            "grad_clip_norm": 1.0,
+            "init_checkpoint": null,
+            "joint_warmup_projector_mode": "hold_peak",
+            "joint_warmup_ratio": 0.0625,
+            "joint_warmup_steps": 77,
+            "log_optimizer_diagnostics": true,
+            "lora": {
+              "alpha": 32,
+              "bias": "none",
+              "dropout": 0.05,
+              "rank": 16
+            },
+            "max_epochs": 20,
+            "max_steps": null,
+            "microbatch_per_device": 1,
+            "mixed_precision": "bf16",
+            "num_workers": 0,
+            "projector_hold_steps": 0,
+            "projector_lr": 0.0002,
+            "projector_warmup_ratio": 0.0625,
+            "projector_warmup_steps": 77,
+            "required_visual_tokens": null,
+            "resume": null,
+            "run_dir": "<LOCAL_PATH>",
+            "save_every_steps": 0,
+            "stage": "joint_lora",
+            "train_ids_file": null,
+            "train_limit": null,
+            "val_ids_file": null,
+            "val_limit": null,
+            "validation_generation_samples": 14,
+            "warmup_ratio": 0.0,
+            "warmup_steps": null,
+            "weight_decay": 0.01
+          }
+        },
+        "data_identity": {
+          "evaluation_ids_sha256": "69bcaa3c89157310951f55ae7ed6fc2ec691ea554024ea770a780ea8257b1462",
+          "train_ids_sha256": "b60c751801325bed594b142e0662233202fce2915273fa9ea259667cc0a22698",
+          "val_ids_sha256": "4d3176b18672d466be6e0f3a239166f057d4fa9c10ba3bb95f23c0d0d32c5e9e"
+        },
+        "eval_command": [
+          "<PYTHON>",
+          "-u",
+          "experiments/report_output_v1/entry.py",
+          "src.cli.evaluate_checkpoint",
+          "--checkpoint",
+          "<LOCAL_PATH>",
+          "--output-dir",
+          "<LOCAL_PATH>",
+          "--split",
+          "test",
+          "--device",
+          "cuda:0",
+          "--scoring-device",
+          "cuda:0",
+          "--metrics",
+          "bleu4",
+          "rougeL",
+          "green",
+          "radgraph",
+          "rate",
+          "bertscore",
+          "answer_ce",
+          "--repeats",
+          "1000",
+          "--sample-fraction",
+          "1.0",
+          "--sample-seed",
+          "42"
+        ],
+        "evaluation_population": 560,
+        "evaluation_protocol": {
+          "eval_split": "test",
+          "metrics": [
+            "bleu4",
+            "rougeL",
+            "green",
+            "radgraph",
+            "rate",
+            "bertscore",
+            "answer_ce"
+          ],
+          "require_full_test": true
+        },
+        "evaluation_samples": 560,
+        "evaluation_scope": "full_split",
+        "manifest_summary": {
+          "test": {
+            "cases": 140,
+            "cohorts": {
+              "BraTS_GLI": 184,
+              "BraTS_MEN": 180,
+              "BraTS_MET": 196
+            },
+            "dataset_counts": {
+              "brats": 560
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 140,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 556,
+              "requires_review": 4
+            },
+            "samples": 560,
+            "sha256": "42aa134d92e30ad724504560d63636c40fbe0f84396ea89a9feba56edfb86d9c"
+          },
+          "train": {
+            "cases": 490,
+            "cohorts": {
+              "BraTS_GLI": 644,
+              "BraTS_MEN": 656,
+              "BraTS_MET": 660
+            },
+            "dataset_counts": {
+              "brats": 1960
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 484,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 1932,
+              "requires_review": 28
+            },
+            "samples": 1960,
+            "sha256": "7ee9e46f17c3d2a9915d1c451d42a60bcaa6d4b5296e6f88a7d1bc7e87675c65"
+          },
+          "val": {
+            "cases": 67,
+            "cohorts": {
+              "BraTS_GLI": 92,
+              "BraTS_MEN": 84,
+              "BraTS_MET": 92
+            },
+            "dataset_counts": {
+              "brats": 268
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 67,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 267,
+              "requires_review": 1
+            },
+            "samples": 268,
+            "sha256": "1210b27cc631e70a92d441737d3552380d52889b8ee1c5f977d331ab947777c8"
+          }
+        },
+        "ratio": 32,
+        "schedule": {
+          "cosine_min_lr_ratio": 0.3,
+          "cosine_steps": 2306,
+          "endpoints": "inclusive",
+          "joint_source": "steps",
+          "joint_steps": 77,
+          "joint_warmup_projector_mode": "hold_peak",
+          "phase_ranges": [
+            {
+              "end_step": 77,
+              "phase": "projector_warmup",
+              "start_step": 1,
+              "steps": 77
+            },
+            {
+              "end_step": 154,
+              "phase": "joint_warmup",
+              "start_step": 78,
+              "steps": 77
+            },
+            {
+              "end_step": 2460,
+              "phase": "joint_cosine",
+              "start_step": 155,
+              "steps": 2306
+            }
+          ],
+          "projector_hold_steps": 0,
+          "projector_source": "steps",
+          "projector_steps": 77,
+          "step_unit": "optimizer_update",
+          "total_steps": 2460
+        },
+        "train_command": [
+          "<PYTHON>",
+          "-u",
+          "experiments/report_output_v1/entry.py",
+          "src.cli.train",
+          "--config",
+          "<LOCAL_PATH>"
+        ],
+        "train_samples": 1960,
+        "updates_per_epoch": 123,
+        "val_samples": 268
+      },
+      {
+        "budget": {
+          "actual_global_fraction": 0.2463768115942029,
+          "actual_ratio": 63.58695652173913,
+          "allocation_version": "bindformer_nearest_fraction_v1",
+          "expected_output_tokens": 138,
+          "global_fraction": 0.25,
+          "global_tokens": 34,
+          "group_size": null,
+          "input_extent_mm_dhw": [
+            156.0,
+            240.0,
+            240.0
+          ],
+          "input_grid_dhw": [
+            39,
+            15,
+            15
+          ],
+          "input_tokens": 8775,
+          "kind": "exact_count",
+          "local_tokens": 104,
+          "max_relative_error": 0.05,
+          "method": "bindformer3d",
+          "num_roles": 4,
+          "num_slots": 26,
+          "output_grid_dhw": null,
+          "raw_num_tokens": 138,
+          "relative_error": 0.006453804347826053,
+          "target_ratio": 64,
+          "version": "method_native_ratio_v1"
+        },
+        "config": {
+          "data": {
+            "annotation_root": "<LOCAL_PATH>",
+            "datasets": [
+              "brats"
+            ],
+            "manifest_dir": "<LOCAL_PATH>",
+            "review_policy": "include_with_flag",
+            "root": "<LOCAL_PATH>",
+            "sampling": "uniform_sequence",
+            "target_version": "single_sequence_findings_coref_v2"
+          },
+          "decoder": {
+            "attention": "sdpa",
+            "ce_chunk_size": 64,
+            "frozen": true,
+            "gradient_checkpointing": true,
+            "name": "llama",
+            "path": "<LOCAL_PATH>",
+            "quantization": "none",
+            "weight_dtype": "bfloat16"
+          },
+          "encoder": {
+            "attention": "flash",
+            "batch_mode": "independent",
+            "name": "neurovfm",
+            "params": {},
+            "path": "<LOCAL_PATH>"
+          },
+          "evaluation": {
+            "batch_size": 1,
+            "bootstrap_repeats": 1000,
+            "checkpoint": null,
+            "datasets": null,
+            "output_dir": null,
+            "review_exclusion_file": null,
+            "split": "val"
+          },
+          "generation": {
+            "batch_mode": "independent",
+            "do_sample": false,
+            "max_new_tokens": 192,
+            "num_beams": 1
+          },
+          "preprocessing": {
+            "boundary_policy": "minimal_pad",
+            "cache_dir": "<LOCAL_PATH>",
+            "cache_enabled": true,
+            "image_interpolation": "bspline",
+            "inplane_mm": 1.0,
+            "intensity_percentiles": [
+              0.5,
+              99.5
+            ],
+            "mri_mean": 0.3141,
+            "mri_std": 0.2623,
+            "name": "neurovfm",
+            "orientation": "RPI",
+            "params": {},
+            "patch_size_dhw": [
+              4,
+              16,
+              16
+            ],
+            "slice_axis_policy": "official",
+            "spacing_policy": "native_grid",
+            "throughplane_mm": 4.0,
+            "token_filter_policy": "none"
+          },
+          "project_root": "<LOCAL_PATH>",
+          "projector": {
+            "bias": true,
+            "hidden_size": 4096,
+            "name": "bindformer3d",
+            "params": {
+              "background_slot": true,
+              "binding_loss_weight": 0.0,
+              "checkpoint_blocks": true,
+              "concept_bank": "<LOCAL_PATH>",
+              "concept_loss_weight": 0.0,
+              "dropout": 0.0,
+              "feature_inner_dim": 256,
+              "feature_loss_weight": 0.0,
+              "feature_num_heads": 4,
+              "feature_query_chunk_size": 128,
+              "feature_samples": 512,
+              "feature_target": "frozen_base_cache",
+              "feature_target_cache": "<LOCAL_PATH>",
+              "ffn_expansion": 4,
+              "fixed_spatial_regions": true,
+              "geometry_coordinate_scale": 100.0,
+              "geometry_enabled": false,
+              "geometry_hidden_dim": 128,
+              "geometry_space": "grid",
+              "geometry_volume_scale": 1000.0,
+              "global_depth": 1,
+              "global_fraction": 0.25,
+              "head_type": "mlp",
+              "inner_dim": 768,
+              "knowledge_mode": "name_definition",
+              "local_global_depth": 1,
+              "local_global_gate_init": 0.1,
+              "local_reads_global": false,
+              "num_heads": 8,
+              "num_tokens": 138,
+              "position_frequencies": 8,
+              "position_mode": "grid_fourier",
+              "reader_chunk_size": 128,
+              "report_output": {
+                "enabled": true,
+                "fields": [
+                  "edema",
+                  "laterality",
+                  "site",
+                  "signal"
+                ],
+                "group_every_steps": 1,
+                "group_weight": 0.0,
+                "margin": 0.2,
+                "path": "<LOCAL_PATH>",
+                "save_best_facts": true,
+                "span_weight": 0.1,
+                "validation_enabled": true,
+                "validation_every_epochs": 1,
+                "validation_limit": 0,
+                "version": "report_output_v1",
+                "warmup_steps": 77
+              },
+              "return_auxiliary": false,
+              "role_query_counts": {
+                "finding": 1,
+                "location_laterality": 1,
+                "morphology_extent": 1,
+                "signal": 1
+              },
+              "roles": [
+                "finding",
+                "location_laterality",
+                "signal",
+                "morphology_extent"
+              ],
+              "router_value_normalization": true,
+              "router_value_projection": false,
+              "sequence_condition": true,
+              "slot_epsilon": 1e-06,
+              "slot_iterations": 3,
+              "spatial_adaptive_aggregation": false,
+              "spatial_attention_temperature": 1.0,
+              "spatial_mean_aggregation": true,
+              "support_beta": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ],
+              "text_loss_weight": 0.0,
+              "tuple_loss_weight": 0.0,
+              "vocabulary_scope": "brats_train",
+              "within_slot_sa": false,
+              "within_slot_sa_depth": 1
+            },
+            "resolved_budget": {
+              "actual_global_fraction": 0.2463768115942029,
+              "actual_ratio": 63.58695652173913,
+              "allocation_version": "bindformer_nearest_fraction_v1",
+              "expected_output_tokens": 138,
+              "global_fraction": 0.25,
+              "global_tokens": 34,
+              "group_size": null,
+              "input_extent_mm_dhw": [
+                156.0,
+                240.0,
+                240.0
+              ],
+              "input_grid_dhw": [
+                39,
+                15,
+                15
+              ],
+              "input_tokens": 8775,
+              "kind": "exact_count",
+              "local_tokens": 104,
+              "max_relative_error": 0.05,
+              "method": "bindformer3d",
+              "num_roles": 4,
+              "num_slots": 26,
+              "output_grid_dhw": null,
+              "raw_num_tokens": 138,
+              "relative_error": 0.006453804347826053,
+              "target_ratio": 64,
+              "version": "method_native_ratio_v1"
+            },
+            "target_compression_ratio": 64
+          },
+          "seed": 42,
+          "task": {
+            "name": "single_sequence_findings",
+            "prompt_version": "single_sequence_findings_v2",
+            "truncate_inputs": false
+          },
+          "training": {
+            "betas": [
+              0.9,
+              0.999
+            ],
+            "checkpoint_epochs": [],
+            "cosine_min_lr_ratio": 0.3,
+            "deterministic": true,
+            "device": "cuda:0",
+            "distributed": "none",
+            "early_stopping_enabled": true,
+            "early_stopping_min_delta": 0.005,
+            "early_stopping_patience": 3,
+            "effective_batch_size": 16,
+            "encoder_lr": 0.0002,
+            "eps": 1e-08,
+            "feature_cache": false,
+            "feature_cache_dir": "<LOCAL_PATH>",
+            "grad_clip_norm": 1.0,
+            "init_checkpoint": null,
+            "joint_warmup_projector_mode": "hold_peak",
+            "joint_warmup_ratio": 0.0625,
+            "joint_warmup_steps": 77,
+            "log_optimizer_diagnostics": true,
+            "lora": {
+              "alpha": 32,
+              "bias": "none",
+              "dropout": 0.05,
+              "rank": 16
+            },
+            "max_epochs": 20,
+            "max_steps": null,
+            "microbatch_per_device": 1,
+            "mixed_precision": "bf16",
+            "num_workers": 0,
+            "projector_hold_steps": 0,
+            "projector_lr": 0.0002,
+            "projector_warmup_ratio": 0.0625,
+            "projector_warmup_steps": 77,
+            "required_visual_tokens": null,
+            "resume": null,
+            "run_dir": "<LOCAL_PATH>",
+            "save_every_steps": 0,
+            "stage": "joint_lora",
+            "train_ids_file": null,
+            "train_limit": null,
+            "val_ids_file": null,
+            "val_limit": null,
+            "validation_generation_samples": 14,
+            "warmup_ratio": 0.0,
+            "warmup_steps": null,
+            "weight_decay": 0.01
+          }
+        },
+        "data_identity": {
+          "evaluation_ids_sha256": "69bcaa3c89157310951f55ae7ed6fc2ec691ea554024ea770a780ea8257b1462",
+          "train_ids_sha256": "b60c751801325bed594b142e0662233202fce2915273fa9ea259667cc0a22698",
+          "val_ids_sha256": "4d3176b18672d466be6e0f3a239166f057d4fa9c10ba3bb95f23c0d0d32c5e9e"
+        },
+        "eval_command": [
+          "<PYTHON>",
+          "-u",
+          "experiments/report_output_v1/entry.py",
+          "src.cli.evaluate_checkpoint",
+          "--checkpoint",
+          "<LOCAL_PATH>",
+          "--output-dir",
+          "<LOCAL_PATH>",
+          "--split",
+          "test",
+          "--device",
+          "cuda:0",
+          "--scoring-device",
+          "cuda:0",
+          "--metrics",
+          "bleu4",
+          "rougeL",
+          "green",
+          "radgraph",
+          "rate",
+          "bertscore",
+          "answer_ce",
+          "--repeats",
+          "1000",
+          "--sample-fraction",
+          "1.0",
+          "--sample-seed",
+          "42"
+        ],
+        "evaluation_population": 560,
+        "evaluation_protocol": {
+          "eval_split": "test",
+          "metrics": [
+            "bleu4",
+            "rougeL",
+            "green",
+            "radgraph",
+            "rate",
+            "bertscore",
+            "answer_ce"
+          ],
+          "require_full_test": true
+        },
+        "evaluation_samples": 560,
+        "evaluation_scope": "full_split",
+        "manifest_summary": {
+          "test": {
+            "cases": 140,
+            "cohorts": {
+              "BraTS_GLI": 184,
+              "BraTS_MEN": 180,
+              "BraTS_MET": 196
+            },
+            "dataset_counts": {
+              "brats": 560
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 140,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 556,
+              "requires_review": 4
+            },
+            "samples": 560,
+            "sha256": "42aa134d92e30ad724504560d63636c40fbe0f84396ea89a9feba56edfb86d9c"
+          },
+          "train": {
+            "cases": 490,
+            "cohorts": {
+              "BraTS_GLI": 644,
+              "BraTS_MEN": 656,
+              "BraTS_MET": 660
+            },
+            "dataset_counts": {
+              "brats": 1960
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 484,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 1932,
+              "requires_review": 28
+            },
+            "samples": 1960,
+            "sha256": "7ee9e46f17c3d2a9915d1c451d42a60bcaa6d4b5296e6f88a7d1bc7e87675c65"
+          },
+          "val": {
+            "cases": 67,
+            "cohorts": {
+              "BraTS_GLI": 92,
+              "BraTS_MEN": 84,
+              "BraTS_MET": 92
+            },
+            "dataset_counts": {
+              "brats": 268
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 67,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 267,
+              "requires_review": 1
+            },
+            "samples": 268,
+            "sha256": "1210b27cc631e70a92d441737d3552380d52889b8ee1c5f977d331ab947777c8"
+          }
+        },
+        "ratio": 64,
+        "schedule": {
+          "cosine_min_lr_ratio": 0.3,
+          "cosine_steps": 2306,
+          "endpoints": "inclusive",
+          "joint_source": "steps",
+          "joint_steps": 77,
+          "joint_warmup_projector_mode": "hold_peak",
+          "phase_ranges": [
+            {
+              "end_step": 77,
+              "phase": "projector_warmup",
+              "start_step": 1,
+              "steps": 77
+            },
+            {
+              "end_step": 154,
+              "phase": "joint_warmup",
+              "start_step": 78,
+              "steps": 77
+            },
+            {
+              "end_step": 2460,
+              "phase": "joint_cosine",
+              "start_step": 155,
+              "steps": 2306
+            }
+          ],
+          "projector_hold_steps": 0,
+          "projector_source": "steps",
+          "projector_steps": 77,
+          "step_unit": "optimizer_update",
+          "total_steps": 2460
+        },
+        "train_command": [
+          "<PYTHON>",
+          "-u",
+          "experiments/report_output_v1/entry.py",
+          "src.cli.train",
+          "--config",
+          "<LOCAL_PATH>"
+        ],
+        "train_samples": 1960,
+        "updates_per_epoch": 123,
+        "val_samples": 268
+      },
+      {
+        "budget": {
+          "actual_global_fraction": 0.24363636363636362,
+          "actual_ratio": 31.90909090909091,
+          "allocation_version": "bindformer_nearest_fraction_v1",
+          "expected_output_tokens": 275,
+          "global_fraction": 0.25,
+          "global_tokens": 67,
+          "group_size": null,
+          "input_extent_mm_dhw": [
+            156.0,
+            240.0,
+            240.0
+          ],
+          "input_grid_dhw": [
+            39,
+            15,
+            15
+          ],
+          "input_tokens": 8775,
+          "kind": "exact_count",
+          "local_tokens": 208,
+          "max_relative_error": 0.05,
+          "method": "bindformer3d",
+          "num_roles": 4,
+          "num_slots": 52,
+          "output_grid_dhw": null,
+          "raw_num_tokens": 275,
+          "relative_error": 0.0028409090909090606,
+          "target_ratio": 32,
+          "version": "method_native_ratio_v1"
+        },
+        "config": {
+          "data": {
+            "annotation_root": "<LOCAL_PATH>",
+            "datasets": [
+              "brats"
+            ],
+            "manifest_dir": "<LOCAL_PATH>",
+            "review_policy": "include_with_flag",
+            "root": "<LOCAL_PATH>",
+            "sampling": "uniform_sequence",
+            "target_version": "single_sequence_findings_coref_v2"
+          },
+          "decoder": {
+            "attention": "sdpa",
+            "ce_chunk_size": 64,
+            "frozen": true,
+            "gradient_checkpointing": true,
+            "name": "llama",
+            "path": "<LOCAL_PATH>",
+            "quantization": "none",
+            "weight_dtype": "bfloat16"
+          },
+          "encoder": {
+            "attention": "flash",
+            "batch_mode": "independent",
+            "name": "neurovfm",
+            "params": {},
+            "path": "<LOCAL_PATH>"
+          },
+          "evaluation": {
+            "batch_size": 1,
+            "bootstrap_repeats": 1000,
+            "checkpoint": null,
+            "datasets": null,
+            "output_dir": null,
+            "review_exclusion_file": null,
+            "split": "val"
+          },
+          "generation": {
+            "batch_mode": "independent",
+            "do_sample": false,
+            "max_new_tokens": 192,
+            "num_beams": 1
+          },
+          "preprocessing": {
+            "boundary_policy": "minimal_pad",
+            "cache_dir": "<LOCAL_PATH>",
+            "cache_enabled": true,
+            "image_interpolation": "bspline",
+            "inplane_mm": 1.0,
+            "intensity_percentiles": [
+              0.5,
+              99.5
+            ],
+            "mri_mean": 0.3141,
+            "mri_std": 0.2623,
+            "name": "neurovfm",
+            "orientation": "RPI",
+            "params": {},
+            "patch_size_dhw": [
+              4,
+              16,
+              16
+            ],
+            "slice_axis_policy": "official",
+            "spacing_policy": "native_grid",
+            "throughplane_mm": 4.0,
+            "token_filter_policy": "none"
+          },
+          "project_root": "<LOCAL_PATH>",
+          "projector": {
+            "bias": true,
+            "hidden_size": 4096,
+            "name": "bindformer3d",
+            "params": {
+              "background_slot": true,
+              "binding_loss_weight": 0.0,
+              "checkpoint_blocks": true,
+              "concept_bank": "<LOCAL_PATH>",
+              "concept_loss_weight": 0.0,
+              "dropout": 0.0,
+              "feature_inner_dim": 256,
+              "feature_loss_weight": 0.0,
+              "feature_num_heads": 4,
+              "feature_query_chunk_size": 128,
+              "feature_samples": 512,
+              "feature_target": "frozen_base_cache",
+              "feature_target_cache": "<LOCAL_PATH>",
+              "ffn_expansion": 4,
+              "fixed_spatial_regions": true,
+              "geometry_coordinate_scale": 100.0,
+              "geometry_enabled": false,
+              "geometry_hidden_dim": 128,
+              "geometry_space": "grid",
+              "geometry_volume_scale": 1000.0,
+              "global_depth": 1,
+              "global_fraction": 0.25,
+              "head_type": "mlp",
+              "inner_dim": 768,
+              "knowledge_mode": "name_definition",
+              "local_global_depth": 1,
+              "local_global_gate_init": 0.1,
+              "local_reads_global": false,
+              "num_heads": 8,
+              "num_tokens": 275,
+              "position_frequencies": 8,
+              "position_mode": "grid_fourier",
+              "reader_chunk_size": 128,
+              "report_output": {
+                "enabled": true,
+                "fields": [
+                  "edema",
+                  "laterality",
+                  "site",
+                  "signal"
+                ],
+                "group_every_steps": 1,
+                "group_weight": 0.1,
+                "margin": 0.2,
+                "path": "<LOCAL_PATH>",
+                "save_best_facts": true,
+                "span_weight": 0.1,
+                "validation_enabled": true,
+                "validation_every_epochs": 1,
+                "validation_limit": 0,
+                "version": "report_output_v1",
+                "warmup_steps": 77
+              },
+              "return_auxiliary": false,
+              "role_query_counts": {
+                "finding": 1,
+                "location_laterality": 1,
+                "morphology_extent": 1,
+                "signal": 1
+              },
+              "roles": [
+                "finding",
+                "location_laterality",
+                "signal",
+                "morphology_extent"
+              ],
+              "router_value_normalization": true,
+              "router_value_projection": false,
+              "sequence_condition": true,
+              "slot_epsilon": 1e-06,
+              "slot_iterations": 3,
+              "spatial_adaptive_aggregation": false,
+              "spatial_attention_temperature": 1.0,
+              "spatial_mean_aggregation": true,
+              "support_beta": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ],
+              "text_loss_weight": 0.0,
+              "tuple_loss_weight": 0.0,
+              "vocabulary_scope": "brats_train",
+              "within_slot_sa": false,
+              "within_slot_sa_depth": 1
+            },
+            "resolved_budget": {
+              "actual_global_fraction": 0.24363636363636362,
+              "actual_ratio": 31.90909090909091,
+              "allocation_version": "bindformer_nearest_fraction_v1",
+              "expected_output_tokens": 275,
+              "global_fraction": 0.25,
+              "global_tokens": 67,
+              "group_size": null,
+              "input_extent_mm_dhw": [
+                156.0,
+                240.0,
+                240.0
+              ],
+              "input_grid_dhw": [
+                39,
+                15,
+                15
+              ],
+              "input_tokens": 8775,
+              "kind": "exact_count",
+              "local_tokens": 208,
+              "max_relative_error": 0.05,
+              "method": "bindformer3d",
+              "num_roles": 4,
+              "num_slots": 52,
+              "output_grid_dhw": null,
+              "raw_num_tokens": 275,
+              "relative_error": 0.0028409090909090606,
+              "target_ratio": 32,
+              "version": "method_native_ratio_v1"
+            },
+            "target_compression_ratio": 32
+          },
+          "seed": 42,
+          "task": {
+            "name": "single_sequence_findings",
+            "prompt_version": "single_sequence_findings_v2",
+            "truncate_inputs": false
+          },
+          "training": {
+            "betas": [
+              0.9,
+              0.999
+            ],
+            "checkpoint_epochs": [],
+            "cosine_min_lr_ratio": 0.3,
+            "deterministic": true,
+            "device": "cuda:0",
+            "distributed": "none",
+            "early_stopping_enabled": true,
+            "early_stopping_min_delta": 0.005,
+            "early_stopping_patience": 3,
+            "effective_batch_size": 16,
+            "encoder_lr": 0.0002,
+            "eps": 1e-08,
+            "feature_cache": false,
+            "feature_cache_dir": "<LOCAL_PATH>",
+            "grad_clip_norm": 1.0,
+            "init_checkpoint": null,
+            "joint_warmup_projector_mode": "hold_peak",
+            "joint_warmup_ratio": 0.0625,
+            "joint_warmup_steps": 77,
+            "log_optimizer_diagnostics": true,
+            "lora": {
+              "alpha": 32,
+              "bias": "none",
+              "dropout": 0.05,
+              "rank": 16
+            },
+            "max_epochs": 20,
+            "max_steps": null,
+            "microbatch_per_device": 1,
+            "mixed_precision": "bf16",
+            "num_workers": 0,
+            "projector_hold_steps": 0,
+            "projector_lr": 0.0002,
+            "projector_warmup_ratio": 0.0625,
+            "projector_warmup_steps": 77,
+            "required_visual_tokens": null,
+            "resume": null,
+            "run_dir": "<LOCAL_PATH>",
+            "save_every_steps": 0,
+            "stage": "joint_lora",
+            "train_ids_file": null,
+            "train_limit": null,
+            "val_ids_file": null,
+            "val_limit": null,
+            "validation_generation_samples": 14,
+            "warmup_ratio": 0.0,
+            "warmup_steps": null,
+            "weight_decay": 0.01
+          }
+        },
+        "data_identity": {
+          "evaluation_ids_sha256": "69bcaa3c89157310951f55ae7ed6fc2ec691ea554024ea770a780ea8257b1462",
+          "train_ids_sha256": "b60c751801325bed594b142e0662233202fce2915273fa9ea259667cc0a22698",
+          "val_ids_sha256": "4d3176b18672d466be6e0f3a239166f057d4fa9c10ba3bb95f23c0d0d32c5e9e"
+        },
+        "eval_command": [
+          "<PYTHON>",
+          "-u",
+          "experiments/report_output_v1/entry.py",
+          "src.cli.evaluate_checkpoint",
+          "--checkpoint",
+          "<LOCAL_PATH>",
+          "--output-dir",
+          "<LOCAL_PATH>",
+          "--split",
+          "test",
+          "--device",
+          "cuda:0",
+          "--scoring-device",
+          "cuda:0",
+          "--metrics",
+          "bleu4",
+          "rougeL",
+          "green",
+          "radgraph",
+          "rate",
+          "bertscore",
+          "answer_ce",
+          "--repeats",
+          "1000",
+          "--sample-fraction",
+          "1.0",
+          "--sample-seed",
+          "42"
+        ],
+        "evaluation_population": 560,
+        "evaluation_protocol": {
+          "eval_split": "test",
+          "metrics": [
+            "bleu4",
+            "rougeL",
+            "green",
+            "radgraph",
+            "rate",
+            "bertscore",
+            "answer_ce"
+          ],
+          "require_full_test": true
+        },
+        "evaluation_samples": 560,
+        "evaluation_scope": "full_split",
+        "manifest_summary": {
+          "test": {
+            "cases": 140,
+            "cohorts": {
+              "BraTS_GLI": 184,
+              "BraTS_MEN": 180,
+              "BraTS_MET": 196
+            },
+            "dataset_counts": {
+              "brats": 560
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 140,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 556,
+              "requires_review": 4
+            },
+            "samples": 560,
+            "sha256": "42aa134d92e30ad724504560d63636c40fbe0f84396ea89a9feba56edfb86d9c"
+          },
+          "train": {
+            "cases": 490,
+            "cohorts": {
+              "BraTS_GLI": 644,
+              "BraTS_MEN": 656,
+              "BraTS_MET": 660
+            },
+            "dataset_counts": {
+              "brats": 1960
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 484,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 1932,
+              "requires_review": 28
+            },
+            "samples": 1960,
+            "sha256": "7ee9e46f17c3d2a9915d1c451d42a60bcaa6d4b5296e6f88a7d1bc7e87675c65"
+          },
+          "val": {
+            "cases": 67,
+            "cohorts": {
+              "BraTS_GLI": 92,
+              "BraTS_MEN": 84,
+              "BraTS_MET": 92
+            },
+            "dataset_counts": {
+              "brats": 268
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 67,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 267,
+              "requires_review": 1
+            },
+            "samples": 268,
+            "sha256": "1210b27cc631e70a92d441737d3552380d52889b8ee1c5f977d331ab947777c8"
+          }
+        },
+        "ratio": 32,
+        "schedule": {
+          "cosine_min_lr_ratio": 0.3,
+          "cosine_steps": 2306,
+          "endpoints": "inclusive",
+          "joint_source": "steps",
+          "joint_steps": 77,
+          "joint_warmup_projector_mode": "hold_peak",
+          "phase_ranges": [
+            {
+              "end_step": 77,
+              "phase": "projector_warmup",
+              "start_step": 1,
+              "steps": 77
+            },
+            {
+              "end_step": 154,
+              "phase": "joint_warmup",
+              "start_step": 78,
+              "steps": 77
+            },
+            {
+              "end_step": 2460,
+              "phase": "joint_cosine",
+              "start_step": 155,
+              "steps": 2306
+            }
+          ],
+          "projector_hold_steps": 0,
+          "projector_source": "steps",
+          "projector_steps": 77,
+          "step_unit": "optimizer_update",
+          "total_steps": 2460
+        },
+        "train_command": [
+          "<PYTHON>",
+          "-u",
+          "experiments/report_output_v1/entry.py",
+          "src.cli.train",
+          "--config",
+          "<LOCAL_PATH>"
+        ],
+        "train_samples": 1960,
+        "updates_per_epoch": 123,
+        "val_samples": 268
+      }
+    ],
+    "4": [
+      {
+        "budget": {
+          "actual_global_fraction": 0.24363636363636362,
+          "actual_ratio": 31.90909090909091,
+          "allocation_version": "bindformer_nearest_fraction_v1",
+          "expected_output_tokens": 275,
+          "global_fraction": 0.25,
+          "global_tokens": 67,
+          "group_size": null,
+          "input_extent_mm_dhw": [
+            156.0,
+            240.0,
+            240.0
+          ],
+          "input_grid_dhw": [
+            39,
+            15,
+            15
+          ],
+          "input_tokens": 8775,
+          "kind": "exact_count",
+          "local_tokens": 208,
+          "max_relative_error": 0.05,
+          "method": "bindformer3d",
+          "num_roles": 4,
+          "num_slots": 52,
+          "output_grid_dhw": null,
+          "raw_num_tokens": 275,
+          "relative_error": 0.0028409090909090606,
+          "target_ratio": 32,
+          "version": "method_native_ratio_v1"
+        },
+        "config": {
+          "data": {
+            "annotation_root": "<LOCAL_PATH>",
+            "datasets": [
+              "brats"
+            ],
+            "manifest_dir": "<LOCAL_PATH>",
+            "review_policy": "include_with_flag",
+            "root": "<LOCAL_PATH>",
+            "sampling": "uniform_sequence",
+            "target_version": "single_sequence_findings_coref_v2"
+          },
+          "decoder": {
+            "attention": "sdpa",
+            "ce_chunk_size": 64,
+            "frozen": true,
+            "gradient_checkpointing": true,
+            "name": "llama",
+            "path": "<LOCAL_PATH>",
+            "quantization": "none",
+            "weight_dtype": "bfloat16"
+          },
+          "encoder": {
+            "attention": "flash",
+            "batch_mode": "independent",
+            "name": "neurovfm",
+            "params": {},
+            "path": "<LOCAL_PATH>"
+          },
+          "evaluation": {
+            "batch_size": 1,
+            "bootstrap_repeats": 1000,
+            "checkpoint": null,
+            "datasets": null,
+            "output_dir": null,
+            "review_exclusion_file": null,
+            "split": "val"
+          },
+          "generation": {
+            "batch_mode": "independent",
+            "do_sample": false,
+            "max_new_tokens": 192,
+            "num_beams": 1
+          },
+          "preprocessing": {
+            "boundary_policy": "minimal_pad",
+            "cache_dir": "<LOCAL_PATH>",
+            "cache_enabled": true,
+            "image_interpolation": "bspline",
+            "inplane_mm": 1.0,
+            "intensity_percentiles": [
+              0.5,
+              99.5
+            ],
+            "mri_mean": 0.3141,
+            "mri_std": 0.2623,
+            "name": "neurovfm",
+            "orientation": "RPI",
+            "params": {},
+            "patch_size_dhw": [
+              4,
+              16,
+              16
+            ],
+            "slice_axis_policy": "official",
+            "spacing_policy": "native_grid",
+            "throughplane_mm": 4.0,
+            "token_filter_policy": "none"
+          },
+          "project_root": "<LOCAL_PATH>",
+          "projector": {
+            "bias": true,
+            "hidden_size": 4096,
+            "name": "bindformer3d",
+            "params": {
+              "background_slot": true,
+              "binding_loss_weight": 0.0,
+              "checkpoint_blocks": true,
+              "concept_bank": "<LOCAL_PATH>",
+              "concept_loss_weight": 0.0,
+              "dropout": 0.0,
+              "feature_inner_dim": 256,
+              "feature_loss_weight": 0.0,
+              "feature_num_heads": 4,
+              "feature_query_chunk_size": 128,
+              "feature_samples": 512,
+              "feature_target": "frozen_base_cache",
+              "feature_target_cache": "<LOCAL_PATH>",
+              "ffn_expansion": 4,
+              "fixed_spatial_regions": true,
+              "geometry_coordinate_scale": 100.0,
+              "geometry_enabled": false,
+              "geometry_hidden_dim": 128,
+              "geometry_space": "grid",
+              "geometry_volume_scale": 1000.0,
+              "global_depth": 1,
+              "global_fraction": 0.25,
+              "head_type": "mlp",
+              "inner_dim": 768,
+              "knowledge_mode": "name_definition",
+              "local_global_depth": 1,
+              "local_global_gate_init": 0.1,
+              "local_reads_global": false,
+              "num_heads": 8,
+              "num_tokens": 275,
+              "position_frequencies": 8,
+              "position_mode": "grid_fourier",
+              "reader_chunk_size": 128,
+              "report_facts": {
+                "enabled": true,
+                "fact_weight": 0.0,
+                "fields": [
+                  "edema",
+                  "laterality",
+                  "site",
+                  "signal"
+                ],
+                "margin": 0.2,
+                "pair_every_steps": 1,
+                "pair_weight": 0.1,
+                "path": "<LOCAL_PATH>",
+                "positive_ce_weight": 0.25,
+                "version": "report_facts_v1",
+                "warmup_steps": 77
+              },
+              "return_auxiliary": false,
+              "role_query_counts": {
+                "finding": 1,
+                "location_laterality": 1,
+                "morphology_extent": 1,
+                "signal": 1
+              },
+              "roles": [
+                "finding",
+                "location_laterality",
+                "signal",
+                "morphology_extent"
+              ],
+              "router_value_normalization": true,
+              "router_value_projection": false,
+              "sequence_condition": true,
+              "slot_epsilon": 1e-06,
+              "slot_iterations": 3,
+              "spatial_adaptive_aggregation": false,
+              "spatial_attention_temperature": 1.0,
+              "spatial_mean_aggregation": true,
+              "support_beta": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ],
+              "text_loss_weight": 0.0,
+              "tuple_loss_weight": 0.0,
+              "vocabulary_scope": "brats_train",
+              "within_slot_sa": false,
+              "within_slot_sa_depth": 1
+            },
+            "resolved_budget": {
+              "actual_global_fraction": 0.24363636363636362,
+              "actual_ratio": 31.90909090909091,
+              "allocation_version": "bindformer_nearest_fraction_v1",
+              "expected_output_tokens": 275,
+              "global_fraction": 0.25,
+              "global_tokens": 67,
+              "group_size": null,
+              "input_extent_mm_dhw": [
+                156.0,
+                240.0,
+                240.0
+              ],
+              "input_grid_dhw": [
+                39,
+                15,
+                15
+              ],
+              "input_tokens": 8775,
+              "kind": "exact_count",
+              "local_tokens": 208,
+              "max_relative_error": 0.05,
+              "method": "bindformer3d",
+              "num_roles": 4,
+              "num_slots": 52,
+              "output_grid_dhw": null,
+              "raw_num_tokens": 275,
+              "relative_error": 0.0028409090909090606,
+              "target_ratio": 32,
+              "version": "method_native_ratio_v1"
+            },
+            "target_compression_ratio": 32
+          },
+          "seed": 42,
+          "task": {
+            "name": "single_sequence_findings",
+            "prompt_version": "single_sequence_findings_v2",
+            "truncate_inputs": false
+          },
+          "training": {
+            "betas": [
+              0.9,
+              0.999
+            ],
+            "checkpoint_epochs": [],
+            "cosine_min_lr_ratio": 0.3,
+            "deterministic": true,
+            "device": "cuda:0",
+            "distributed": "none",
+            "early_stopping_enabled": true,
+            "early_stopping_min_delta": 0.005,
+            "early_stopping_patience": 3,
+            "effective_batch_size": 16,
+            "encoder_lr": 0.0002,
+            "eps": 1e-08,
+            "feature_cache": false,
+            "feature_cache_dir": "<LOCAL_PATH>",
+            "grad_clip_norm": 1.0,
+            "init_checkpoint": null,
+            "joint_warmup_projector_mode": "hold_peak",
+            "joint_warmup_ratio": 0.0625,
+            "joint_warmup_steps": 77,
+            "log_optimizer_diagnostics": true,
+            "lora": {
+              "alpha": 32,
+              "bias": "none",
+              "dropout": 0.05,
+              "rank": 16
+            },
+            "max_epochs": 20,
+            "max_steps": null,
+            "microbatch_per_device": 1,
+            "mixed_precision": "bf16",
+            "num_workers": 0,
+            "projector_hold_steps": 0,
+            "projector_lr": 0.0002,
+            "projector_warmup_ratio": 0.0625,
+            "projector_warmup_steps": 77,
+            "required_visual_tokens": null,
+            "resume": null,
+            "run_dir": "<LOCAL_PATH>",
+            "save_every_steps": 0,
+            "stage": "joint_lora",
+            "train_ids_file": null,
+            "train_limit": null,
+            "val_ids_file": null,
+            "val_limit": null,
+            "validation_generation_samples": 14,
+            "warmup_ratio": 0.0,
+            "warmup_steps": null,
+            "weight_decay": 0.01
+          }
+        },
+        "data_identity": {
+          "evaluation_ids_sha256": "69bcaa3c89157310951f55ae7ed6fc2ec691ea554024ea770a780ea8257b1462",
+          "train_ids_sha256": "b60c751801325bed594b142e0662233202fce2915273fa9ea259667cc0a22698",
+          "val_ids_sha256": "4d3176b18672d466be6e0f3a239166f057d4fa9c10ba3bb95f23c0d0d32c5e9e"
+        },
+        "eval_command": [
+          "<PYTHON>",
+          "-u",
+          "experiments/report_facts_v1/entry.py",
+          "src.cli.evaluate_checkpoint",
+          "--checkpoint",
+          "<LOCAL_PATH>",
+          "--output-dir",
+          "<LOCAL_PATH>",
+          "--split",
+          "test",
+          "--device",
+          "cuda:0",
+          "--scoring-device",
+          "cuda:0",
+          "--metrics",
+          "bleu4",
+          "rougeL",
+          "green",
+          "radgraph",
+          "rate",
+          "bertscore",
+          "answer_ce",
+          "--repeats",
+          "1000",
+          "--sample-fraction",
+          "1.0",
+          "--sample-seed",
+          "42"
+        ],
+        "evaluation_population": 560,
+        "evaluation_protocol": {
+          "eval_split": "test",
+          "metrics": [
+            "bleu4",
+            "rougeL",
+            "green",
+            "radgraph",
+            "rate",
+            "bertscore",
+            "answer_ce"
+          ],
+          "require_full_test": true
+        },
+        "evaluation_samples": 560,
+        "evaluation_scope": "full_split",
+        "manifest_summary": {
+          "test": {
+            "cases": 140,
+            "cohorts": {
+              "BraTS_GLI": 184,
+              "BraTS_MEN": 180,
+              "BraTS_MET": 196
+            },
+            "dataset_counts": {
+              "brats": 560
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 140,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 556,
+              "requires_review": 4
+            },
+            "samples": 560,
+            "sha256": "42aa134d92e30ad724504560d63636c40fbe0f84396ea89a9feba56edfb86d9c"
+          },
+          "train": {
+            "cases": 490,
+            "cohorts": {
+              "BraTS_GLI": 644,
+              "BraTS_MEN": 656,
+              "BraTS_MET": 660
+            },
+            "dataset_counts": {
+              "brats": 1960
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 484,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 1932,
+              "requires_review": 28
+            },
+            "samples": 1960,
+            "sha256": "7ee9e46f17c3d2a9915d1c451d42a60bcaa6d4b5296e6f88a7d1bc7e87675c65"
+          },
+          "val": {
+            "cases": 67,
+            "cohorts": {
+              "BraTS_GLI": 92,
+              "BraTS_MEN": 84,
+              "BraTS_MET": 92
+            },
+            "dataset_counts": {
+              "brats": 268
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 67,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 267,
+              "requires_review": 1
+            },
+            "samples": 268,
+            "sha256": "1210b27cc631e70a92d441737d3552380d52889b8ee1c5f977d331ab947777c8"
+          }
+        },
+        "ratio": 32,
+        "schedule": {
+          "cosine_min_lr_ratio": 0.3,
+          "cosine_steps": 2306,
+          "endpoints": "inclusive",
+          "joint_source": "steps",
+          "joint_steps": 77,
+          "joint_warmup_projector_mode": "hold_peak",
+          "phase_ranges": [
+            {
+              "end_step": 77,
+              "phase": "projector_warmup",
+              "start_step": 1,
+              "steps": 77
+            },
+            {
+              "end_step": 154,
+              "phase": "joint_warmup",
+              "start_step": 78,
+              "steps": 77
+            },
+            {
+              "end_step": 2460,
+              "phase": "joint_cosine",
+              "start_step": 155,
+              "steps": 2306
+            }
+          ],
+          "projector_hold_steps": 0,
+          "projector_source": "steps",
+          "projector_steps": 77,
+          "step_unit": "optimizer_update",
+          "total_steps": 2460
+        },
+        "train_command": [
+          "<PYTHON>",
+          "-u",
+          "experiments/report_facts_v1/entry.py",
+          "src.cli.train",
+          "--config",
+          "<LOCAL_PATH>"
+        ],
+        "train_samples": 1960,
+        "updates_per_epoch": 123,
+        "val_samples": 268
+      },
+      {
+        "budget": {
+          "actual_global_fraction": 0.2463768115942029,
+          "actual_ratio": 63.58695652173913,
+          "allocation_version": "bindformer_nearest_fraction_v1",
+          "expected_output_tokens": 138,
+          "global_fraction": 0.25,
+          "global_tokens": 34,
+          "group_size": null,
+          "input_extent_mm_dhw": [
+            156.0,
+            240.0,
+            240.0
+          ],
+          "input_grid_dhw": [
+            39,
+            15,
+            15
+          ],
+          "input_tokens": 8775,
+          "kind": "exact_count",
+          "local_tokens": 104,
+          "max_relative_error": 0.05,
+          "method": "bindformer3d",
+          "num_roles": 4,
+          "num_slots": 26,
+          "output_grid_dhw": null,
+          "raw_num_tokens": 138,
+          "relative_error": 0.006453804347826053,
+          "target_ratio": 64,
+          "version": "method_native_ratio_v1"
+        },
+        "config": {
+          "data": {
+            "annotation_root": "<LOCAL_PATH>",
+            "datasets": [
+              "brats"
+            ],
+            "manifest_dir": "<LOCAL_PATH>",
+            "review_policy": "include_with_flag",
+            "root": "<LOCAL_PATH>",
+            "sampling": "uniform_sequence",
+            "target_version": "single_sequence_findings_coref_v2"
+          },
+          "decoder": {
+            "attention": "sdpa",
+            "ce_chunk_size": 64,
+            "frozen": true,
+            "gradient_checkpointing": true,
+            "name": "llama",
+            "path": "<LOCAL_PATH>",
+            "quantization": "none",
+            "weight_dtype": "bfloat16"
+          },
+          "encoder": {
+            "attention": "flash",
+            "batch_mode": "independent",
+            "name": "neurovfm",
+            "params": {},
+            "path": "<LOCAL_PATH>"
+          },
+          "evaluation": {
+            "batch_size": 1,
+            "bootstrap_repeats": 1000,
+            "checkpoint": null,
+            "datasets": null,
+            "output_dir": null,
+            "review_exclusion_file": null,
+            "split": "val"
+          },
+          "generation": {
+            "batch_mode": "independent",
+            "do_sample": false,
+            "max_new_tokens": 192,
+            "num_beams": 1
+          },
+          "preprocessing": {
+            "boundary_policy": "minimal_pad",
+            "cache_dir": "<LOCAL_PATH>",
+            "cache_enabled": true,
+            "image_interpolation": "bspline",
+            "inplane_mm": 1.0,
+            "intensity_percentiles": [
+              0.5,
+              99.5
+            ],
+            "mri_mean": 0.3141,
+            "mri_std": 0.2623,
+            "name": "neurovfm",
+            "orientation": "RPI",
+            "params": {},
+            "patch_size_dhw": [
+              4,
+              16,
+              16
+            ],
+            "slice_axis_policy": "official",
+            "spacing_policy": "native_grid",
+            "throughplane_mm": 4.0,
+            "token_filter_policy": "none"
+          },
+          "project_root": "<LOCAL_PATH>",
+          "projector": {
+            "bias": true,
+            "hidden_size": 4096,
+            "name": "bindformer3d",
+            "params": {
+              "background_slot": true,
+              "binding_loss_weight": 0.0,
+              "checkpoint_blocks": true,
+              "concept_bank": "<LOCAL_PATH>",
+              "concept_loss_weight": 0.0,
+              "dropout": 0.0,
+              "feature_inner_dim": 256,
+              "feature_loss_weight": 0.0,
+              "feature_num_heads": 4,
+              "feature_query_chunk_size": 128,
+              "feature_samples": 512,
+              "feature_target": "frozen_base_cache",
+              "feature_target_cache": "<LOCAL_PATH>",
+              "ffn_expansion": 4,
+              "fixed_spatial_regions": true,
+              "geometry_coordinate_scale": 100.0,
+              "geometry_enabled": false,
+              "geometry_hidden_dim": 128,
+              "geometry_space": "grid",
+              "geometry_volume_scale": 1000.0,
+              "global_depth": 1,
+              "global_fraction": 0.25,
+              "head_type": "mlp",
+              "inner_dim": 768,
+              "knowledge_mode": "name_definition",
+              "local_global_depth": 1,
+              "local_global_gate_init": 0.1,
+              "local_reads_global": false,
+              "num_heads": 8,
+              "num_tokens": 138,
+              "position_frequencies": 8,
+              "position_mode": "grid_fourier",
+              "reader_chunk_size": 128,
+              "report_facts": {
+                "enabled": true,
+                "fact_weight": 0.0,
+                "fields": [
+                  "edema",
+                  "laterality",
+                  "site",
+                  "signal"
+                ],
+                "margin": 0.2,
+                "pair_every_steps": 1,
+                "pair_weight": 0.1,
+                "path": "<LOCAL_PATH>",
+                "positive_ce_weight": 0.25,
+                "version": "report_facts_v1",
+                "warmup_steps": 77
+              },
+              "return_auxiliary": false,
+              "role_query_counts": {
+                "finding": 1,
+                "location_laterality": 1,
+                "morphology_extent": 1,
+                "signal": 1
+              },
+              "roles": [
+                "finding",
+                "location_laterality",
+                "signal",
+                "morphology_extent"
+              ],
+              "router_value_normalization": true,
+              "router_value_projection": false,
+              "sequence_condition": true,
+              "slot_epsilon": 1e-06,
+              "slot_iterations": 3,
+              "spatial_adaptive_aggregation": false,
+              "spatial_attention_temperature": 1.0,
+              "spatial_mean_aggregation": true,
+              "support_beta": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ],
+              "text_loss_weight": 0.0,
+              "tuple_loss_weight": 0.0,
+              "vocabulary_scope": "brats_train",
+              "within_slot_sa": false,
+              "within_slot_sa_depth": 1
+            },
+            "resolved_budget": {
+              "actual_global_fraction": 0.2463768115942029,
+              "actual_ratio": 63.58695652173913,
+              "allocation_version": "bindformer_nearest_fraction_v1",
+              "expected_output_tokens": 138,
+              "global_fraction": 0.25,
+              "global_tokens": 34,
+              "group_size": null,
+              "input_extent_mm_dhw": [
+                156.0,
+                240.0,
+                240.0
+              ],
+              "input_grid_dhw": [
+                39,
+                15,
+                15
+              ],
+              "input_tokens": 8775,
+              "kind": "exact_count",
+              "local_tokens": 104,
+              "max_relative_error": 0.05,
+              "method": "bindformer3d",
+              "num_roles": 4,
+              "num_slots": 26,
+              "output_grid_dhw": null,
+              "raw_num_tokens": 138,
+              "relative_error": 0.006453804347826053,
+              "target_ratio": 64,
+              "version": "method_native_ratio_v1"
+            },
+            "target_compression_ratio": 64
+          },
+          "seed": 42,
+          "task": {
+            "name": "single_sequence_findings",
+            "prompt_version": "single_sequence_findings_v2",
+            "truncate_inputs": false
+          },
+          "training": {
+            "betas": [
+              0.9,
+              0.999
+            ],
+            "checkpoint_epochs": [],
+            "cosine_min_lr_ratio": 0.3,
+            "deterministic": true,
+            "device": "cuda:0",
+            "distributed": "none",
+            "early_stopping_enabled": true,
+            "early_stopping_min_delta": 0.005,
+            "early_stopping_patience": 3,
+            "effective_batch_size": 16,
+            "encoder_lr": 0.0002,
+            "eps": 1e-08,
+            "feature_cache": false,
+            "feature_cache_dir": "<LOCAL_PATH>",
+            "grad_clip_norm": 1.0,
+            "init_checkpoint": null,
+            "joint_warmup_projector_mode": "hold_peak",
+            "joint_warmup_ratio": 0.0625,
+            "joint_warmup_steps": 77,
+            "log_optimizer_diagnostics": true,
+            "lora": {
+              "alpha": 32,
+              "bias": "none",
+              "dropout": 0.05,
+              "rank": 16
+            },
+            "max_epochs": 20,
+            "max_steps": null,
+            "microbatch_per_device": 1,
+            "mixed_precision": "bf16",
+            "num_workers": 0,
+            "projector_hold_steps": 0,
+            "projector_lr": 0.0002,
+            "projector_warmup_ratio": 0.0625,
+            "projector_warmup_steps": 77,
+            "required_visual_tokens": null,
+            "resume": null,
+            "run_dir": "<LOCAL_PATH>",
+            "save_every_steps": 0,
+            "stage": "joint_lora",
+            "train_ids_file": null,
+            "train_limit": null,
+            "val_ids_file": null,
+            "val_limit": null,
+            "validation_generation_samples": 14,
+            "warmup_ratio": 0.0,
+            "warmup_steps": null,
+            "weight_decay": 0.01
+          }
+        },
+        "data_identity": {
+          "evaluation_ids_sha256": "69bcaa3c89157310951f55ae7ed6fc2ec691ea554024ea770a780ea8257b1462",
+          "train_ids_sha256": "b60c751801325bed594b142e0662233202fce2915273fa9ea259667cc0a22698",
+          "val_ids_sha256": "4d3176b18672d466be6e0f3a239166f057d4fa9c10ba3bb95f23c0d0d32c5e9e"
+        },
+        "eval_command": [
+          "<PYTHON>",
+          "-u",
+          "experiments/report_facts_v1/entry.py",
+          "src.cli.evaluate_checkpoint",
+          "--checkpoint",
+          "<LOCAL_PATH>",
+          "--output-dir",
+          "<LOCAL_PATH>",
+          "--split",
+          "test",
+          "--device",
+          "cuda:0",
+          "--scoring-device",
+          "cuda:0",
+          "--metrics",
+          "bleu4",
+          "rougeL",
+          "green",
+          "radgraph",
+          "rate",
+          "bertscore",
+          "answer_ce",
+          "--repeats",
+          "1000",
+          "--sample-fraction",
+          "1.0",
+          "--sample-seed",
+          "42"
+        ],
+        "evaluation_population": 560,
+        "evaluation_protocol": {
+          "eval_split": "test",
+          "metrics": [
+            "bleu4",
+            "rougeL",
+            "green",
+            "radgraph",
+            "rate",
+            "bertscore",
+            "answer_ce"
+          ],
+          "require_full_test": true
+        },
+        "evaluation_samples": 560,
+        "evaluation_scope": "full_split",
+        "manifest_summary": {
+          "test": {
+            "cases": 140,
+            "cohorts": {
+              "BraTS_GLI": 184,
+              "BraTS_MEN": 180,
+              "BraTS_MET": 196
+            },
+            "dataset_counts": {
+              "brats": 560
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 140,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 556,
+              "requires_review": 4
+            },
+            "samples": 560,
+            "sha256": "42aa134d92e30ad724504560d63636c40fbe0f84396ea89a9feba56edfb86d9c"
+          },
+          "train": {
+            "cases": 490,
+            "cohorts": {
+              "BraTS_GLI": 644,
+              "BraTS_MEN": 656,
+              "BraTS_MET": 660
+            },
+            "dataset_counts": {
+              "brats": 1960
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 484,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 1932,
+              "requires_review": 28
+            },
+            "samples": 1960,
+            "sha256": "7ee9e46f17c3d2a9915d1c451d42a60bcaa6d4b5296e6f88a7d1bc7e87675c65"
+          },
+          "val": {
+            "cases": 67,
+            "cohorts": {
+              "BraTS_GLI": 92,
+              "BraTS_MEN": 84,
+              "BraTS_MET": 92
+            },
+            "dataset_counts": {
+              "brats": 268
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 67,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 267,
+              "requires_review": 1
+            },
+            "samples": 268,
+            "sha256": "1210b27cc631e70a92d441737d3552380d52889b8ee1c5f977d331ab947777c8"
+          }
+        },
+        "ratio": 64,
+        "schedule": {
+          "cosine_min_lr_ratio": 0.3,
+          "cosine_steps": 2306,
+          "endpoints": "inclusive",
+          "joint_source": "steps",
+          "joint_steps": 77,
+          "joint_warmup_projector_mode": "hold_peak",
+          "phase_ranges": [
+            {
+              "end_step": 77,
+              "phase": "projector_warmup",
+              "start_step": 1,
+              "steps": 77
+            },
+            {
+              "end_step": 154,
+              "phase": "joint_warmup",
+              "start_step": 78,
+              "steps": 77
+            },
+            {
+              "end_step": 2460,
+              "phase": "joint_cosine",
+              "start_step": 155,
+              "steps": 2306
+            }
+          ],
+          "projector_hold_steps": 0,
+          "projector_source": "steps",
+          "projector_steps": 77,
+          "step_unit": "optimizer_update",
+          "total_steps": 2460
+        },
+        "train_command": [
+          "<PYTHON>",
+          "-u",
+          "experiments/report_facts_v1/entry.py",
+          "src.cli.train",
+          "--config",
+          "<LOCAL_PATH>"
+        ],
+        "train_samples": 1960,
+        "updates_per_epoch": 123,
+        "val_samples": 268
+      },
+      {
+        "budget": {
+          "actual_global_fraction": 0.24363636363636362,
+          "actual_ratio": 31.90909090909091,
+          "allocation_version": "bindformer_nearest_fraction_v1",
+          "expected_output_tokens": 275,
+          "global_fraction": 0.25,
+          "global_tokens": 67,
+          "group_size": null,
+          "input_extent_mm_dhw": [
+            156.0,
+            240.0,
+            240.0
+          ],
+          "input_grid_dhw": [
+            39,
+            15,
+            15
+          ],
+          "input_tokens": 8775,
+          "kind": "exact_count",
+          "local_tokens": 208,
+          "max_relative_error": 0.05,
+          "method": "bindformer3d",
+          "num_roles": 4,
+          "num_slots": 52,
+          "output_grid_dhw": null,
+          "raw_num_tokens": 275,
+          "relative_error": 0.0028409090909090606,
+          "target_ratio": 32,
+          "version": "method_native_ratio_v1"
+        },
+        "config": {
+          "data": {
+            "annotation_root": "<LOCAL_PATH>",
+            "datasets": [
+              "brats"
+            ],
+            "manifest_dir": "<LOCAL_PATH>",
+            "review_policy": "include_with_flag",
+            "root": "<LOCAL_PATH>",
+            "sampling": "uniform_sequence",
+            "target_version": "single_sequence_findings_coref_v2"
+          },
+          "decoder": {
+            "attention": "sdpa",
+            "ce_chunk_size": 64,
+            "frozen": true,
+            "gradient_checkpointing": true,
+            "name": "llama",
+            "path": "<LOCAL_PATH>",
+            "quantization": "none",
+            "weight_dtype": "bfloat16"
+          },
+          "encoder": {
+            "attention": "flash",
+            "batch_mode": "independent",
+            "name": "neurovfm",
+            "params": {},
+            "path": "<LOCAL_PATH>"
+          },
+          "evaluation": {
+            "batch_size": 1,
+            "bootstrap_repeats": 1000,
+            "checkpoint": null,
+            "datasets": null,
+            "output_dir": null,
+            "review_exclusion_file": null,
+            "split": "val"
+          },
+          "generation": {
+            "batch_mode": "independent",
+            "do_sample": false,
+            "max_new_tokens": 192,
+            "num_beams": 1
+          },
+          "preprocessing": {
+            "boundary_policy": "minimal_pad",
+            "cache_dir": "<LOCAL_PATH>",
+            "cache_enabled": true,
+            "image_interpolation": "bspline",
+            "inplane_mm": 1.0,
+            "intensity_percentiles": [
+              0.5,
+              99.5
+            ],
+            "mri_mean": 0.3141,
+            "mri_std": 0.2623,
+            "name": "neurovfm",
+            "orientation": "RPI",
+            "params": {},
+            "patch_size_dhw": [
+              4,
+              16,
+              16
+            ],
+            "slice_axis_policy": "official",
+            "spacing_policy": "native_grid",
+            "throughplane_mm": 4.0,
+            "token_filter_policy": "none"
+          },
+          "project_root": "<LOCAL_PATH>",
+          "projector": {
+            "bias": true,
+            "hidden_size": 4096,
+            "name": "bindformer3d",
+            "params": {
+              "background_slot": true,
+              "binding_loss_weight": 0.0,
+              "checkpoint_blocks": true,
+              "concept_bank": "<LOCAL_PATH>",
+              "concept_loss_weight": 0.0,
+              "dropout": 0.0,
+              "feature_inner_dim": 256,
+              "feature_loss_weight": 0.0,
+              "feature_num_heads": 4,
+              "feature_query_chunk_size": 128,
+              "feature_samples": 512,
+              "feature_target": "frozen_base_cache",
+              "feature_target_cache": "<LOCAL_PATH>",
+              "ffn_expansion": 4,
+              "fixed_spatial_regions": true,
+              "geometry_coordinate_scale": 100.0,
+              "geometry_enabled": false,
+              "geometry_hidden_dim": 128,
+              "geometry_space": "grid",
+              "geometry_volume_scale": 1000.0,
+              "global_depth": 1,
+              "global_fraction": 0.25,
+              "head_type": "mlp",
+              "inner_dim": 768,
+              "knowledge_mode": "name_definition",
+              "local_global_depth": 1,
+              "local_global_gate_init": 0.1,
+              "local_reads_global": false,
+              "num_heads": 8,
+              "num_tokens": 275,
+              "position_frequencies": 8,
+              "position_mode": "grid_fourier",
+              "reader_chunk_size": 128,
+              "report_facts": {
+                "enabled": true,
+                "fact_weight": 0.1,
+                "fields": [
+                  "edema",
+                  "laterality",
+                  "site",
+                  "signal"
+                ],
+                "margin": 0.2,
+                "pair_every_steps": 1,
+                "pair_weight": 0.1,
+                "path": "<LOCAL_PATH>",
+                "positive_ce_weight": 0.25,
+                "version": "report_facts_v1",
+                "warmup_steps": 77
+              },
+              "return_auxiliary": false,
+              "role_query_counts": {
+                "finding": 1,
+                "location_laterality": 1,
+                "morphology_extent": 1,
+                "signal": 1
+              },
+              "roles": [
+                "finding",
+                "location_laterality",
+                "signal",
+                "morphology_extent"
+              ],
+              "router_value_normalization": true,
+              "router_value_projection": false,
+              "sequence_condition": true,
+              "slot_epsilon": 1e-06,
+              "slot_iterations": 3,
+              "spatial_adaptive_aggregation": false,
+              "spatial_attention_temperature": 1.0,
+              "spatial_mean_aggregation": true,
+              "support_beta": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ],
+              "text_loss_weight": 0.0,
+              "tuple_loss_weight": 0.0,
+              "vocabulary_scope": "brats_train",
+              "within_slot_sa": false,
+              "within_slot_sa_depth": 1
+            },
+            "resolved_budget": {
+              "actual_global_fraction": 0.24363636363636362,
+              "actual_ratio": 31.90909090909091,
+              "allocation_version": "bindformer_nearest_fraction_v1",
+              "expected_output_tokens": 275,
+              "global_fraction": 0.25,
+              "global_tokens": 67,
+              "group_size": null,
+              "input_extent_mm_dhw": [
+                156.0,
+                240.0,
+                240.0
+              ],
+              "input_grid_dhw": [
+                39,
+                15,
+                15
+              ],
+              "input_tokens": 8775,
+              "kind": "exact_count",
+              "local_tokens": 208,
+              "max_relative_error": 0.05,
+              "method": "bindformer3d",
+              "num_roles": 4,
+              "num_slots": 52,
+              "output_grid_dhw": null,
+              "raw_num_tokens": 275,
+              "relative_error": 0.0028409090909090606,
+              "target_ratio": 32,
+              "version": "method_native_ratio_v1"
+            },
+            "target_compression_ratio": 32
+          },
+          "seed": 42,
+          "task": {
+            "name": "single_sequence_findings",
+            "prompt_version": "single_sequence_findings_v2",
+            "truncate_inputs": false
+          },
+          "training": {
+            "betas": [
+              0.9,
+              0.999
+            ],
+            "checkpoint_epochs": [],
+            "cosine_min_lr_ratio": 0.3,
+            "deterministic": true,
+            "device": "cuda:0",
+            "distributed": "none",
+            "early_stopping_enabled": true,
+            "early_stopping_min_delta": 0.005,
+            "early_stopping_patience": 3,
+            "effective_batch_size": 16,
+            "encoder_lr": 0.0002,
+            "eps": 1e-08,
+            "feature_cache": false,
+            "feature_cache_dir": "<LOCAL_PATH>",
+            "grad_clip_norm": 1.0,
+            "init_checkpoint": null,
+            "joint_warmup_projector_mode": "hold_peak",
+            "joint_warmup_ratio": 0.0625,
+            "joint_warmup_steps": 77,
+            "log_optimizer_diagnostics": true,
+            "lora": {
+              "alpha": 32,
+              "bias": "none",
+              "dropout": 0.05,
+              "rank": 16
+            },
+            "max_epochs": 20,
+            "max_steps": null,
+            "microbatch_per_device": 1,
+            "mixed_precision": "bf16",
+            "num_workers": 0,
+            "projector_hold_steps": 0,
+            "projector_lr": 0.0002,
+            "projector_warmup_ratio": 0.0625,
+            "projector_warmup_steps": 77,
+            "required_visual_tokens": null,
+            "resume": null,
+            "run_dir": "<LOCAL_PATH>",
+            "save_every_steps": 0,
+            "stage": "joint_lora",
+            "train_ids_file": null,
+            "train_limit": null,
+            "val_ids_file": null,
+            "val_limit": null,
+            "validation_generation_samples": 14,
+            "warmup_ratio": 0.0,
+            "warmup_steps": null,
+            "weight_decay": 0.01
+          }
+        },
+        "data_identity": {
+          "evaluation_ids_sha256": "69bcaa3c89157310951f55ae7ed6fc2ec691ea554024ea770a780ea8257b1462",
+          "train_ids_sha256": "b60c751801325bed594b142e0662233202fce2915273fa9ea259667cc0a22698",
+          "val_ids_sha256": "4d3176b18672d466be6e0f3a239166f057d4fa9c10ba3bb95f23c0d0d32c5e9e"
+        },
+        "eval_command": [
+          "<PYTHON>",
+          "-u",
+          "experiments/report_facts_v1/entry.py",
+          "src.cli.evaluate_checkpoint",
+          "--checkpoint",
+          "<LOCAL_PATH>",
+          "--output-dir",
+          "<LOCAL_PATH>",
+          "--split",
+          "test",
+          "--device",
+          "cuda:0",
+          "--scoring-device",
+          "cuda:0",
+          "--metrics",
+          "bleu4",
+          "rougeL",
+          "green",
+          "radgraph",
+          "rate",
+          "bertscore",
+          "answer_ce",
+          "--repeats",
+          "1000",
+          "--sample-fraction",
+          "1.0",
+          "--sample-seed",
+          "42"
+        ],
+        "evaluation_population": 560,
+        "evaluation_protocol": {
+          "eval_split": "test",
+          "metrics": [
+            "bleu4",
+            "rougeL",
+            "green",
+            "radgraph",
+            "rate",
+            "bertscore",
+            "answer_ce"
+          ],
+          "require_full_test": true
+        },
+        "evaluation_samples": 560,
+        "evaluation_scope": "full_split",
+        "manifest_summary": {
+          "test": {
+            "cases": 140,
+            "cohorts": {
+              "BraTS_GLI": 184,
+              "BraTS_MEN": 180,
+              "BraTS_MET": 196
+            },
+            "dataset_counts": {
+              "brats": 560
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 140,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 556,
+              "requires_review": 4
+            },
+            "samples": 560,
+            "sha256": "42aa134d92e30ad724504560d63636c40fbe0f84396ea89a9feba56edfb86d9c"
+          },
+          "train": {
+            "cases": 490,
+            "cohorts": {
+              "BraTS_GLI": 644,
+              "BraTS_MEN": 656,
+              "BraTS_MET": 660
+            },
+            "dataset_counts": {
+              "brats": 1960
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 484,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 1932,
+              "requires_review": 28
+            },
+            "samples": 1960,
+            "sha256": "7ee9e46f17c3d2a9915d1c451d42a60bcaa6d4b5296e6f88a7d1bc7e87675c65"
+          },
+          "val": {
+            "cases": 67,
+            "cohorts": {
+              "BraTS_GLI": 92,
+              "BraTS_MEN": 84,
+              "BraTS_MET": 92
+            },
+            "dataset_counts": {
+              "brats": 268
+            },
+            "datasets": [
+              "brats"
+            ],
+            "patients": 67,
+            "review_status": {
+              "coreference_pass_completed_not_clinical_certification": 267,
+              "requires_review": 1
+            },
+            "samples": 268,
+            "sha256": "1210b27cc631e70a92d441737d3552380d52889b8ee1c5f977d331ab947777c8"
+          }
+        },
+        "ratio": 32,
+        "schedule": {
+          "cosine_min_lr_ratio": 0.3,
+          "cosine_steps": 2306,
+          "endpoints": "inclusive",
+          "joint_source": "steps",
+          "joint_steps": 77,
+          "joint_warmup_projector_mode": "hold_peak",
+          "phase_ranges": [
+            {
+              "end_step": 77,
+              "phase": "projector_warmup",
+              "start_step": 1,
+              "steps": 77
+            },
+            {
+              "end_step": 154,
+              "phase": "joint_warmup",
+              "start_step": 78,
+              "steps": 77
+            },
+            {
+              "end_step": 2460,
+              "phase": "joint_cosine",
+              "start_step": 155,
+              "steps": 2306
+            }
+          ],
+          "projector_hold_steps": 0,
+          "projector_source": "steps",
+          "projector_steps": 77,
+          "step_unit": "optimizer_update",
+          "total_steps": 2460
+        },
+        "train_command": [
+          "<PYTHON>",
+          "-u",
+          "experiments/report_facts_v1/entry.py",
+          "src.cli.train",
+          "--config",
+          "<LOCAL_PATH>"
+        ],
+        "train_samples": 1960,
+        "updates_per_epoch": 123,
+        "val_samples": 268
+      }
+    ]
+  }
+}

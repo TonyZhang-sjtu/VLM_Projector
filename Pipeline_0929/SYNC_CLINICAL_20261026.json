@@ -1,0 +1,33 @@
+{
+  "environment": {
+    "packages": {
+      "PyRuSH": "1.0.13",
+      "RaTEScore": "0.1.0",
+      "bert-score": "0.3.13",
+      "datasets": "3.6.0",
+      "green_score": "0.0.13",
+      "huggingface-hub": "0.34.4",
+      "matplotlib": "3.10.7",
+      "medspacy": "1.3.1",
+      "numpy": "1.26.4",
+      "packaging": "26.3",
+      "pandas": "2.2.3",
+      "radgraph": "0.1.18",
+      "scipy": "1.15.2",
+      "sentence-transformers": "3.4.1",
+      "sentencepiece": "0.2.1",
+      "spacy": "3.7.5",
+      "thinc": "8.2.5",
+      "tokenizers": "0.21.4",
+      "torch": "2.5.0+cu124",
+      "transformers": "4.51.3"
+    },
+    "python": "3.10.14"
+  },
+  "source_digests": {
+    "RaTEScore": "e87e7af12447e6edecac55536b325fa3067c5110679a6832a46613f0e5c69472",
+    "bert_score": "b009009ddf34b03b3fad818d7db72f7c401951632b7f5c5f527960f2763e8dd7",
+    "green_score": "dff41e9dd42c5b5073962af39ce56a06f4e3bddf313326c4707f204abf8f5fd5",
+    "radgraph": "5f2c5c9eade8137ae26153c33a131fc0e6ff9dfd8823951f80f1bee24fab6ab3"
+  }
+}

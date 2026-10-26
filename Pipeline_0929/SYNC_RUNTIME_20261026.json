@@ -1,0 +1,15 @@
+{
+  "python": "3.10.14",
+  "source_digests": {
+    "SimpleITK": "db4a11c12e207900499fa0ee437e5ca6d078bd03f8746ac8a48d971e698c23f1",
+    "accelerate": "f1cf94bfcb11cecb7165f4820deee405ea11a5c0fbe56b3745f05138f1136ccd",
+    "flash_attn": "a43f904098606c162b5477040d2a0b9fbe03977cfd89a087bdda09aaf52fbb25",
+    "neurovfm": "46819c6c0f216fb303654079cb18c2fbeb9534ce7c5fe84e140f018c2b30ba45",
+    "nibabel": "61035375b7c71d5e4a7f8a60bd9004327a10a6217c1df6481fbcec043ebf4606",
+    "numpy": "6a3b0dffcc6d392882bd9c05fd68b360d0aaa9b65c01c279a06a5690e87c4e18",
+    "peft": "e7c5f5924ae161242c9cadfcd86a9e200579f38c3098ecb22111594702c675d5",
+    "torch": "d98611ad282faaad72163c96ce2d7b47ba3a2223fb305441159f2c56f30e457a",
+    "transformers": "471af16b64772bad4a7f8ec10bc12f4e63ac7af215c65308c456eac4a0864f05"
+  },
+  "user_site_enabled": false
+}

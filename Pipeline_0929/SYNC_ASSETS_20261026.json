@@ -1,0 +1,45 @@
+{
+  "format": "projector_asset_fingerprint_v1",
+  "groups": {
+    "manifests": {
+      "files": 3,
+      "bytes": 2438023,
+      "sha256": "31515a42059869d7d8056430accc2f551c61e13ad9a915816cc9613fdfdec6bf"
+    },
+    "brats_images": {
+      "files": 12445,
+      "bytes": 37875081984,
+      "sha256": "ccd25809ff00edaa64de8253f017830ae8c229c0e0e1ae7a6e7fccfb79981a26"
+    },
+    "encoder": {
+      "files": 4,
+      "bytes": 286581785,
+      "sha256": "92fa7e4c66d38d3314caf41c671aad25ec23e28f2f59f61d2c07b054d5dd24e7"
+    },
+    "decoder": {
+      "files": 14,
+      "bytes": 16077898082,
+      "sha256": "d00991e67f9e72a3177c179d3f853167ec94e78b63c848360e453dcc3fc091d4"
+    },
+    "bindformer": {
+      "files": 31,
+      "bytes": 42154900,
+      "sha256": "f8e8907315c5756805a90a2dba229de4a1078d8e07b49ffb597075c69eb7807e"
+    },
+    "report_facts": {
+      "files": 5,
+      "bytes": 2228014,
+      "sha256": "9014e0ff2b27b16ebefd3af8823b7d9373b6429f5170598641f10e90aa0454e3"
+    },
+    "report_output": {
+      "files": 5,
+      "bytes": 2256278,
+      "sha256": "68529f63aea4f5bb6cead7a9f59a1b84cbfd6acc37f18904d971813a0109cfd9"
+    },
+    "evaluation": {
+      "files": 48,
+      "bytes": 16400718887,
+      "sha256": "012698282d739ea5c73b67940e7f89280ae689985cabec32b728f8937eebeb58"
+    }
+  }
+}

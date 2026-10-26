@@ -30,4 +30,12 @@ def combined_loss(result, answer_count, world_size=1, feature_weight=0., sample_
         feature=result['feature_loss_sum']
         if not torch.isfinite(feature):raise FloatingPointError('Nonfinite reconstruction loss')
         loss=loss+feature_weight*feature*backward_scale(sample_count,world_size)
+    # Opt-in objectives already include their configured weights. Old callers
+    # have no such key and retain the exact original arithmetic above.
+    if 'auxiliary_loss_sum' in result:
+        if sample_count is None or sample_count<1:
+            raise ValueError('Auxiliary objectives require the actual window sample count')
+        auxiliary=result['auxiliary_loss_sum']
+        if not torch.isfinite(auxiliary):raise FloatingPointError('Nonfinite auxiliary objective')
+        loss=loss+auxiliary*backward_scale(sample_count,world_size)
     return loss

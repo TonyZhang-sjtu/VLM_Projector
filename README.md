@@ -8,7 +8,10 @@
 [环境与迁移说明](docs/ENVIRONMENT_AND_MIGRATION.md)。Git 不包含数据、标注、模型、缓存、
 训练输出或登录 token。仓库 checkout 路径由 `project_root: null` 自动识别。
 
-已有服务器同步本轮 64× / BindFormer 更新并验证运行，见
+本轮（2026-10-26）上传与双机同步、Exp1024 完整调用链及资产/环境核对，见
+[GitHub 上传与服务器同步流程](Pipeline_0929/GITHUB_UPLOAD_AND_SERVER_SYNC.md)。
+
+已有服务器同步此前 64× / BindFormer 更新并验证运行，见
 [第二台服务器操作 prompt](docs/SERVER2_SYNC_64X_20261021.md)，沿用各机自己的路径配置。
 
 ```bash
