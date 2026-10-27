@@ -1,0 +1,382 @@
+{
+  "format": "exp1026_sync_v1",
+  "launchers": {
+    "run_adaptive_merge3d.sh": {
+      "launcher_sha256": "0ec1101d5cdea8b4faa9be9c9b162497be6578d309d8438016bb4a726f7aa049",
+      "normalized_plan_sha256": "b0ce3e9c13f0f16bab8f4897dc93dc65e19c01dc121f2807fa757820ca65589e",
+      "projector": "adaptive_merge3d",
+      "ratios": [
+        4,
+        8,
+        16,
+        32
+      ],
+      "tokens": [
+        2194,
+        1097,
+        549,
+        275
+      ],
+      "train_val_test": [
+        [
+          1960,
+          268,
+          560
+        ],
+        [
+          1960,
+          268,
+          560
+        ],
+        [
+          1960,
+          268,
+          560
+        ],
+        [
+          1960,
+          268,
+          560
+        ]
+      ]
+    },
+    "run_attention_pool.sh": {
+      "launcher_sha256": "3bc98597d08d21650091a66bd2f58e6da14709969241b3cb498b53f4a5c3832a",
+      "normalized_plan_sha256": "83492e2f87a666d05edb7d7c436d798a17df9f6b12ba18f4fd4a2ca55676faf4",
+      "projector": "attention_pool",
+      "ratios": [
+        4,
+        8,
+        16,
+        32
+      ],
+      "tokens": [
+        2194,
+        1097,
+        549,
+        275
+      ],
+      "train_val_test": [
+        [
+          1960,
+          268,
+          560
+        ],
+        [
+          1960,
+          268,
+          560
+        ],
+        [
+          1960,
+          268,
+          560
+        ],
+        [
+          1960,
+          268,
+          560
+        ]
+      ]
+    },
+    "run_avgpool3d_r128_r256.sh": {
+      "launcher_sha256": "5500ce748aaaec1fb90a69551ad30d15cffaa27d6098f8b8f449539d94a3a29f",
+      "normalized_plan_sha256": "1d49b1c542a4bd29c66242051c90d3b927ed4262f6c6ab8dc9a871d49eccbe63",
+      "projector": "avgpool3d",
+      "ratios": [
+        128,
+        256
+      ],
+      "tokens": [
+        72,
+        36
+      ],
+      "train_val_test": [
+        [
+          1960,
+          268,
+          560
+        ],
+        [
+          1960,
+          268,
+          560
+        ]
+      ]
+    },
+    "run_baseline_a_r128_r256.sh": {
+      "launcher_sha256": "f04e11738d675b33a6f21bbeee3dbf1942f84c48d79f21e910119c52f93f5a31",
+      "normalized_plan_sha256": "d7d0484da2f6529fa41df53dde316754174173f7afe54103ec377ee1dcc19c45",
+      "projector": "bindformer3d",
+      "ratios": [
+        128,
+        256
+      ],
+      "tokens": [
+        69,
+        35
+      ],
+      "train_val_test": [
+        [
+          1960,
+          268,
+          560
+        ],
+        [
+          1960,
+          268,
+          560
+        ]
+      ]
+    },
+    "run_concat3d.sh": {
+      "launcher_sha256": "9d184b8480b8c0a255a35062b7674d4bb9013a6dcb0965cbcea0ef459eb90a64",
+      "normalized_plan_sha256": "ebdce39486d33018f7536c27effea918fff92c95d9f67c8a5ac222932cc01f08",
+      "projector": "concat3d",
+      "ratios": [
+        4,
+        8,
+        16,
+        32
+      ],
+      "tokens": [
+        2250,
+        1125,
+        525,
+        280
+      ],
+      "train_val_test": [
+        [
+          1960,
+          268,
+          560
+        ],
+        [
+          1960,
+          268,
+          560
+        ],
+        [
+          1960,
+          268,
+          560
+        ],
+        [
+          1960,
+          268,
+          560
+        ]
+      ]
+    },
+    "run_convpool3d.sh": {
+      "launcher_sha256": "e6fd7a2089bbd499bc6b6ef503a54082ccbc8431673b2ec17c39a978bb5773ce",
+      "normalized_plan_sha256": "4a410e7b749315df3d5d816422cd4e2e0c72a5b567e48275854f28b6c9a18a53",
+      "projector": "convpool3d",
+      "ratios": [
+        4,
+        8,
+        16,
+        32
+      ],
+      "tokens": [
+        2197,
+        1100,
+        550,
+        275
+      ],
+      "train_val_test": [
+        [
+          1960,
+          268,
+          560
+        ],
+        [
+          1960,
+          268,
+          560
+        ],
+        [
+          1960,
+          268,
+          560
+        ],
+        [
+          1960,
+          268,
+          560
+        ]
+      ]
+    },
+    "run_local_packer3d_r128_r256.sh": {
+      "launcher_sha256": "55c15cc08aae4f1ea2daceeea58b15979d991082c0837a2f9aa1a6476f3ab98f",
+      "normalized_plan_sha256": "e41ff67a531f35acf456ba3bdf69d65b2b0b503e6d6a73bb2e4be8e8ba338bfe",
+      "projector": "local_packer3d",
+      "ratios": [
+        128,
+        256
+      ],
+      "tokens": [
+        72,
+        36
+      ],
+      "train_val_test": [
+        [
+          1960,
+          268,
+          560
+        ],
+        [
+          1960,
+          268,
+          560
+        ]
+      ]
+    },
+    "run_mixer3d.sh": {
+      "launcher_sha256": "a9f86cac8110775d6c89fb06d02cbc6e38e2cc31440bf001c0520c04bf7f9404",
+      "normalized_plan_sha256": "234df9372f728059673cc3aa104073da58064e64f43f6734278181f7bd10c2e3",
+      "projector": "mixer3d",
+      "ratios": [
+        4,
+        8,
+        16,
+        32
+      ],
+      "tokens": [
+        2197,
+        1100,
+        550,
+        275
+      ],
+      "train_val_test": [
+        [
+          1960,
+          268,
+          560
+        ],
+        [
+          1960,
+          268,
+          560
+        ],
+        [
+          1960,
+          268,
+          560
+        ],
+        [
+          1960,
+          268,
+          560
+        ]
+      ]
+    },
+    "run_mlp2x.sh": {
+      "launcher_sha256": "39a48434db90137202ec65d4e9d828fe0954fb9297759a2ba649293f8dfe2ceb",
+      "normalized_plan_sha256": "df0ae94b2ea49245fc80c126773ef5cddda882e70fd7c17ed4ef6d7da7372a66",
+      "projector": "mlp2x_gelu",
+      "ratios": [
+        1
+      ],
+      "tokens": [
+        8775
+      ],
+      "train_val_test": [
+        [
+          1960,
+          268,
+          560
+        ]
+      ]
+    },
+    "run_perceiver_flamingo.sh": {
+      "launcher_sha256": "797dc19b9395810e6d0fafd27c47465184432b5f3adf72a9d2b5e47e3939a3a1",
+      "normalized_plan_sha256": "1e61668c77f087924aa89d6154511b109ac3b9bb95c6c58b8e29a2155731b4a4",
+      "projector": "perceiver_flamingo",
+      "ratios": [
+        4,
+        8,
+        16,
+        32
+      ],
+      "tokens": [
+        2194,
+        1097,
+        549,
+        275
+      ],
+      "train_val_test": [
+        [
+          1960,
+          268,
+          560
+        ],
+        [
+          1960,
+          268,
+          560
+        ],
+        [
+          1960,
+          268,
+          560
+        ],
+        [
+          1960,
+          268,
+          560
+        ]
+      ]
+    },
+    "run_perceiver_nv_r128_r256.sh": {
+      "launcher_sha256": "3eadf411f2be940b65cb84a1de4bafe308a3228348ccfe67ae769fe8c4831080",
+      "normalized_plan_sha256": "cc023fd17f2351c5c17e50bb33a44bfb82d8f89a830794d8e4a6297d67d776ac",
+      "projector": "perceiver_nv",
+      "ratios": [
+        128,
+        256
+      ],
+      "tokens": [
+        69,
+        35
+      ],
+      "train_val_test": [
+        [
+          1960,
+          268,
+          560
+        ],
+        [
+          1960,
+          268,
+          560
+        ]
+      ]
+    },
+    "run_token_select3d.sh": {
+      "launcher_sha256": "ac414d5d52f51dfd9c6c6fe051f8fe51f43ef5f2dc183a635c0dea6d16f49faf",
+      "normalized_plan_sha256": "c97ffd6f4b1f8cc630fb3565a84e5fea1661f4b16685751f77add9e278192217",
+      "projector": "token_select3d",
+      "ratios": [
+        8,
+        16
+      ],
+      "tokens": [
+        1097,
+        549
+      ],
+      "train_val_test": [
+        [
+          1960,
+          268,
+          560
+        ],
+        [
+          1960,
+          268,
+          560
+        ]
+      ]
+    }
+  }
+}

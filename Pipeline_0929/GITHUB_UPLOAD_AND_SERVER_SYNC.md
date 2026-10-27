@@ -1,6 +1,6 @@
 # GitHub 上传与两台服务器同步流程
 
-> 最新发布：`sync-20261026-r128-r256-launcher`（含 Exp1026 Baseline A 入口），请使用文末第十一节同步。第十节的 `sync-20261026-r128-r256` 及更早的 `sync-20261026` 保留为历史版本；通用环境/资产核对流程继续适用。
+> 最新发布：`sync-20261027-exp1026`（Exp1026 全部12个入口及统一训练流程），下载/合并和目标机prompt见文末第十二节。此前标签保留为历史版本，通用环境与资产核对流程继续适用。
 
 本轮日期：2026-10-26。源仓库：`/mnt/sda/jyzhang/VLM_Projector`。
 GitHub 私有仓库：[TonyZhang-sjtu/VLM_Projector](https://github.com/TonyZhang-sjtu/VLM_Projector)，分支 `main`，本轮固定发布标签 `sync-20261026`。
@@ -409,3 +409,104 @@ CUDA_VISIBLE_DEVICES=0 bash scripts/Exp1026/run_baseline_a_r128_r256.sh \
 预期128×／256×分别为69／35 tokens，train/val/test=1960/268/560，fixed-region mean routing、全新初始化、恒定LR配方、完整test。正式训练由用户另行决定；本同步流程只做dry-run，不复用现有checkpoint。
 
 补充发布检查：最终脚本通过 `bash -n`；分别在源目录（故意设置相反的 `BIND_*` 变量）和不带源机路径配置的另一根路径源码副本中完成两个倍率的真实数据dry-run。两份计划规范化路径后与上一轮已验证的Baseline A计划完全一致；最终默认GPU改为0后，另验证默认卡选择和外部覆盖均生效（真实dry-run使用显式GPU 0）；对应检查记录保存在 `.tmp/github_sync_r128_r256_20261026/launcher_followup/`。主实现沿用第十节314 passed / 16 skipped的验证结果，本次不重复运行无改动的主实现测试。
+
+## 十二、2026-10-27：Exp1026 全目录训练流程发布
+
+固定标签：`sync-20261027-exp1026`；父提交 `8d011c5c51899324f0ea87ecf6dcb11095096dce`。本次把此前未追踪的11个Exp1026入口全部纳入Git；加上已发布的Baseline A，共12个入口、35个默认实验。保留用户当前GPU默认值、倍率和TokenSelect名称；不修改已发布的共享训练实现。新增[目录说明](../scripts/Exp1026/README.md)、`scripts/check_exp1026_sync.py` 和 [SYNC_EXP1026_20261027.json](SYNC_EXP1026_20261027.json) 作为两端运行计划比较依据。
+
+### 给目标服务器的执行 prompt
+
+把 `RELEASE_COMMIT` 替换成源服务器本轮最终回复的完整SHA；目标机地址为 `mingjie@10.110.14.26`，仓库已知位置为 `/home/mingjie/jyzhang/VLM_Projector`。本轮由目标机自己的代码助手执行，不从源机远程修改目标机。
+
+```text
+请把本机 /home/mingjie/jyzhang/VLM_Projector 同步并合并到以下固定发布版本：
+仓库：https://github.com/TonyZhang-sjtu/VLM_Projector.git
+标签：sync-20261027-exp1026
+RELEASE_COMMIT=<源服务器本轮给出的完整SHA>
+
+目标是让 scripts/Exp1026 的代码、实际训练/评测调用链和实验参数与发布版本一致，
+保留本机Python、数据、模型、缓存、GPU编号和输出路径。不要自动开始正式训练，
+不迁移或复用旧checkpoint；显卡本身的数值差异不作为同步失败。
+
+1. 先检查AGENTS.md、当前分支/HEAD、git status、git diff和运行中的任务。
+   将未提交修改及可能与新增文件冲突的未追踪源码备份到仓库外；为已有本地提交
+   建备份分支。备份本机configs/local_paths.yaml（或PROJECTOR_LOCAL_CONFIG
+   指定文件），记录SHA256、Python、资产和输出位置。不要覆盖资产、结果或任务，
+   不要reset --hard、git clean或强推。
+2. 核对origin确为上述仓库，然后执行：
+     git fetch origin main tag sync-20261027-exp1026
+   核对标签解析的SHA与RELEASE_COMMIT相同。工作区可安全更新、无任务依赖且可
+   快进时执行 git merge --ff-only "$RELEASE_COMMIT"。
+   如果本地存在分叉，先保留本地提交，再审阅差异并在本地做普通merge，逐项处理
+   冲突。路径差异迁入Git忽略的local overlay或环境变量；训练算法和入口以发布
+   版本为准。非路径逻辑改动先保留到备份分支并说明，不盲目整目录选ours/theirs。
+   不能在不干扰任务的条件下更新当前目录时，建固定版本worktree完成验证，并
+   报告当前目录合并尚未完成；不要终止其他任务。
+3. 合并后读取发布版本的 Pipeline_0929/GITHUB_UPLOAD_AND_SERVER_SYNC.md
+   第十二节和 scripts/Exp1026/README.md。快进时HEAD应等于RELEASE_COMMIT；
+   有真实merge提交时，确认发布提交是HEAD祖先，并将src、configs、scripts、
+   experiments及环境/依赖锁与RELEASE_COMMIT逐项比较，运行代码不能有差异。
+   不要从备份整体恢复旧src或旧脚本盖回新版。
+4. 激活本机projector环境，显式设置PROJECTOR_PYTHON、PROJECTOR_LOCAL_CONFIG、
+   PROJECTOR_OUTPUT_ROOT、PYTHONNOUSERSITE=1和本机CUDA_VISIBLE_DEVICES。
+   脚本保留源机默认Python绝对路径，必须由本机变量覆盖。检查实际import src
+   来自当前checkout；overlay中的project_root也必须对应当前checkout。
+   本轮12个入口均走共享constant-LR流程，会加载PROJECTOR_LOCAL_CONFIG。
+5. 保留各脚本当前倍率，不统一改成128/256；新流程为LR=2e-4/2e-4、seed=42、
+   最多20epochs、warmup/hold/joint warmup=77/0/77、hold_peak、cosine下限1.0、
+   batch/microbatch=16/1、LoRA rank/alpha/dropout=16/32/0.05、早停3/0.005，
+   最低validation CE的best.pt执行完整test/all。不要复用旧1e-5的saved run配置。
+6. 按README对12个入口全部执行--dry-run；用scripts/check_exp1026_sync.py
+   对照Pipeline_0929/SYNC_EXP1026_20261027.json，要求12个入口/35个实验全部
+   匹配，包括脚本哈希、配置、数据身份、预算、调度、训练/评测命令和完整test。
+   执行CPU回归tests/test_baseline_sweep.py和tests/test_ft_ablation_launchers.py。
+   若资产/环境尚未完成此前核验，按同步文档第五、六节核对，不重新生成标注或
+   静默更换模型/评测依赖；缺失就报告，不能把dry-run当成完整资产验收。
+7. 最后报告原HEAD、发布SHA、最终HEAD和是否快进/merge，是否存在执行代码差异，
+   本机路径配置前后情况、环境/资产状态、61项相关CPU回归的实际结果和35份计划
+   比较结果，以及本机可用的正式启动命令。未完成项明确列出，不宣称已完全同步。
+   不将本机merge或路径配置再推回GitHub，除非用户另行要求。
+```
+
+### 目标机核对命令
+
+在完成备份且当前工作区可以安全快进后：
+
+```bash
+cd /home/mingjie/jyzhang/VLM_Projector
+git fetch origin main tag sync-20261027-exp1026
+RELEASE_COMMIT="$(git rev-parse 'refs/tags/sync-20261027-exp1026^{commit}')"
+# 还需与源服务器最终回复的完整SHA比较。
+git merge --ff-only "$RELEASE_COMMIT"
+git merge-base --is-ancestor "$RELEASE_COMMIT" HEAD
+git diff --exit-code "$RELEASE_COMMIT" -- src configs scripts experiments \
+  environment-lock.json environments.yaml pyproject.toml requirements-clinical.txt \
+  third_party/sources.lock.json third_party/patches \
+  results/BindFormer_role_value_adapter_r16/_launch.bash \
+  results/BindFormer_role_value_adapter_r16/entry.py \
+  results/BindFormer_role_value_adapter_r16/runtime.py \
+  results/BindFormer_role_value_adapter_r16/reader_adapter.py
+```
+
+这里允许目标机产生合法merge提交，因此本节覆盖早期文档“HEAD必须等于发布SHA”的要求：普通merge时HEAD可以不同，发布版本必须是祖先，实际执行源码/共享配置必须一致。任何命令失败都先处理原因，不能跳过后宣称合并完成。未追踪的运行代码也要审阅，不能以Git diff为空掩盖旧文件被实际导入。
+
+```bash
+conda activate projector
+export PROJECTOR_PYTHON="$(command -v python)"
+export PROJECTOR_LOCAL_CONFIG="$PWD/configs/local_paths.yaml"
+export PROJECTOR_OUTPUT_ROOT="$PWD/runs/Exp1026"
+export PYTHONNOUSERSITE=1
+export OMP_NUM_THREADS=4 MKL_NUM_THREADS=4
+export CUBLAS_WORKSPACE_CONFIG=:4096:8
+test -x "$PROJECTOR_PYTHON"
+test -f "$PROJECTOR_LOCAL_CONFIG"
+# 外置overlay不在仓库内时，改为确认它未被Git追踪。
+git check-ignore "$PROJECTOR_LOCAL_CONFIG"
+"$PROJECTOR_PYTHON" -c 'import sys,src; print(sys.executable); print(src.__file__)'
+env -u PROJECTOR_TEST_DEVICE CUDA_VISIBLE_DEVICES='' OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 \
+  "$PROJECTOR_PYTHON" -m pytest -q tests/test_baseline_sweep.py tests/test_ft_ablation_launchers.py
+```
+
+随后执行 `scripts/Exp1026/README.md` 的完整dry-run循环和比较命令。默认每个实验train/val/test=1960/268/560；此次默认高倍率方法中AvgPool/LocalPacker输出72/36 tokens，Baseline A/Perceiver-NV输出69/35。TokenSelect保留8×/16×且默认run tag固定，实际重复训练时通过CLI `--run-tag`换新名字。
+
+本次源机验证：12个shell语法检查通过；24项默认/覆盖检查通过；源目录和不含本机local overlay的隔离目录各执行全部12个入口，共35个默认实验，两份计划逐项比较完全一致；隔离目录相关CPU回归61 passed。新增比较工具仅输出脚本内容和规范化执行计划摘要，不上传病例明细、模型或真实运行结果。源机日志与原始计划在 `.tmp/github_sync_exp1026_20261027/`。本轮未启动正式训练、未执行完整GPU模型训练，也未连接目标机实际合并。
