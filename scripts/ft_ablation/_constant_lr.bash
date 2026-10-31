@@ -5,7 +5,14 @@ run_constant_lr_baseline() {
   local -a const_path_args=()
   const_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
 
-  if [[ ! "${CUDA_VISIBLE_DEVICES:-}" =~ ^[0-9]+$ ]]; then
+  if [[ -n "${projector_parallel_device:-}" ]]; then
+    if [[ "$projector_method" != concat3d || "$projector_parallel_device" != cuda:1
+          || ! "${CUDA_VISIBLE_DEVICES:-}" =~ ^[0-9]+,[0-9]+$
+          || "${CUDA_VISIBLE_DEVICES%%,*}" == "${CUDA_VISIBLE_DEVICES##*,}" ]]; then
+      echo "Concat3D model parallelism requires two distinct physical GPU indices, e.g. CUDA_VISIBLE_DEVICES=0,1." >&2
+      return 2
+    fi
+  elif [[ ! "${CUDA_VISIBLE_DEVICES:-}" =~ ^[0-9]+$ ]]; then
     echo "Set CUDA_VISIBLE_DEVICES to one physical GPU index." >&2
     return 2
   fi

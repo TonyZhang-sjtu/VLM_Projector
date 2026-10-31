@@ -3,7 +3,7 @@
 set -Eeuo pipefail
 
 # ===== 本次实验设置：可直接修改；命令行 --set / --ratios 可显式覆盖 =====
-export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-1}"
+export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0}"
 export PROJECTOR_PYTHON="${PROJECTOR_PYTHON:-/mnt/sda/mingjie/conda_envs/projector/bin/python}"
 projector_method=avgpool3d
 projector_ratios=(128 256)  # 支持 (64)、(32 64) 或原有倍率；也可用 --ratios 覆盖。

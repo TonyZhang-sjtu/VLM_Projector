@@ -38,6 +38,8 @@ def positive_int(value):
 def resolve_projector_config(config):
     """Materialize defaults before provenance/save; leave legacy MLP unchanged."""
     name = config.name
+    if config.get('budget_protocol') is None:
+        config.pop('budget_protocol', None)  # Preserve legacy projector/checkpoint contracts.
     if name not in DEFAULTS:
         raise ValueError(f'Unknown projector {name!r}; choose from {list(DEFAULTS)}')
     if not positive_int(config.hidden_size) or type(config.bias) is not bool:

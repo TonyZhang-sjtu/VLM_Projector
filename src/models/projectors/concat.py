@@ -1,6 +1,7 @@
 import math
 import torch
 from torch.nn import functional as F
+from src.models.device_transfer import move_tensor
 from src.models.projectors.common import StructuredProjector, mapping_head
 
 
@@ -12,6 +13,10 @@ class ConcatAdapter3D(StructuredProjector):
 
     def forward(self, features, coords, metadata):
         grid = self.inputs(features, coords, metadata)
+        # Stage across host memory; direct peer copies are unreliable on some GPUs.
+        features = move_tensor(features, next(self.head.parameters()).device)
+        if features.device.type == 'cpu':
+            features = features.to(next(self.head.parameters()).dtype)
         group = self.group
         out = tuple(math.ceil(n/r) for n,r in zip(grid,group))
         pads = tuple(m*r-n for n,m,r in zip(grid,out,group))

@@ -5,8 +5,9 @@ import torch
 from torch.nn import functional as F
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from src.config import path_of
+from src.models.device_transfer import move_tensor
 from src.models.decoders.base import DecoderAdapter, DecoderBatch
-from src.tasks.single_sequence_findings import build_task
+from src.tasks.registry import build_task
 
 
 class LlamaDecoder(DecoderAdapter):
@@ -72,7 +73,7 @@ class LlamaDecoder(DecoderAdapter):
             text=embedding(safe)
             if vision.ndim!=2 or vision.shape[1]!=self.hidden_size or (len(vision)<1 and (training or not allow_empty_visual)):
                 raise ValueError('Invalid projected visual embeddings')
-            vision=vision.to(device=device,dtype=text.dtype)
+            vision=move_tensor(vision,device,dtype=text.dtype)
             value=torch.cat((text[:index],vision,text[index:]))
             length=len(value)
             reserve=0 if training else self.config.generation.max_new_tokens
@@ -101,7 +102,7 @@ class LlamaDecoder(DecoderAdapter):
         positions=(mask.cumsum(-1)-1).clamp_min(0)
         return DecoderBatch(torch.stack(padded),mask,positions,torch.stack(targets),lengths,prompt_counts)
 
-    def loss(self,batch):
+    def loss(self,batch,per_example=False):
         # Keep the frozen transformer differentiable w.r.t. visual embeddings.
         hidden=self.lm.model(inputs_embeds=batch.inputs_embeds,attention_mask=batch.attention_mask,
                              position_ids=batch.position_ids,use_cache=False,return_dict=True).last_hidden_state
@@ -109,14 +110,24 @@ class LlamaDecoder(DecoderAdapter):
         # projecting all ~9k visual positions would waste several GB on logits.
         targets=batch.labels[:,1:]
         valid=targets!=-100
+        lengths=valid.sum(1)
+        if (lengths == 0).any():raise ValueError('A sample has no supervised answer tokens')
+        weights=(1.0 / lengths.float())[:,None].expand_as(valid)[valid] if per_example else None
         selected=hidden[:,:-1][valid]
         targets=targets[valid]
         if not len(targets):raise ValueError('No supervised answer tokens')
         total=selected.sum()*0
+        example_total=total
         chunk=self.config.decoder.ce_chunk_size
         for start in range(0,len(targets),chunk):
             logits=self.lm.lm_head(selected[start:start+chunk]).float()
-            total=total+F.cross_entropy(logits,targets[start:start+chunk],reduction='sum')
+            if per_example:
+                losses=F.cross_entropy(logits,targets[start:start+chunk],reduction='none')
+                total=total+losses.sum()
+                example_total=example_total+(losses*weights[start:start+chunk]).sum()
+            else:
+                total=total+F.cross_entropy(logits,targets[start:start+chunk],reduction='sum')
+        if per_example:return total,len(targets),example_total
         return total,len(targets)
 
     @torch.no_grad()

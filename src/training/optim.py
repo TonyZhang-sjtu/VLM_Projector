@@ -2,6 +2,26 @@ import math
 import torch
 
 
+def clip_grad_norm_across_devices(parameters, max_norm):
+    """Apply one global clip coefficient without peer-copying norm scalars."""
+    groups = {}
+    for parameter in parameters:
+        if parameter.grad is not None:
+            groups.setdefault(parameter.grad.device, []).append(parameter)
+    # clip_grad_norm_ with an infinite threshold computes the same local norm
+    # without changing gradients. Moving each scalar to Python avoids broken
+    # CUDA peer copies when the global norm spans two GPUs.
+    norms = [float(torch.nn.utils.clip_grad_norm_(group, float('inf'), error_if_nonfinite=True))
+             for group in groups.values()]
+    total = math.hypot(*norms)
+    factor = float(max_norm) / (total + 1e-6)
+    if factor < 1:
+        for group in groups.values():
+            for parameter in group:
+                parameter.grad.mul_(factor)
+    return total
+
+
 def build_optimizer(model,config):
     groups=[]
     for name,lr in [('projector',config.training.projector_lr),('encoder',config.training.encoder_lr)]:

@@ -8,6 +8,8 @@ data:
   datasets: [brats]
   review_policy: include_with_flag
   sampling: uniform_sequence
+  invalid_sample_policy: strict  # NeuroQA overrides to skip; report tasks are unchanged.
+  modality_sampling: legacy_exact  # Preserve saved pre-interface VQA runs; new VQA configs override.
 preprocessing:
   name: neurovfm
   spacing_policy: native_grid
@@ -34,6 +36,7 @@ encoder:
   params: {}
 projector:
   name: mlp2x_gelu
+  budget_protocol: null
   target_compression_ratio: null
   resolved_budget: {}
   hidden_size: 4096
@@ -58,6 +61,8 @@ training:
   stage: a
   # Index within CUDA_VISIBLE_DEVICES; select physical GPUs outside the program.
   device: cuda:0
+  # Optional second logical GPU for the full-width Concat3D projector.
+  projector_device: null
   distributed: none
   microbatch_per_device: 1
   effective_batch_size: 16

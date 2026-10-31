@@ -1,6 +1,6 @@
 # Exp1026：统一 Baseline A 训练流程
 
-本目录于 2026-10-27 随 `sync-20261027-exp1026` 完整发布。所有入口使用当前共享训练 pipeline，参数在各脚本顶部可见。Baseline A 复用 `scripts/ft_ablation/Exp1020/run_bindformer_va_fixed_region_mean_constlr.sh`；其他11个入口复用 `scripts/ft_ablation/_constant_lr.bash`。不需要复制其他服务器的脚本或运行配置。
+本目录最初于 2026-10-27 随 `sync-20261027-exp1026` 发布；此后 Concat 入口改为 128/256 双卡实验。所有入口使用当前共享训练 pipeline，参数在各脚本顶部可见。Baseline A 复用 `scripts/ft_ablation/Exp1020/run_bindformer_va_fixed_region_mean_constlr.sh`；其他11个入口复用 `scripts/ft_ablation/_constant_lr.bash`。
 
 ## 默认实验范围
 
@@ -8,9 +8,9 @@
 |---|---|---|---:|
 | `run_adaptive_merge3d.sh` | AdaptiveMerge | 4 / 8 / 16 / 32 | 3 |
 | `run_attention_pool.sh` | AttentionPool | 4 / 8 / 16 / 32 | 3 |
-| `run_avgpool3d_r128_r256.sh` | AvgPool | 128 / 256 | 1 |
+| `run_avgpool3d_r128_r256.sh` | AvgPool | 128 / 256 | 0 |
 | `run_baseline_a_r128_r256.sh` | BindFormer Baseline A | 128 / 256 | 0 |
-| `run_concat3d.sh` | Concat | 4 / 8 / 16 / 32 | 3 |
+| `run_concat3d_r128_r256.sh` | Concat | 128 / 256 | 0,1 |
 | `run_convpool3d.sh` | ConvPool | 4 / 8 / 16 / 32 | 3 |
 | `run_local_packer3d_r128_r256.sh` | LocalPacker | 128 / 256 | 2 |
 | `run_mixer3d.sh` | Mixer | 4 / 8 / 16 / 32 | 3 |
@@ -19,11 +19,11 @@
 | `run_perceiver_nv_r128_r256.sh` | Perceiver-NV | 128 / 256 | 3 |
 | `run_token_select3d.sh` | TokenSelect | 8 / 16 | 3 |
 
-共12个入口、35个默认实验。各入口内部依次执行所选倍率，每个倍率从预训练模型和全新 projector/LoRA/optimizer 初始化，训练结束后评测该次最低 validation CE 的 `best.pt`，再进行下一倍率。不要给所有脚本统一附加 `--ratios 128 256`；MLP只支持1×。
+共12个入口、33个默认实验。各入口内部依次执行所选倍率，每个倍率从预训练模型和全新 projector/LoRA/optimizer 初始化，训练结束后评测该次最低 validation CE 的 `best.pt`，再进行下一倍率。不要给所有脚本统一附加 `--ratios 128 256`；MLP只支持1×。
 
 ## 统一训练配方
 
-- seed=42，deterministic=true，单GPU `joint_lora`，bf16。
+- seed=42，deterministic=true，`joint_lora`，bf16；Concat 128/256 使用单进程双卡模型并行，其余入口为单GPU。
 - projector / encoder LoRA峰值LR均为2e-4；最多20 epochs；默认数据下123 updates/epoch、最多2460 updates。
 - effective batch/microbatch=16/1；encoder LoRA rank/alpha/dropout=16/32/0.05。
 - projector warmup/hold/joint warmup=77/0/77，joint warmup策略为 `hold_peak`。
@@ -62,6 +62,15 @@ CUDA_VISIBLE_DEVICES=0 bash scripts/Exp1026/run_adaptive_merge3d.sh \
 
 `CUDA_VISIBLE_DEVICES` 覆盖脚本中的物理卡默认值，模型内仍用逻辑 `cuda:0`。`PROJECTOR_OUTPUT_ROOT` 可映射到本机新输出目录。所有入口均可用CLI `--run-tag` 指定新名称；不要依赖 `PROJECTOR_RUN_TAG` 对所有脚本都生效。TokenSelect保留当前固定默认名称 `token_select_r8_r16`，重复运行应显式换新tag，不能覆盖已有结果。
 
+Concat 128/256 需要两张 24 GiB 卡：脚本中的 `CUDA_VISIBLE_DEVICES=0,1` 指定物理卡，Encoder 和冻结的 Llama 位于逻辑 `cuda:0`，完整宽度的 Concat3D 投影器及 AdamW 状态位于逻辑 `cuda:1`。两卡之间的特征和梯度经 CPU 中转，以避开本机不可靠的 GPU 间直接拷贝。该入口默认关闭只读的逐参数优化器诊断，以给 256× 投影器留出显存；训练损失、优化器和学习率配方不变。例如换用物理卡 2、3：
+
+```bash
+CUDA_VISIBLE_DEVICES=2,3 bash scripts/Exp1026/run_concat3d_r128_r256.sh --dry-run
+CUDA_VISIBLE_DEVICES=2,3 bash scripts/Exp1026/run_concat3d_r128_r256.sh
+```
+
+这不是 DDP；不要用 `torchrun` 启动。128× 训练、完整 test 评测完成后，脚本才会启动 256×。可用 `--ratios 256` 单独运行 256×，或用 `--run-tag` 指定本次实验名。训练和评测都会自动使用双卡放置。
+
 数据、模型、知识库和临床评测overlay不在Git里。缺少时按[同步流程](../../Pipeline_0929/GITHUB_UPLOAD_AND_SERVER_SYNC.md)补齐相同版本；不要为跑通而更换输入、减小测试范围或跳过指标。预算可解析并不意味着所有倍率的完整宽度模型都适合本机显存；已有Concat高倍率资源约束见[128×／256×实现记录](../../Pipeline_0929/PROJECTOR_R128_R256_IMPLEMENTATION.md)。
 
 ## 同步验收
@@ -73,16 +82,18 @@ export SYNC_CHECK_DIR="$PWD/.tmp/exp1026_sync_$(date -u +%Y%m%dT%H%M%S%NZ)"
 mkdir -p "$SYNC_CHECK_DIR"
 for launcher in scripts/Exp1026/*.sh; do
   name="$(basename "$launcher" .sh)"
-  CUDA_VISIBLE_DEVICES=0 bash "$launcher" --dry-run \
+  if [[ "$name" == run_concat3d_r128_r256 ]]; then
+    visible=0,1
+  else
+    visible=0
+  fi
+  CUDA_VISIBLE_DEVICES="$visible" bash "$launcher" --dry-run \
     --config "$PROJECTOR_LOCAL_CONFIG" \
     --run-tag "sync_${name}" --output-root "$SYNC_CHECK_DIR/planned_runs" \
     > "$SYNC_CHECK_DIR/${name}.json" 2> "$SYNC_CHECK_DIR/${name}.stderr" || exit
 done
-"$PROJECTOR_PYTHON" scripts/check_exp1026_sync.py \
-  --plans "$SYNC_CHECK_DIR" --output "$SYNC_CHECK_DIR/comparison.json" \
-  --reference Pipeline_0929/SYNC_EXP1026_20261027.json
 ```
 
-比较工具要求12份计划完整，逐个检查脚本内容SHA256及规范化后的整份执行计划摘要：仅允许解释器位置和明列本机路径变化，保留完整训练配置、倍率、预算、调度、数据身份/manifest摘要、训练与评测命令、checkpoint文件名及评测范围。它不替代实际Git源码比对、环境核对或资产内容校验。若报告不一致，检查输出的JSON与本机原始计划，不要改参考文件来让检查通过。
+`Pipeline_0929/SYNC_EXP1026_20261027.json` 是 2026-10-27 的历史快照，包含旧 Concat 入口及旧倍率，不能用于比较现在的 12 份计划。上面的命令只做当前配置预检；需要新的同步验收时应生成并审查新参考文件。
 
-源机本次验证：12个shell语法检查；24项默认GPU/外部GPU/CLI参数覆盖检查；源目录和不带源机local overlay的隔离目录各执行12份真实数据计划，35个实验完全一致；相关CPU回归61 passed。未执行正式训练或GPU模型验收。源机日志在 `.tmp/github_sync_exp1026_20261027/`，不进Git。
+历史同步验证记录见 `.tmp/github_sync_exp1026_20261027/`；该记录不覆盖新的 Concat 双卡实现。

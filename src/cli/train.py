@@ -10,6 +10,12 @@ def main():
     cli.add_argument('--dry-run',action='store_true',help='Resolve selected data and update schedule without loading models')
     args=cli.parse_args()
     config=config_from(args)
+    if config.task.name == 'neuroqa':
+        if args.dry_run:
+            raise ValueError('Use src.cli.vqa_train --dry-run for balanced QA planning')
+        from src.training.vqa_trainer import VQATrainer
+        VQATrainer(config).train()
+        return
     if args.dry_run:
         from src.data.manifest import load_manifests
         from src.training.schedule import resolve_joint_schedule

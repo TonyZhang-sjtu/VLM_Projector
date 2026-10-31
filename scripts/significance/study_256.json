@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "study": "256x_main_table_fixed_checkpoints",
+  "ours": "ours",
+  "family_size": 77,
+  "permutations": 10000,
+  "bootstraps": 10000,
+  "resampling_seed": 20261030,
+  "source": {
+    "type": "user_screenshot",
+    "description": "256x Compression screenshot supplied in this conversation; numbers transcribed at displayed precision.",
+    "local_workbook_note": "results/Experiments for VLM Projector.xlsx Main does not yet contain a 256x section; this is not a claim of cell-level mapping from that workbook.",
+    "supporting_reports": [
+      "results/Exp1026_status_20261027/results.json",
+      "results/Exp1026_rerun_status_20261028/results.json",
+      "results/Concat3D_Exp1026_analysis_20261029/results.json",
+      "results/BindFormer_32x_MLP_summary_20261022/results.json"
+    ]
+  },
+  "search_roots": [
+    "runs"
+  ],
+  "methods": [
+    {
+      "id": "ours",
+      "label": "Ours Vanilla + fixed-region mean (Baseline A)",
+      "projector": "bindformer3d",
+      "ratio": 256,
+      "run_dir": "runs/baselines/bindformer_va_fixed_region_mean_constlr_p2e-4_l2e-4_20261026T163948675021333Z/r256",
+      "expected_rounded_metrics": {
+        "bleu4": 13.8815,
+        "rougeL": 34.553,
+        "green": 0.3031,
+        "radgraph_simple": 0.2914,
+        "radgraph_partial": 0.2301,
+        "radgraph_complete": 0.1397,
+        "rate": 0.5017,
+        "bertscore_precision": 0.6887,
+        "bertscore_recall": 0.6949,
+        "bertscore_f1": 0.6897,
+        "answer_ce": 1.2003
+      },
+      "checkpoint_sha256": "e7f413faa5489844d29ea4505c070b221a8b5241db5af8aba46134b1b809ec6a"
+    },
+    {
+      "id": "mlp",
+      "label": "MLP (No Compression)",
+      "projector": "mlp2x_gelu",
+      "ratio": 1,
+      "run_dir": "runs/baselines/constlr_mlp2x_gelu_p2e-4_l2e-4_20261020T072519960514123Z/r1",
+      "expected_rounded_metrics": {
+        "bleu4": 14.7506,
+        "rougeL": 36.6123,
+        "green": 0.3328,
+        "radgraph_simple": 0.3199,
+        "radgraph_partial": 0.2473,
+        "radgraph_complete": 0.1638,
+        "rate": 0.5019,
+        "bertscore_precision": 0.709,
+        "bertscore_recall": 0.6917,
+        "bertscore_f1": 0.6981,
+        "answer_ce": 1.218
+      },
+      "checkpoint_sha256": "3d55887b9cfcb680ebc0624e024c335885c80e8da1dc999387c95ea95bb89651"
+    },
+    {
+      "id": "avgpool",
+      "label": "AvgPool3D",
+      "projector": "avgpool3d",
+      "ratio": 256,
+      "run_dir": "runs/baselines/constlr_avgpool3d_p2e-4_l2e-4_20261027T085605344161985Z/r256",
+      "expected_rounded_metrics": {
+        "bleu4": 15.6507,
+        "rougeL": 35.5702,
+        "green": 0.2996,
+        "radgraph_simple": 0.2994,
+        "radgraph_partial": 0.2314,
+        "radgraph_complete": 0.1399,
+        "rate": 0.4924,
+        "bertscore_precision": 0.6861,
+        "bertscore_recall": 0.6998,
+        "bertscore_f1": 0.6902,
+        "answer_ce": 1.2467
+      },
+      "checkpoint_sha256": "69d6301c716cf783775a166e420d6565cf379115537ea654c73ae028db9696ee"
+    },
+    {
+      "id": "concat",
+      "label": "Concat3D",
+      "projector": "concat3d",
+      "ratio": 256,
+      "run_dir": "runs/baselines/constlr_concat3d_p2e-4_l2e-4_20261028T145324127953875Z/r256",
+      "expected_rounded_metrics": {
+        "bleu4": 12.1034,
+        "rougeL": 34.7772,
+        "green": 0.2781,
+        "radgraph_simple": 0.2986,
+        "radgraph_partial": 0.2285,
+        "radgraph_complete": 0.1354,
+        "rate": 0.4778,
+        "bertscore_precision": 0.7217,
+        "bertscore_recall": 0.6568,
+        "bertscore_f1": 0.6854,
+        "answer_ce": 1.2255
+      },
+      "checkpoint_sha256": "8bfa8a3738c1efd2bc894c87c8c434620916d4f77e8897df037260b300ec0194"
+    },
+    {
+      "id": "localpacker",
+      "label": "LocalPacker3D",
+      "projector": "local_packer3d",
+      "ratio": 256,
+      "run_dir": "runs/baselines/constlr_local_packer3d_p2e-4_l2e-4_20261027T085629629307367Z/r256",
+      "expected_rounded_metrics": {
+        "bleu4": 14.1178,
+        "rougeL": 34.4014,
+        "green": 0.2723,
+        "radgraph_simple": 0.272,
+        "radgraph_partial": 0.2138,
+        "radgraph_complete": 0.1277,
+        "rate": 0.4869,
+        "bertscore_precision": 0.6901,
+        "bertscore_recall": 0.6847,
+        "bertscore_f1": 0.685,
+        "answer_ce": 1.2207
+      },
+      "checkpoint_sha256": "bff274d2f3a293035fb0d7e5ff8b193ad324815a5b0489464356e86cadc09f7b"
+    },
+    {
+      "id": "perceiver",
+      "label": "Perceiver_NV",
+      "projector": "perceiver_nv",
+      "ratio": 256,
+      "run_dir": null,
+      "expected_rounded_metrics": {
+        "bleu4": 14.8112,
+        "rougeL": 34.4871,
+        "green": 0.2877,
+        "radgraph_simple": 0.2949,
+        "radgraph_partial": 0.2311,
+        "radgraph_complete": 0.1417,
+        "rate": 0.4869,
+        "bertscore_precision": 0.6932,
+        "bertscore_recall": 0.6718,
+        "bertscore_f1": 0.6797,
+        "answer_ce": 1.2486
+      }
+    },
+    {
+      "id": "adaptive",
+      "label": "Adaptive_Merge3D",
+      "projector": "adaptive_merge3d",
+      "ratio": 256,
+      "run_dir": null,
+      "expected_rounded_metrics": {
+        "bleu4": 14.6907,
+        "rougeL": 34.8536,
+        "green": 0.2924,
+        "radgraph_simple": 0.297,
+        "radgraph_partial": 0.2285,
+        "radgraph_complete": 0.1368,
+        "rate": 0.4975,
+        "bertscore_precision": 0.6949,
+        "bertscore_recall": 0.685,
+        "bertscore_f1": 0.6875,
+        "answer_ce": 1.2571
+      }
+    },
+    {
+      "id": "tokenselect",
+      "label": "Token_Select3D",
+      "projector": "token_select3d",
+      "ratio": 256,
+      "run_dir": null,
+      "expected_rounded_metrics": {
+        "bleu4": 14.1237,
+        "rougeL": 34.3111,
+        "green": 0.3081,
+        "radgraph_simple": 0.2936,
+        "radgraph_partial": 0.233,
+        "radgraph_complete": 0.1467,
+        "rate": 0.4821,
+        "bertscore_precision": 0.6819,
+        "bertscore_recall": 0.6932,
+        "bertscore_f1": 0.685,
+        "answer_ce": 1.2565
+      }
+    }
+  ]
+}

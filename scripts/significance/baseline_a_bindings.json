@@ -1,0 +1,223 @@
+{
+  "targets_sha256": "51889b3f95d4b628f1e4c1bd5f0bd767fc15a36dd96d60e70e92e27102c80f60",
+  "source": {
+    "type": "excel",
+    "workbook": "/mnt/sda/jyzhang/VLM_Projector/results/Experiments for VLM Projector.xlsx",
+    "workbook_sha256": "b5ae3ddfc1cf72480464a1de446554c7d246f863e3d207bc40ccfd6ae6b3c5f8",
+    "sheet": "Main",
+    "targets_sha256": "51889b3f95d4b628f1e4c1bd5f0bd767fc15a36dd96d60e70e92e27102c80f60"
+  },
+  "bindings": {
+    "r16/ours": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/baselines/bindformer_va_fixed_region_mean_constlr_p2e-4_l2e-4_20261020T154849784772805Z/r16",
+      "checkpoint_sha256": "07e1c817b972580eda8f78e0f94445f59808bbae17b7b167e5f8751c0f084a37",
+      "metric_sha256": "220af8a61613717c4744138e8fcf5e69fe21ae0b4f225704a94fa7a01decf515",
+      "config_sha256": "d82d5e0314cdb6840b3ada47bed9d1d9fe222fd83284084f9b70a06238b6915e"
+    },
+    "r16/avgpool": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/imported/server_b/constlr_avgpool3d_p2e-4_l2e-4_20261019T110009208059940Z/r16",
+      "checkpoint_sha256": "01e33531003b0cff9bee9b781c73c14183be098e661359af346d32bfed1d16ed",
+      "metric_sha256": "287ce98a5f102a3568f62b16c17310314defe3005fd0aa7822ffede01398f4eb",
+      "config_sha256": "9202a547651fc31a71c0eac5d9622094c55930adefdb733e8fb9f21d6b93511c"
+    },
+    "r16/concat": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/imported/server_b/constlr_concat3d_p2e-4_l2e-4_20261019T110147538241807Z/r16",
+      "checkpoint_sha256": "2924bb8995399990f96512c109a6b1ac6752a20095b756512c59735317885269",
+      "metric_sha256": "cbbcc322e380b2d1e579106587ccf18fb658355fbae01a99d5b2654a9bdbf3d1",
+      "config_sha256": "949dd7531a4c803ebc650f554e51f23a1602ceb4538cf7c5bf0e1bfe3f27af80"
+    },
+    "r16/localpacker": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/imported/server_b/constlr_local_packer3d_p2e-4_l2e-4_20261019T110218032906576Z/r16",
+      "checkpoint_sha256": "1689a04107ce3d3ba9fc81ed99ca57054218840826c4ec3d80102fa50d12b7c0",
+      "metric_sha256": "4e4048da39a6f8352fb6d369b3bbdedc34198be9316c34817288945546072906",
+      "config_sha256": "018ebc02b4e5e5080cb174674cd74a49227590a26908164bb0a5c77b19a81254"
+    },
+    "r16/perceiver": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/imported/server_b/constlr_perceiver_nv_p2e-4_l2e-4_20261020T135241890616961Z/r16",
+      "checkpoint_sha256": "e74d29bb0ba0ac06189c5ed315350796ee2ed3620f4dcb340387ae4ae1dd2591",
+      "metric_sha256": "6c079042bf73475f624533e9ef072a824a0f9a9a2d71158c4bc7e8c434ea6afa",
+      "config_sha256": "336fd183c67272f7371552a8c9b2089e75143ef0016e4a908f03a4fc02c3f4de"
+    },
+    "r16/adaptive": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/imported/server_b/constlr_adaptive_merge3d_p2e-4_l2e-4_20261020T135311073712422Z/r16",
+      "checkpoint_sha256": "b1a1449a1d426636f97c6dfb388e4ce6149a3125c87434199a17757d72424067",
+      "metric_sha256": "5401b01cb26d915e504719b6f9ba356133ec61d9a749e862149e0a702fe85fbb",
+      "config_sha256": "3dab64f702cac2009431dbd114f9f1852950f482f707e5e06fec0e3d7a971afe"
+    },
+    "r16/tokenselect": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/imported/server_b/constlr_token_select3d_p2e-4_l2e-4_20261020T135337883013357Z/r16",
+      "checkpoint_sha256": "d93e7dd0d7869681623e633badda4bc084d6f805eb75788f24e3f18da3410986",
+      "metric_sha256": "a03d4dd89810b87e9bb299f8ed0feec3563bb28182d6284dab6f6426fa97166b",
+      "config_sha256": "b33d7f529501486d7bc5a81310e5764191c959fc116d85a9fb436e60234cc956"
+    },
+    "r32/ours": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/baselines/bindformer_va_fixed_region_mean_constlr_p2e-4_l2e-4_20261020T154849784772805Z/r32",
+      "checkpoint_sha256": "0e4a3f7f0662d8cd37a697c323d4e3013d1c841ea456dd56704b8853b7d86b42",
+      "metric_sha256": "dba9b7f536608cbe37e18542a28415ef9cc6a4f63589f359361a1477bcfdf5bc",
+      "config_sha256": "db01d1dd1e873cb52f0737c10eb84a49cd6f377e2f7a56be06a85941bd3d338d"
+    },
+    "r32/avgpool": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/imported/server_b/constlr_avgpool3d_p2e-4_l2e-4_20261019T110009208059940Z/r32",
+      "checkpoint_sha256": "b7e5b14257ed5540e780dfd1b41e8ab641378f8ccc8de7c8149527bb74a8234f",
+      "metric_sha256": "4ed711e6497fc7fa9dd78a22e079a3b4899d5cc9a06381f2e09c75e53185bd38",
+      "config_sha256": "6208d0d19d37e207e5c7898d775cad309cc8832b4fa8679e554a3f7e002e9068"
+    },
+    "r32/concat": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/imported/server_b/constlr_concat3d_p2e-4_l2e-4_20261019T110147538241807Z/r32",
+      "checkpoint_sha256": "9da7e701a65ad13d178946da799884a154b02c6ef78793ffab58fdd0990443d2",
+      "metric_sha256": "d353832b3ee8a2d095db5df4b133a3dab9cdc500e99ef67518ac6eed73ed23f4",
+      "config_sha256": "e92d98f7368af29d42563d54dfa8099aa901ea61f1d56d9e629db7cd2cf8d610"
+    },
+    "r32/localpacker": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/imported/server_b/constlr_local_packer3d_p2e-4_l2e-4_20261019T110218032906576Z/r32",
+      "checkpoint_sha256": "4c124520e92758935951dc642e15dc40182b5f64132fe1ca608105493630231a",
+      "metric_sha256": "83f6846e24dd8ede272120aa1d715edfb5e8a08f6973b59fb229b2f7b792aa7f",
+      "config_sha256": "f12c8171898558c46295cc4e5c71acad73eb50b2f5a98f74b0eec6959800f60e"
+    },
+    "r32/perceiver": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/imported/server_b/constlr_perceiver_nv_p2e-4_l2e-4_20261020T135241890616961Z/r32",
+      "checkpoint_sha256": "2ae0943f8df761477bb00639d3bb3898fde8d7ebe27dad6ecf22406ad4bc7047",
+      "metric_sha256": "2adfbfc8647f339d7a5ceeb27a423526a852ff2034d0acf4282c580a774eae5f",
+      "config_sha256": "c7c95fb636b8c52b4005ab2a40d3f920b49aed0ccc23d11b82af88e6d0d0ccb0"
+    },
+    "r32/adaptive": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/imported/server_b/constlr_adaptive_merge3d_p2e-4_l2e-4_20261020T135311073712422Z/r32",
+      "checkpoint_sha256": "b6d0833cb950bbc358eb19f55863b282c4bf9e84c6798ad06484823b65517e90",
+      "metric_sha256": "f3f33a5b4f9271ad83e9d4bb9aa81ae1bfa75f66552e7e8bf648345156c296c4",
+      "config_sha256": "3fc17d64784560b59ce0bafdb61c7cc64052c81dd13b6b6bb82d5339ca166e52"
+    },
+    "r32/tokenselect": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/imported/server_b/constlr_token_select3d_p2e-4_l2e-4_20261020T135337883013357Z/r32",
+      "checkpoint_sha256": "9c0685e36a701b91e83e12d438452df7a42a800fd7780429b21482e08e65ad24",
+      "metric_sha256": "f4aa7fbaecb66de991122c1c773f191aa63e8b7d083d7adeb52f12800eb5f9e8",
+      "config_sha256": "fa1802b94ac86cee81566a1046d12ac6bce95555a578cc79e5f4048a9a6ce976"
+    },
+    "r64/ours": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/baselines/bindformer_va_fixed_region_mean_constlr_p2e-4_l2e-4_20261022T113814583275713Z/r64",
+      "checkpoint_sha256": "c97fed70aa231dca4ee6905df8a90017943d122200cfb883bf59e20a33ecbcde",
+      "metric_sha256": "191803d7b79a6487aed86afbdfec2de424ad3f504e2bf15d8616c83883321abb",
+      "config_sha256": "65c2006afdce98b4677bcc510eaac8dd13095029f4f7f3702015bff5dce14cba"
+    },
+    "r64/avgpool": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/imported/server_b/constlr_avgpool3d_p2e-4_l2e-4_20261022T042432497913732Z/r64",
+      "checkpoint_sha256": "6c86de29b05860b116f0777768ad7d5447b8d9a742590e07c63afd170ae33204",
+      "metric_sha256": "fdd7d7b4f703b0d89cdc85fdbd56558b48448ac7e2db1885ec3da57366e18a49",
+      "config_sha256": "3e13b0e5cd5ab508c3cfa080f6fd2dc90a968832cfbd8fcdec8c43266e8cc638"
+    },
+    "r64/concat": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/imported/server_b/constlr_concat3d_p2e-4_l2e-4_20261022T114203828370544Z/r64",
+      "checkpoint_sha256": "98a1fd638cd4299411b9d44bf473d890289d3b73804286a02e31f9af0ab4ecdd",
+      "metric_sha256": "061f9dc006cd1c4bc5ac9ad92daf8991722671112c7bb832abe206844a1e5658",
+      "config_sha256": "5634eb31a6ec9ca09efe349dcf74c515cbaf51812ad4f2965afac07b0d491e14"
+    },
+    "r64/localpacker": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/imported/server_b/constlr_local_packer3d_p2e-4_l2e-4_20261022T170926437049711Z/r64",
+      "checkpoint_sha256": "212dbc2e7c7ee5ae6f799758542fbe2470012f74979c7e327a3c29265cbf20c2",
+      "metric_sha256": "dbfd75337919b1fcb8fe26c3bb4030fd1aa0de0bb276607b0ad53bd01f6adb9b",
+      "config_sha256": "ab0db18886bed275b7858025bdcff6df645b74b60631c4207a0469038ba4876b"
+    },
+    "r64/perceiver": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/imported/server_b/constlr_perceiver_nv_p2e-4_l2e-4_20261022T145229332136914Z/r64",
+      "checkpoint_sha256": "e4f6f91a5983ba48c38782b64d0cb3581995641c6d6cf81469c5d41d2221da38",
+      "metric_sha256": "505277d2d4797129c403dec090080998c509e1216616ec394649455fa671366b",
+      "config_sha256": "3248e6117906a44c47734ba9bdfa90e687552734d25484522edcfb78f8827c8c"
+    },
+    "r64/adaptive": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/imported/server_b/constlr_adaptive_merge3d_p2e-4_l2e-4_20261022T042441527305699Z/r64",
+      "checkpoint_sha256": "31c30c3035cfccb4dadc2a3d36018b6bec12e217769f7a25a9ce8bd38d926b16",
+      "metric_sha256": "36ea9a36eb66a7baee614cd2f559a08d51aa2445a0909aee087935f23fde3fc2",
+      "config_sha256": "e73cfaef30fc596e48964d4bd2269c2022bb495385b321a8db7f1ba95f413795"
+    },
+    "r64/tokenselect": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/imported/server_b/constlr_token_select3d_p2e-4_l2e-4_20261022T223922273966916Z/r64",
+      "checkpoint_sha256": "b467b4ff519d20d2ad5123eef047d53622b9b42b04b2ac9e53cebd8aadb95ccb",
+      "metric_sha256": "bc026d033bd1204850ab99e2c93e881e8c482ea4f37c37d22752adeb2b08a771",
+      "config_sha256": "8f88f6eee8cde2b6a4be054467981ec0bef40c92aaba93bd4c0d69362f2f56a9"
+    },
+    "r128/ours": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/baselines/bindformer_va_fixed_region_mean_constlr_p2e-4_l2e-4_20261026T163948675021333Z/r128",
+      "checkpoint_sha256": "781bf095995cbf5a51fc7de3921e2578f2fb71fb50adb8539bb92255b4e63fe7",
+      "metric_sha256": "9d55332d7efd46d6ebd5b80b3dabf7d569354d5823144222588e3b57ba40e12d",
+      "config_sha256": "58cc0a90abf64cdbcef266c6e1f48df3a5ac26f321e85e31e00293af481f73cd"
+    },
+    "r128/avgpool": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/baselines/constlr_avgpool3d_p2e-4_l2e-4_20261027T085605344161985Z/r128",
+      "checkpoint_sha256": "083ab91fc9e9c2e26c6f0b5ab9e8d1e0b55d3ce69d09194cf7109af889401206",
+      "metric_sha256": "dd5a2f59747b2e21032acc7ce9d783cf8dbf8e499621c2859e3624333b28414e",
+      "config_sha256": "da35ce94de1086dd76b0ec02a05d05b1dbdf362325d1e852803adae237f2b50f"
+    },
+    "r128/concat": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/baselines/constlr_concat3d_p2e-4_l2e-4_20261028T145324127953875Z/r128",
+      "checkpoint_sha256": "14f07618c85caaccdb8d605859290aaa3fef9c0abb399bd812fc422f7c24e381",
+      "metric_sha256": "86dd983bf09d29e092fb6208f477763d7fc8396f0ec08f355749f6d1aa193551",
+      "config_sha256": "abef0096e799d95de2a76251df7e68f9eb2fad36a7052bf53c21103d03fd1e58"
+    },
+    "r128/localpacker": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/baselines/constlr_local_packer3d_p2e-4_l2e-4_20261027T085629629307367Z/r128",
+      "checkpoint_sha256": "84e23f59e643c6e7fb77569ed378c4c687f3bcfd86dff4c8d7c0f499fa6e5502",
+      "metric_sha256": "5b84b4b895632d3d57effc067d1cf6c480b6e8dbc5a7795a73eb9e86fb0e7339",
+      "config_sha256": "f7d44d30f67860a1bb350710843b7d99673e7569de2689e130c31baeb0bffce4"
+    },
+    "r128/perceiver": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/imported/server_b/constlr_perceiver_nv_p2e-4_l2e-4_20261027T091559623136926Z/r128",
+      "checkpoint_sha256": "559bbdd9881786af62fae6e7bf6da85225ec7e04685d97983e6ab080d143a5f6",
+      "metric_sha256": "4d6113f3ddb69d7a62c082a6ae843e8edf712d4e6b2c6de6200b1f5d46af1d42",
+      "config_sha256": "ad7029720cff9ec8d0d34c582e8c51a0354448f308107f580a26cdaf63717779"
+    },
+    "r128/adaptive": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/imported/server_b/constlr_adaptive_merge3d_p2e-4_l2e-4_20261027T091619501922183Z/r128",
+      "checkpoint_sha256": "5602bb9997c755843108b3e51df8a3b8be04f5ebfd50c53b46a35efce042c7e4",
+      "metric_sha256": "d77b20a1b6cdd4e6c0fd3dbf633680dbc3a82813049f6499bc7785f9fe9349d4",
+      "config_sha256": "715ca2d9e10f10696ea6f2578d0ded83e688b9cccc4c31362c41cb81fc34d16e"
+    },
+    "r128/tokenselect": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/imported/server_b/token_select_r8_r16/r128",
+      "checkpoint_sha256": "a1c925bd5a819b89a8202c54dc7c2c7393be9e568cd8592eb6e54e0fb6c107ad",
+      "metric_sha256": "ef3516b5c41c717eec209f35a8bc3bbf5cb76d146266d5003987544b01cb62e1",
+      "config_sha256": "d09480b7e5317201660775cc8c3ac7c5afb91bd9e61183db498dc03fc022bc28"
+    },
+    "r256/ours": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/baselines/bindformer_va_fixed_region_mean_constlr_p2e-4_l2e-4_20261026T163948675021333Z/r256",
+      "checkpoint_sha256": "e7f413faa5489844d29ea4505c070b221a8b5241db5af8aba46134b1b809ec6a",
+      "metric_sha256": "604e1cd67c8943624278e757ee54e95eac49de5425519355cf304134e13c0ac1",
+      "config_sha256": "d347230927194e64b4de38573e86dd068993609361b6fc3984a249656611f93a"
+    },
+    "r256/avgpool": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/baselines/constlr_avgpool3d_p2e-4_l2e-4_20261027T085605344161985Z/r256",
+      "checkpoint_sha256": "69d6301c716cf783775a166e420d6565cf379115537ea654c73ae028db9696ee",
+      "metric_sha256": "31a5e11940139429032647554e1a7a7266ff03ed002af2f456c7745df9a72f3b",
+      "config_sha256": "476e7b6c26072f9e24ab8539be0b92a8839e3478c02282a187b22d5647b1fddb"
+    },
+    "r256/concat": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/baselines/constlr_concat3d_p2e-4_l2e-4_20261028T145324127953875Z/r256",
+      "checkpoint_sha256": "8bfa8a3738c1efd2bc894c87c8c434620916d4f77e8897df037260b300ec0194",
+      "metric_sha256": "85dc73d6ea46f4ba23bb95c42463ebb731911e6b25ca01a8a329d4f2271c9f04",
+      "config_sha256": "7bf9946128ced57f2348788f9229e833c134dcc92df19e452dca0a3c4b5e2fb9"
+    },
+    "r256/localpacker": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/baselines/constlr_local_packer3d_p2e-4_l2e-4_20261027T085629629307367Z/r256",
+      "checkpoint_sha256": "bff274d2f3a293035fb0d7e5ff8b193ad324815a5b0489464356e86cadc09f7b",
+      "metric_sha256": "25057e3e5a534c45f7b74c509b60d96f87d469df3c21440ff780e46418bb2853",
+      "config_sha256": "34084b5675c104d9f698be5e628d9b70efbe568b832b04289950cc650f4cd12b"
+    },
+    "r256/perceiver": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/imported/server_b/constlr_perceiver_nv_p2e-4_l2e-4_20261027T091559623136926Z/r256",
+      "checkpoint_sha256": "9e0d72f4a566c55d3e4f4107d96943077b48415d253fd664840af97af7aab188",
+      "metric_sha256": "818a8afa14552e5c34412969b480a03e8f241f9329f4137ad89bd611d4a0deea",
+      "config_sha256": "017272605bf2b7e539488692d3ddf52b0599ed308160de1920dd03aeb45e1704"
+    },
+    "r256/adaptive": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/imported/server_b/constlr_adaptive_merge3d_p2e-4_l2e-4_20261027T091619501922183Z/r256",
+      "checkpoint_sha256": "957dfb4561a4a8cb6b8b40fce2dbe6335f1e91d728443ba5b3e60d7799efe4c7",
+      "metric_sha256": "c994c6ec8515b7f6b124baf2cf5c530af927ae799d9f90fc9e23ca09bdb13710",
+      "config_sha256": "39deff9c1e7e860dc90ff106ee28f97789638e107763470d2a9edd27b6b23c22"
+    },
+    "r256/tokenselect": {
+      "run_dir": "/mnt/sda/jyzhang/VLM_Projector/runs/imported/server_b/token_select_r8_r16/r256",
+      "checkpoint_sha256": "4bd70550d46722e2cf5b684cc9a355d2d7f1d092e3e40dd1834eafd79a2fc2a5",
+      "metric_sha256": "bfe5b2ad062c8412738b122786c694e3f937c5061c2524655b6093bbf979af7f",
+      "config_sha256": "a07d0ff52194ae8a64e5e4946b93a614951fc44a639d117ae283771dd2dc3ba3"
+    }
+  },
+  "note": "Initial 35 explicit bindings from the latest Excel metric vectors and run configuration. Each invocation verifies actual checkpoint bytes, raw-score aggregation and paired provenance before use. Missing bindings stop execution; discovered candidates never auto-bind."
+}

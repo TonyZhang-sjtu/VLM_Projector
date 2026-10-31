@@ -84,7 +84,7 @@ def build_plan(args):
     from src.training.trainer import select_training_samples, training_budget
 
     if int(os.environ.get('WORLD_SIZE', '1')) != 1:
-        raise ValueError('Baseline sweeps are single-GPU launchers; use launch_ddp.sh for DDP')
+        raise ValueError('Baseline sweeps are single-process launchers; use launch_ddp.sh for DDP')
     ratios = checked_ratios(args)
     check_overrides(args.overrides)
     metrics = metric_selection(args.metrics)

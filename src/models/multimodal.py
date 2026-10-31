@@ -48,10 +48,14 @@ class MultimodalModel(nn.Module):
         projected=self.project_volumes([x['volume'] for x in items],[x['sample'].sequence for x in items])
         visual=[v.embeddings for v in projected]
         batch=self.decoder.prepare([x['sample'] for x in items],visual,training=True)
-        loss_sum,tokens=self.decoder.loss(batch)
+        per_example=self.config.task.name=='neuroqa'
+        values=self.decoder.loss(batch,per_example=True) if per_example else self.decoder.loss(batch)
+        loss_sum,tokens=values[:2]
         result={'loss_sum':loss_sum,'answer_tokens':tokens,'lengths':batch.lengths,
                 'encoder_token_counts':[v.input_tokens for v in projected],
                 'projector_token_counts':[v.output_tokens for v in projected]}
+        if per_example:
+            result.update(example_loss_sum=values[2],sample_count=len(items))
         head=getattr(self.projector,'feature_reconstructor',None)
         if head is not None:
             from src.models.projectors.bindformer.reconstruction import sampling_seed
@@ -102,3 +106,23 @@ class MultimodalModel(nn.Module):
                               total_prefix_token_count=result['prompt_token_count']+actual)
             return results
         finally:self.train(was_training)
+
+
+def place_model(model, primary_device):
+    """Place a Concat projector on its own GPU without first loading it on the LLM GPU."""
+    projector_device = model.config.training.get('projector_device')
+    if projector_device is None:
+        return model.to(primary_device)
+    primary = torch.device(primary_device)
+    secondary = torch.device(projector_device)
+    if secondary.type == 'cpu':
+        model.encoder.to(primary)
+        model.decoder.to(primary)
+        model.projector.to(secondary)
+        return model
+    if not torch.cuda.is_available() or max(primary.index, secondary.index) >= torch.cuda.device_count():
+        raise ValueError(f'Concat3D needs both {primary} and {secondary} visible in CUDA_VISIBLE_DEVICES')
+    model.encoder.to(primary)
+    model.decoder.to(primary)
+    model.projector.to(secondary)
+    return model

@@ -1,0 +1,49 @@
+data:
+  manifest_dir: assets/data/NeuroQA_derived/official_holdout_patient_guard_v1_mni_v2
+  target_version: official_holdout_patient_guard_v1
+  datasets: [brats]
+  sampling: balanced_neuroqa
+  invalid_sample_policy: include_unreviewed
+  modality_sampling: exact_balanced_repeat
+preprocessing:
+  name: neuroqa_mni1mm_v2
+  cache_dir: assets/preprocessing/neuroqa_mni1mm_v2
+  params:
+    registration_seed: 42
+    registration_threads: 1
+  spacing_policy: native_grid
+  throughplane_mm: 1.0
+  inplane_mm: 1.0
+  boundary_policy: minimal_pad
+  orientation: RPI
+  image_interpolation: linear
+projector:
+  name: avgpool3d
+  budget_protocol: neuroqa_mni1mm_shared_m_v1
+  target_compression_ratio: 128
+task:
+  name: neuroqa
+  prompt_version: neuroqa_single_volume_v1
+training:
+  stage: joint_lora
+  feature_cache: false
+  feature_cache_dir: cache/features/vqa/neuroqa
+  effective_batch_size: 16
+  microbatch_per_device: 1
+  projector_lr: 2.0e-4
+  encoder_lr: 2.0e-5
+  max_epochs: 20
+  warmup_ratio: 0
+  projector_warmup_ratio: 0.05
+  joint_warmup_ratio: 0.05
+  cosine_min_lr_ratio: 0.1
+  joint_warmup_projector_mode: hold_peak
+  early_stopping_min_delta: 0.002
+  early_stopping_patience: 3
+  run_dir: runs/vqa/neuroqa/v2_default
+  lora:
+    rank: 16
+    alpha: 32
+    dropout: 0.05
+generation:
+  max_new_tokens: 192

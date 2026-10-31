@@ -14,8 +14,8 @@ from src.data.datasets import ALL_DATASETS, normalize_datasets
 from src.data.manifest import load_manifests
 from src.data.dataset import VolumeDataset
 from src.preprocessing.registry import build_preprocessor
-from src.models.multimodal import MultimodalModel
-from src.training.optim import build_optimizer,build_scheduler,build_joint_scheduler
+from src.models.multimodal import MultimodalModel, place_model
+from src.training.optim import build_optimizer,build_scheduler,build_joint_scheduler,clip_grad_norm_across_devices
 from src.training.stages import assert_stage,wrap_distributed
 from src.training.schedule import resolve_joint_schedule,update_joint_validation
 from src.training.loss import global_answer_tokens,global_sample_count,combined_loss
@@ -122,7 +122,7 @@ class Trainer:
         chosen=list(representatives.values());seen={s.id for s in chosen}
         chosen += [s for s in val if s.id not in seen]
         self.generation_data=VolumeDataset(chosen[:config.training.validation_generation_samples],self.preprocessor)
-        self.model=MultimodalModel(config).to(self.device)
+        self.model=place_model(MultimodalModel(config),self.device)
         self.report=assert_stage(self.model)
         self.optimizer=build_optimizer(self.model,config)
         self.scheduler=build_joint_scheduler(self.optimizer,self.plan) if self.plan else build_scheduler(
@@ -150,6 +150,8 @@ class Trainer:
                 raise ValueError(f'Resume changed dataset_scope: {old_scope} vs {self.state["dataset_scope"]}')
             for key in ('train_selection','val_selection'):
                 if old['state'].get(key)!=self.state[key]:raise ValueError(f'Resume changed {key}')
+            if old['config']['training'].get('projector_device')!=config.training.get('projector_device'):
+                raise ValueError('Resume changed training setting: projector_device')
             for key in ('effective_batch_size','microbatch_per_device','max_epochs','max_steps','train_limit','val_limit',
                         'projector_lr','encoder_lr','warmup_ratio','weight_decay','betas','eps','lora',
                         'warmup_steps','grad_clip_norm','early_stopping_patience'):
@@ -243,6 +245,8 @@ class Trainer:
                 extra_totals={}
                 feature_total=0.;feature_cosine=0.;feature_patches=0
                 start=time.perf_counter();torch.cuda.reset_peak_memory_stats(self.device)
+                projector_device=c.training.get('projector_device')
+                if projector_device is not None:torch.cuda.reset_peak_memory_stats(projector_device)
                 batches=[indices[i:i+micro] for i in range(0,len(indices),micro)]
                 for j,ids in enumerate(batches):
                     context=self.wrapped.no_sync() if self.world>1 and j<len(batches)-1 else nullcontext()
@@ -269,7 +273,9 @@ class Trainer:
                 if diagnostics_enabled and self.rank==0:
                     from src.training.diagnostics import OptimizerDiagnostics
                     diagnostics=OptimizerDiagnostics(self.optimizer)
-                norm=torch.nn.utils.clip_grad_norm_(parameters,c.training.grad_clip_norm,error_if_nonfinite=True)
+                norm=(clip_grad_norm_across_devices(parameters,c.training.grad_clip_norm)
+                      if projector_device is not None else
+                      torch.nn.utils.clip_grad_norm_(parameters,c.training.grad_clip_norm,error_if_nonfinite=True))
                 if diagnostics is not None:diagnostics.after_clip()
                 self.optimizer.step();self.scheduler.step()
                 component_diagnostics=diagnostics.after_step() if diagnostics is not None else None
@@ -278,6 +284,7 @@ class Trainer:
                 summed=torch.tensor([loss_total,float(len(indices)),encoder_tokens,projector_tokens],device=self.device,dtype=torch.float64)
                 if self.world>1:dist.all_reduce(summed)
                 torch.cuda.synchronize(self.device)
+                if projector_device is not None:torch.cuda.synchronize(projector_device)
                 record={'step':self.state['global_step'],'epoch':epoch,'answer_ce':float(summed[0]/count),
                     'answer_loss_sum':float(summed[0]),
                     'answer_tokens':count,'actual_samples':int(summed[1]),'sampler_repeats_this_epoch':repeats,
@@ -290,6 +297,9 @@ class Trainer:
                     'grad_norm':float(norm),'seconds':time.perf_counter()-start,
                     'peak_allocated_bytes':torch.cuda.max_memory_allocated(self.device),
                     'peak_reserved_bytes':torch.cuda.max_memory_reserved(self.device)}
+                if projector_device is not None:
+                    record.update(projector_peak_allocated_bytes=torch.cuda.max_memory_allocated(projector_device),
+                                  projector_peak_reserved_bytes=torch.cuda.max_memory_reserved(projector_device))
                 if feature_weight:
                     aux=torch.tensor([feature_total,feature_cosine,feature_patches],device=self.device,dtype=torch.float64)
                     if self.world>1:dist.all_reduce(aux)

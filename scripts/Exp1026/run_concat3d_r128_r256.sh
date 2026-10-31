@@ -1,18 +1,21 @@
 #!/usr/bin/env bash
-# concat3d: Baseline A training recipe; independent runs and best.pt full-test evaluation.
+# concat3d: full-width two-GPU model parallel training and best.pt evaluation.
 set -Eeuo pipefail
 
 # ===== 本次实验设置：可直接修改；命令行 --set / --ratios 可显式覆盖 =====
-export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-3}"
+# Two physical GPU IDs; inside Python they become logical cuda:0 and cuda:1.
+export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0,1}"
 export PROJECTOR_PYTHON="${PROJECTOR_PYTHON:-/mnt/sda/mingjie/conda_envs/projector/bin/python}"
 projector_method=concat3d
-projector_ratios=(4 8 16 32)  # 支持 (64)、(32 64) 或原有倍率；也可用 --ratios 覆盖。
+projector_parallel_device=cuda:1  # Encoder/LLM on cuda:0; Concat/AdamW on cuda:1.
+projector_ratios=(128 256)  # 支持 (64)、(32 64) 或原有倍率；也可用 --ratios 覆盖。
 projector_lr=2e-4
 encoder_lr=2e-4  # Vision Encoder LoRA LR
 projector_max_epochs=20
 projector_seed=42
 projector_effective_batch_size=16
 projector_microbatch_per_device=1
+projector_log_optimizer_diagnostics=false  # Save ~3.1 GiB on the 256x projector GPU.
 encoder_lora_rank=16
 encoder_lora_alpha=32
 projector_warmup_steps=77
@@ -32,8 +35,10 @@ projector_run_tag=""    # 留空自动生成时间戳；手动指定时每次使
 const_script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 source "$const_script_dir/../ft_ablation/_constant_lr.bash"
 run_constant_lr_baseline \
+  --set "training.projector_device=$projector_parallel_device" \
   --set "training.effective_batch_size=$projector_effective_batch_size" \
   --set "training.microbatch_per_device=$projector_microbatch_per_device" \
+  --set "training.log_optimizer_diagnostics=$projector_log_optimizer_diagnostics" \
   --set "training.lora.rank=$encoder_lora_rank" \
   --set "training.lora.alpha=$encoder_lora_alpha" \
   "$@"

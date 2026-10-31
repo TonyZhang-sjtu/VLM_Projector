@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "profiles": [
+    {
+      "environment": {
+        "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+        "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True",
+        "OMP_NUM_THREADS": "4",
+        "MKL_NUM_THREADS": "4",
+        "OPENBLAS_NUM_THREADS": "1",
+        "PYTHONNOUSERSITE": "1",
+        "TOKENIZERS_PARALLELISM": "false",
+        "NUMEXPR_NUM_THREADS": null,
+        "OMP_DYNAMIC": null,
+        "MKL_DYNAMIC": null,
+        "CUDA_DEVICE_ORDER": null,
+        "NVIDIA_TF32_OVERRIDE": null,
+        "PYTHONHASHSEED": null,
+        "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS": null
+      },
+      "packages": {
+        "torch": "2.5.0+cu124",
+        "numpy": "2.1.2",
+        "transformers": "4.51.3",
+        "tokenizers": "0.21.4",
+        "peft": "0.15.2",
+        "accelerate": "1.7.0",
+        "flash-attn": "2.7.4.post1",
+        "einops": "0.8.0",
+        "SimpleITK": "2.4.0",
+        "omegaconf": "2.3.0",
+        "safetensors": "0.8.0",
+        "nvidia-cublas-cu12": "12.4.5.8",
+        "nvidia-cudnn-cu12": "9.1.0.70"
+      },
+      "id": "server_a_constant_lr",
+      "origin": {
+        "project_root": "/mnt/sda/jyzhang/VLM_Projector",
+        "executable": "/mnt/sda/mingjie/conda_envs/projector/bin/python"
+      },
+      "evidence_files": [
+        {
+          "path": "scripts/ft_ablation/_constant_lr.bash",
+          "sha256": "4d7598f165245231538a8389b4962e21daa7a60744cd5695511121e6add0574f"
+        }
+      ],
+      "evidence_kind": "launcher_defaults_validated_by_exact_r16_and_r32_baseline_a_replays",
+      "historical_gpu": "NVIDIA RTX A5500"
+    },
+    {
+      "environment": {
+        "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+        "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True",
+        "OMP_NUM_THREADS": "4",
+        "MKL_NUM_THREADS": "4",
+        "OPENBLAS_NUM_THREADS": "1",
+        "PYTHONNOUSERSITE": "1",
+        "TOKENIZERS_PARALLELISM": "false",
+        "NUMEXPR_NUM_THREADS": null,
+        "OMP_DYNAMIC": null,
+        "MKL_DYNAMIC": null,
+        "CUDA_DEVICE_ORDER": null,
+        "NVIDIA_TF32_OVERRIDE": null,
+        "PYTHONHASHSEED": null,
+        "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS": null
+      },
+      "packages": {
+        "torch": "2.5.0+cu124",
+        "numpy": "2.1.2",
+        "transformers": "4.51.3",
+        "tokenizers": "0.21.4",
+        "peft": "0.15.2",
+        "accelerate": "1.7.0",
+        "flash-attn": "2.7.4.post1",
+        "einops": "0.8.0",
+        "SimpleITK": "2.4.0",
+        "omegaconf": "2.3.0",
+        "safetensors": "0.8.0",
+        "nvidia-cublas-cu12": "12.4.5.8",
+        "nvidia-cudnn-cu12": "9.1.0.70"
+      },
+      "id": "server_b_constant_lr",
+      "origin": {
+        "project_root": "/home/mingjie/jyzhang/VLM_Projector",
+        "executable": "/opt/mingjie/conda-envs/projector/bin/python"
+      },
+      "evidence_files": [
+        {
+          "path": "runs/imported/server_b/runtime/ce_runtime_server_b_20261031T035529Z.json",
+          "sha256": "4a70f4235ba3040dfeb49219e0bc2af82da07cd7cfa82e099dec852ec47b03c1"
+        }
+      ],
+      "evidence_kind": "transferred_launcher_defaults_and_current_packages_not_historical_process_environment",
+      "historical_gpu": "NVIDIA RTX A5000",
+      "notes": "Empty observer-shell variables and observer thread count 16 are NOT original experiment settings. Both source launchers default OMP/MKL to 4; actual historical overrides were not recorded. GPU name comes from historical scoring provenance."
+    }
+  ],
+  "checkpoint_overrides": {}
+}

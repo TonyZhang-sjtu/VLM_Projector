@@ -9,6 +9,11 @@ from collections import Counter
 from omegaconf import OmegaConf
 
 VERSION = 'method_native_ratio_v1'
+NEUROQA_VERSION = 'neuroqa_mni1mm_shared_m_v1'
+NEUROQA_GROUPS = {16: (9, 2, 1), 32: (6, 2, 4), 64: (9, 3, 3),
+                  128: (17, 3, 3), 256: (18, 4, 5)}
+NEUROQA_GRIDS = {16: (6, 8, 13), 32: (9, 8, 4), 64: (6, 5, 5),
+                 128: (3, 5, 5), 256: (3, 4, 3)}
 DEFAULT_RATIOS = (4, 8, 16, 32)
 SUPPORTED_RATIOS = (*DEFAULT_RATIOS, 64, 128, 256)
 GRID_METHODS = frozenset(('avgpool3d', 'convpool3d', 'mixer3d', 'local_packer3d'))
@@ -34,7 +39,7 @@ def ratio_value(projector):
     return value
 
 
-def derive_budget(name, ratio, grid, extent, params=None):
+def derive_budget(name, ratio, grid, extent, params=None, protocol=None):
     from src.models.projectors.geometry import choose_grid
     grid, extent = tuple(grid), tuple(extent)
     if len(grid) != 3 or any(type(n) is not int or n < 1 for n in grid):
@@ -47,7 +52,18 @@ def derive_budget(name, ratio, grid, extent, params=None):
     n = math.prod(grid)
     raw = math.ceil(n / ratio)
     output_grid, group = None, None
-    if name == 'mlp2x_gelu':
+    if protocol == NEUROQA_VERSION and name != 'mlp2x_gelu':
+        if grid != (49, 15, 13) or extent != (196, 240, 208) or ratio not in NEUROQA_GRIDS:
+            raise ValueError('NeuroQA budgets require grid [49,15,13], extent [196,240,208] and r16/32/64/128/256')
+        if name not in GRID_METHODS | EXACT_METHODS | {'concat3d'}:
+            raise ValueError(f'Unknown NeuroQA budget method: {name}')
+        actual = math.prod(NEUROQA_GRIDS[ratio])
+        output_grid = list(NEUROQA_GRIDS[ratio]) if name in GRID_METHODS | {'concat3d'} else None
+        group = list(NEUROQA_GROUPS[ratio]) if name == 'concat3d' else None
+        kind = 'neuroqa_shared_m'
+    elif protocol not in (None, VERSION, NEUROQA_VERSION):
+        raise ValueError(f'Unknown budget protocol: {protocol}')
+    elif name == 'mlp2x_gelu':
         if ratio != 1:
             raise ValueError('Uncompressed MLP supports only ratio 1 (or manual mode)')
         actual, kind = n, 'uncompressed'
@@ -82,7 +98,7 @@ def derive_budget(name, ratio, grid, extent, params=None):
         from src.models.projectors.bindformer.budget import allocate_tokens, role_counts
         allocation = allocate_tokens(actual, (params or {}).get('global_fraction', 0.25),
                                      role_query_counts=role_counts((params or {}).get('role_query_counts')))
-    return {'version': VERSION, 'method': name, 'kind': kind, 'target_ratio': ratio,
+    return {'version': protocol or VERSION, 'method': name, 'kind': kind, 'target_ratio': ratio,
             'input_grid_dhw': list(grid), 'input_extent_mm_dhw': list(extent),
             'input_tokens': n, 'raw_num_tokens': raw, 'expected_output_tokens': actual,
             'output_grid_dhw': output_grid, 'group_size': group,
@@ -96,7 +112,7 @@ def validate_resolved(projector):
     record = OmegaConf.to_container(projector.resolved_budget, resolve=True)
     try:
         expected = derive_budget(projector.name, ratio, record['input_grid_dhw'],
-                                 record['input_extent_mm_dhw'], projector.params)
+                                 record['input_extent_mm_dhw'], projector.params, projector.get('budget_protocol'))
     except (KeyError, TypeError) as exc:
         raise ValueError('Malformed resolved projector budget') from exc
     if record != expected:
@@ -107,7 +123,7 @@ def validate_resolved(projector):
     elif projector.name == 'mlp2x_gelu':
         matches = True
     else:
-        matches = params.get('num_tokens') == record['raw_num_tokens']
+        matches = params.get('num_tokens') == record['expected_output_tokens' if record['version'] == NEUROQA_VERSION else 'raw_num_tokens']
     if projector.name in GRID_METHODS:
         matches = matches and params.get('budget_policy') == 'nearest'
     if not matches:
@@ -121,7 +137,7 @@ def resolve_budget(projector, grid, extent):
     ratio = ratio_value(projector)
     if ratio is None:
         return None
-    record = derive_budget(projector.name, ratio, grid, extent, projector.params)
+    record = derive_budget(projector.name, ratio, grid, extent, projector.params, projector.get('budget_protocol'))
     if projector.get('resolved_budget'):
         saved = validate_resolved(projector)
         if saved['input_grid_dhw'] != record['input_grid_dhw'] or any(
@@ -132,7 +148,7 @@ def resolve_budget(projector, grid, extent):
     if projector.name == 'concat3d':
         projector.params.group_size = record['group_size']
     elif projector.name != 'mlp2x_gelu':
-        projector.params.num_tokens = record['raw_num_tokens']
+        projector.params.num_tokens = record['expected_output_tokens' if record['version'] == NEUROQA_VERSION else 'raw_num_tokens']
     projector.resolved_budget = OmegaConf.create(record)
     resolve_projector_config(projector)
     return record

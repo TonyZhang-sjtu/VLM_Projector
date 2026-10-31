@@ -1,6 +1,6 @@
 # GitHub 上传与两台服务器同步流程
 
-> 最新发布：`sync-20261027-exp1026`（Exp1026 全部12个入口及统一训练流程），下载/合并和目标机prompt见文末第十二节。此前标签保留为历史版本，通用环境与资产核对流程继续适用。
+> 最新发布：`sync-20261031-vqa`（VQA、报告训练更新和显著性分析）；目标机 prompt 与本轮检查范围见文末第十三节。本节覆盖旧章节中本轮不适用的全量资产校验和旧版计划数量要求；此前标签仅供查阅历史版本。
 
 本轮日期：2026-10-26。源仓库：`/mnt/sda/jyzhang/VLM_Projector`。
 GitHub 私有仓库：[TonyZhang-sjtu/VLM_Projector](https://github.com/TonyZhang-sjtu/VLM_Projector)，分支 `main`，本轮固定发布标签 `sync-20261026`。
@@ -510,3 +510,86 @@ env -u PROJECTOR_TEST_DEVICE CUDA_VISIBLE_DEVICES='' OMP_NUM_THREADS=2 MKL_NUM_T
 随后执行 `scripts/Exp1026/README.md` 的完整dry-run循环和比较命令。默认每个实验train/val/test=1960/268/560；此次默认高倍率方法中AvgPool/LocalPacker输出72/36 tokens，Baseline A/Perceiver-NV输出69/35。TokenSelect保留8×/16×且默认run tag固定，实际重复训练时通过CLI `--run-tag`换新名字。
 
 本次源机验证：12个shell语法检查通过；24项默认/覆盖检查通过；源目录和不含本机local overlay的隔离目录各执行全部12个入口，共35个默认实验，两份计划逐项比较完全一致；隔离目录相关CPU回归61 passed。新增比较工具仅输出脚本内容和规范化执行计划摘要，不上传病例明细、模型或真实运行结果。源机日志与原始计划在 `.tmp/github_sync_exp1026_20261027/`。本轮未启动正式训练、未执行完整GPU模型训练，也未连接目标机实际合并。
+
+## 十三、2026-10-31：VQA 与 report generation 同步
+
+本次标签 `sync-20261031-vqa`，完整提交 SHA 以源机发布回复及标签校验为准。发布内容包括 VQA 训练、预处理、评测和 shell 入口，报告训练共享代码及 Concat 双卡改动，用户确认的显著性分析代码与配置，以及固定公开数据集病例/题目 ID 的小型 smoke 清单和验证脚本。显著性配置记录历史指标、运行目录和 checkpoint 哈希，仅作为分析输入身份绑定，不附带 checkpoint 或逐病例结果；目标机路径需自行适配。资产、真实影像、题目文本、病例级输出、实验结果、隔离实验快照、本地配置和环境仍不上传。
+
+源机的 `NEUROQA_VQA_TRAINING_AND_EVALUATION_PLAN.md` 含病例级质量审查结果，按上述排除规则保留本地，不纳入本次提交；可公开同步的运行参数和限制见 `scripts/Exp_VQA/README.md`。
+
+本轮按用户要求不对全部数据集内容逐一核对，也不执行旧章节的全量资产指纹或默认全数据 `--check-data`。快速核验由代码一致性、环境依赖、路径/清单协议、少量样本的真实读取、两个 pipeline 的 dry-run 和 CPU 回归组成；这些检查不能证明全部数据内容一致或保证完整训练一定成功。正式训练前 launcher 自身可能仍会进行其设计要求的完整数据预检；不要为了加速绕过或削弱它。
+
+### 可直接交给目标服务器代码助手的 prompt
+
+将下列 `RELEASE_COMMIT` 替换为源服务器回复的完整提交 SHA。目标机由自己的助手操作，本次不从源机远程改动目标机。
+
+```text
+请将本机 /home/mingjie/jyzhang/VLM_Projector 同步到 GitHub 私有仓库
+https://github.com/TonyZhang-sjtu/VLM_Projector.git 的固定版本：
+标签 sync-20261031-vqa，RELEASE_COMMIT=<源服务器回复的完整SHA>。
+目标是代码、训练/评测调用链和实验逻辑与该版本一致，保留并适配本机 Python、
+数据、模型、缓存、GPU 和输出路径；不迁移/复用旧 checkpoint，不启动正式长训练。
+用户已将数据直接传过来，本轮不逐一核对全数据内容，不运行旧流程的全量数据指纹。
+
+1. 先检查 AGENTS.md、仓库远端、分支、HEAD、未提交与未追踪的代码、活动任务、
+   本机 local_paths.yaml、Python、资产和输出路径；把冲突文件及本地配置备份到
+   仓库外，为本地已有提交保留备份分支。不要终止任务，不覆盖数据或结果，
+   不执行 reset --hard、git clean 或强推。
+2. git fetch origin main tag sync-20261031-vqa；核对标签解析得到的完整 SHA
+   与 RELEASE_COMMIT 一致。若工作区安全且可快进，git merge --ff-only
+   "$RELEASE_COMMIT"；若有本地分叉，保留备份后审阅并正常 merge，逐项解决
+   冲突。已有运行任务依赖当前目录、无法安全更新时使用独立 worktree 验证，
+   并明确报告当前目录尚未合并。不要把本地合并推回远端。
+3. 核对发布提交是 HEAD 祖先，核对实际执行的 src、configs、scripts、tests 等
+   代码与发布版本一致；有真实 merge 时 HEAD 可以不同。不能恢复旧目录盖住新代码，
+   也要检查未追踪代码、PYTHONPATH 或环境导致的错误导入。
+4. 设置本机 PROJECTOR_PYTHON、PROJECTOR_LOCAL_CONFIG、输出路径及物理 GPU；
+   检查导入的 src 确实来自本次 checkout、环境与依赖锁相符。本机 local overlay
+   不上传，也不要用源机绝对路径覆盖本机现有路径。报告 Exp1026 使用 report 的
+   PROJECTOR_LOCAL_CONFIG；VQA 的 scripts/Exp_VQA/_common.bash 有意不自动加载它，
+   以防报告的 manifest/cache 覆盖 QA，因此须单独通过仅含机器路径的 overlay
+   （--config）或 --set encoder.path=...、--set decoder.path=... 等映射。
+   同时核对 VQA 的 data.manifest_dir 和 preprocessing.cache_dir 成对指向 v2：
+   manifest/lineage 内存有绝对路径，程序验证 lineage.preprocessing_root、影像
+   路径及 provenance，不是只改 cache_dir 就足够。先备份并只读核对；如需路径映射，
+   在本机创建独立可回退的映射或 manifest 副本，只更改必要路径并验证原协议、
+   数据划分、内容身份及审计证据仍受原检查约束；不要覆盖原资产、重建标注、
+   修改病人/QA 划分、伪造验证或跳过来源校验。无法确认安全映射则报告阻塞。
+5. 报告预处理 cache_dir 应指向缓存根，而不是直接指向其可读名称子目录。
+   当前报告预处理版本路径为根目录下
+   2c90586eacc0646f9bf4670fa85fce866db8a4874b88e4e47926ed2cfe1532b9；
+   源机该路径是指向 report_generation_native1mm_v2 的相对符号链接。目标机先
+   只读检查本地配置、实际版本、目录、readlink -f 和少量缓存样本：原哈希名
+   本身若是有效实体目录即可继续使用；若只有新名称目录且哈希名完全不存在，
+   确认它是相应版本后，在本机缓存根目录建立相对兼容链接。若双方都存在、链接
+   断裂或来源不明，先报告并保留原样，不覆盖、不盲目执行 rename_report_cache.py。
+   确认训练/验证/测试各少量样本能命中既有缓存，避免悄然创建空缓存。
+6. 运行适合本机环境的 CPU 回归，例如 tests/test_preprocessing.py、
+   tests/test_preprocessing_artifact.py、tests/test_joint_training.py、
+   tests/test_neuroqa.py、tests/test_neuroqa_preprocessing_v2.py、
+   tests/test_neuroqa_runtime.py、tests/test_vqa_launch.py、
+   tests/test_concat_model_parallel.py、tests/test_baseline_sweep.py、
+   tests/test_ft_ablation_launchers.py。用各入口实际参数做 dry-run，检查 report
+   Baseline A 和 VQA 基线及方法的 projector、倍率、学习率、采样、任务、训练及
+   best checkpoint 评测命令；VQA 全部 14 个入口含 smoke，共 47 个默认计划。
+   当前 report 目录包含 12 个入口/33 个默认实验，Concat r128/r256 是单进程双卡，
+   不要使用旧 35 项参考 JSON 来宣称新版一致。保证 CLI 显式路径覆盖已生效。
+7. 做小样本 VQA 预检：使用 scripts/Exp_VQA/vqa_smoke.sh --check-data，附上
+   上述本机路径 overlay/必要 --set。此模式校验全局清单元数据和 QC 证据，并对
+   固定的少量选中病例检查实际影像/缓存，不启动 GPU 训练；不要运行全量
+   vqa_avgpool3d.sh --check-data 或全量资产 fingerprint。若环境和空闲 GPU 足够，
+   经现有授权范围做短小的独立工程 smoke 来确认真实 forward/backward、验证、
+   best.pt 和测试链路；不更改正式实验设置、不抢占别人的任务、不启动全量训练。
+   如无法做 GPU smoke 则明确报告未验证，不能把 dry-run 说成实模训练通过。
+8. VQA 当前默认 v2 / include_unreviewed / exact_balanced_repeat，未复核病例会被
+   标记，数据全局 QC 尚未完全验收；训练计划不等于数据科学质量已验收。
+   Baseline A VQA 默认关闭 report 派生知识库，projector/encoder LR 2e-4/2e-5；
+   report Baseline A 配方不同，不要将两者混为同一个训练配置。显著性分析配置
+   中的历史源机路径仅用于相应分析，按需在本机副本映射，不能当作新训练路径。
+9. 最终报告：原/最终 HEAD 和发布 SHA、合并方式、本机路径映射及配置备份，
+   report 缓存链接/命中、VQA 清单及抽样状态、代码/依赖核查、CPU 测试和各
+   dry-run 结果、GPU smoke 是否真正执行及结果、剩余缺失与风险。列出目标机可用
+   的 VQA 基线和方法启动命令，但由用户决定何时启动正式实验。
+```
+
+源机本轮检查：报告预处理版本和兼容链接核对，train/val/test 各抽样一个报告缓存命中并验证；报告预处理及 joint 训练 CPU 测试 47 项通过。VQA 14 个 shell 的 47 项默认计划 dry-run 和小样本数据预检通过；VQA 测试 147 项通过；共享训练及启动相关组合回归 215 项通过、4 项跳过。未因本次同步启动正式训练。旧实验日志的 GPU smoke 可以作为历史证据，但不能代替目标机运行时验证。

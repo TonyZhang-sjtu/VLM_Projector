@@ -97,6 +97,19 @@ def validate(c):
         raise ValueError("Baseline supports BF16 unquantized decoder only")
     if c.training.distributed not in ("none", "ddp"):
         raise ValueError("Only single device and DDP have been implemented")
+    projector_device = c.training.get('projector_device')
+    if projector_device is not None:
+        import re
+        if projector_device == 'cpu' and c.task.name != 'neuroqa':
+            raise ValueError('CPU projector_device is validated only for NeuroQA Concat3D')
+        if projector_device != 'cpu' and (not isinstance(projector_device, str)
+                or re.fullmatch(r'cuda:\d+', projector_device) is None
+                or not isinstance(c.training.device, str)
+                or re.fullmatch(r'cuda:\d+', c.training.device) is None
+                or int(projector_device.split(':')[1]) == int(c.training.device.split(':')[1])):
+            raise ValueError('training.projector_device must be a different logical cuda:N device')
+        if c.projector.name != 'concat3d' or c.training.distributed != 'none':
+            raise ValueError('Two-GPU projector placement supports Concat3D without DDP only')
     if c.training.mixed_precision != "bf16":
         raise ValueError("Baseline precision must be bf16")
     if c.preprocessing.spacing_policy not in ("2mm", "4mm", "official_4mm", "resample", "brats2mm_other_native_z", "native_grid"):
@@ -109,7 +122,7 @@ def validate(c):
         raise ValueError('Packed numerical consistency is unvalidated; use independent volume encoding')
     if c.preprocessing.token_filter_policy != "none":
         raise ValueError("Custom token selection requires an explicit registered implementation")
-    if c.data.review_policy != "include_with_flag" or c.data.sampling != "uniform_sequence":
+    if c.data.review_policy != "include_with_flag" or c.data.sampling != ('balanced_neuroqa' if c.task.name == 'neuroqa' else 'uniform_sequence'):
         raise ValueError("Alternate sampling/review policy requires a versioned manifest")
     if c.preprocessing.slice_axis_policy not in ("official", "published_z"):
         raise ValueError("Unknown slice-axis policy")
@@ -188,6 +201,33 @@ def validate(c):
             raise ValueError('Optional step/sample limits must be positive integers')
     if c.evaluation.batch_size<1 or c.evaluation.split not in ('train','val','test'):
         raise ValueError('Invalid evaluation split or batch size')
+    if c.task.name == 'neuroqa':
+        if c.data.get('invalid_sample_policy', 'strict') not in ('skip', 'strict', 'include_unreviewed'):
+            raise ValueError('data.invalid_sample_policy must be skip, strict or include_unreviewed')
+        if c.data.get('modality_sampling', 'legacy_exact') not in ('dual_eligible', 'legacy_exact', 'exact_balanced_repeat'):
+            raise ValueError('Unknown NeuroQA modality sampling policy')
+        from src.models.projectors.budget import NEUROQA_VERSION
+        if (c.preprocessing.name not in ('neuroqa_mni1mm', 'neuroqa_mni1mm_v2') or c.preprocessing.spacing_policy != 'native_grid'
+                or c.preprocessing.throughplane_mm != 1 or c.preprocessing.inplane_mm != 1
+                or c.preprocessing.orientation != 'RPI' or c.preprocessing.boundary_policy != 'minimal_pad'):
+            raise ValueError('NeuroQA v1 requires the fixed MNI 1 mm adapter with RPI/minimal padding')
+        if c.projector.get('budget_protocol') != NEUROQA_VERSION:
+            raise ValueError('NeuroQA requires its versioned shared-M budget')
+        allowed_ratios = (1,) if c.projector.name == 'mlp2x_gelu' else (16,32,64,128,256)
+        if ratio_value(c.projector) not in allowed_ratios:
+            raise ValueError('NeuroQA requires one of its five ratios, or r1 for uncompressed MLP')
+        if c.training.distributed != 'none':
+            raise ValueError('NeuroQA supports single-process training')
+        if c.data.get('modality_sampling', 'legacy_exact') in ('legacy_exact', 'exact_balanced_repeat') and c.training.effective_batch_size % 2:
+            raise ValueError('Exact modality balance requires an even effective batch')
+        if c.training.init_checkpoint:
+            raise ValueError('Main NeuroQA benchmark starts from base assets; report transfer is a separate protocol')
+        if c.projector.name == 'bindformer3d' and c.projector.params.knowledge_mode != 'none':
+            raise ValueError('NeuroQA v1 disables report-derived concept banks; rebuild using only QA-train patients before enabling knowledge')
+        if set(c.preprocessing.params) - {'registration_seed', 'registration_threads'}:
+            raise ValueError('Unknown NeuroQA preprocessing parameter')
+        if c.training.stage not in ('a','b_lora','joint_lora') or list(c.data.datasets) != ['brats']:
+            raise ValueError('NeuroQA v1 supports BraTS with projector-only or visual-LoRA training')
 
 
 def accumulation_steps(config, world_size=1):

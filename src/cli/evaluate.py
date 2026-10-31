@@ -5,7 +5,7 @@ from src.config import path_of,file_hash
 from src.data.manifest import load_manifests
 from src.data.dataset import VolumeDataset
 from src.preprocessing.registry import build_preprocessor
-from src.models.multimodal import MultimodalModel
+from src.models.multimodal import MultimodalModel, place_model
 from src.training.checkpoint import provenance,load_checkpoint
 from src.training.trainer import seed_all,validate
 from src.evaluation.generate import predict
@@ -19,6 +19,8 @@ def main():
     cli.add_argument('--control',choices=['zero','shuffle','text'])
     cli.add_argument('--skip-answer-ce',action='store_true',help='Skip the extra teacher-forced CE pass when only report metrics are needed')
     args=cli.parse_args();c=config_from(args,dataset_key='evaluation.datasets')
+    if c.task.name == 'neuroqa':
+        cli.error('Use python -m src.cli.vqa_evaluate --checkpoint ... --output ... for QA scoring')
     if not c.evaluation.checkpoint or not c.evaluation.output_dir:cli.error('Set evaluation.checkpoint and evaluation.output_dir')
     output=path_of(c,c.evaluation.output_dir)
     if (output/'predictions.jsonl').exists():raise FileExistsError('Choose a new evaluation output directory')
@@ -34,7 +36,7 @@ def main():
     pre=build_preprocessor(c);data=VolumeDataset(samples,pre)
     from src.models.projectors.budget import prepare_budget
     budget_preflight=prepare_budget(c,samples)
-    model=MultimodalModel(c).to(c.training.device)
+    model=place_model(MultimodalModel(c),c.training.device)
     proof=provenance(c,model,pre,summary)
     checkpoint=path_of(c,c.evaluation.checkpoint)
     load_checkpoint(checkpoint,model,expected_provenance=proof)

@@ -55,6 +55,13 @@ def provenance(config,model,preprocessor,manifest_summary):
         'prompt':model.decoder.task.fingerprint,'tokenizer_image_id':model.decoder.image_id,
         'encoder_execution':'independent','decoder_loss':'answer_only_causal_ce_sum',
         'source_files':{str(p.relative_to(ROOT)):file_hash(p) for p in sorted((ROOT/'src').rglob('*.py'))}}
+    if config.task.name == 'neuroqa':
+        content['decoder_loss']='answer_only_causal_ce_per_qa_mean_v1'
+        content['sampling']='exact_equal_T1_T2_unique_qa_cyclic_quota_v1'
+        if config.data.get('modality_sampling', 'legacy_exact') == 'dual_eligible':
+            content['sampling']='dual_eligible_balanced_alternating_unique_qa_v1'
+        elif config.data.get('modality_sampling', 'legacy_exact') == 'exact_balanced_repeat':
+            content['sampling']='exact_equal_T1_T2_minimum_repeats_cyclic_v1'
     concept_assets=getattr(model.projector,'asset_provenance',None)
     if concept_assets is not None:
         content['projector_assets']=concept_assets
@@ -90,6 +97,8 @@ def load_checkpoint(path,model,mode='evaluate',optimizer=None,scheduler=None,exp
     # and NumPy RNG records require the full local pickle format.
     checkpoint=torch.load(path,map_location='cpu',weights_only=False)
     if mode not in ('evaluate','initialize','resume'):raise ValueError('Unknown checkpoint loading mode')
+    if checkpoint['config']['task'] != OmegaConf.to_container(model.config.task,resolve=True):
+        raise ValueError('Cross-task checkpoint loading requires a separate explicit transfer protocol')
     joint=model.config.training.stage=='joint_lora'
     expected_format=2 if checkpoint.get('stage')=='joint_lora' else 1
     if checkpoint.get('format_version')!=expected_format:raise ValueError('Unknown checkpoint format')

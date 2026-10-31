@@ -35,6 +35,9 @@ def contained_path(root, relative):
 
 
 def load_manifests(config, check_paths=True, datasets=None):
+    if config.task.name == 'neuroqa':
+        from src.data.neuroqa_manifest import load_neuroqa
+        return load_neuroqa(config, check_paths)
     # Older saved configs had no selector and therefore loaded every source.
     configured = config.data.get('datasets', ALL_DATASETS)
     selected_datasets = normalize_datasets(

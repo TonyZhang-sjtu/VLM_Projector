@@ -22,7 +22,10 @@ def atomic_torch_save(value, destination):
 
 class TensorCache:
     def __init__(self, root):
-        self.root = Path(root)
+        # Keep content/version identity intact while using human-readable stores.
+        # resolve() follows the migration compatibility link for old checkpoints
+        # and already-running consumers; no fingerprinted transform code changes.
+        self.root = Path(root).resolve()
 
     def get(self, key):
         path = self.root / key[:2] / f'{key}.pt'
