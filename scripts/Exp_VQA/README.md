@@ -59,7 +59,7 @@ CUDA_VISIBLE_DEVICES=0 bash scripts/Exp_VQA/vqa_avgpool3d.sh --ratios 128 256 --
 
 这里明确采用 **Baseline A 视觉结构 / 无外部知识库** 的 VQA 版本。`knowledge_mode=none` 不加载 UMLS concept bank，不执行概念检索或向 role query 注入概念向量；可学习的角色 query、序列条件和图像特征处理保留。report Baseline A 使用 `name_definition`，其知识库按 report train 构建，不能直接视为符合 QA split 的知识库。当前 VQA 配置检查要求 `none`；启用知识需先按 QA 训练患者重建并审计来源，再另建实验。
 
-优化器/调度沿用本目录的共同 VQA 配方：projector/encoder LR=2e-4/2e-5、两段 5% warmup、cosine 下限 0.1、QA answer-only CE、val closed accuracy 选模。没有移植 report 的 encoder LR=2e-4、固定 77-step warmup、恒定 LR 和 val CE 选模。脚本顶部可以编辑所有训练参数，CLI 覆盖优先；外部 `BIND_*` 环境变量不会改变该入口的结构默认值。
+优化器/调度沿用本目录的共同 VQA 恒定 LR 配方（2026-11-01）：projector/encoder LoRA 峰值 LR 均为 2e-4、两段 warmup 各固定 150 次 optimizer update、无 projector hold、joint warmup 时 projector 保持峰值、之后两者恒定 2e-4。QA answer-only CE 和 val closed accuracy 选模保留。脚本顶部可以编辑所有训练参数，CLI 覆盖优先；外部 `BIND_*` 环境变量不会改变该入口的结构默认值。
 
 ```bash
 # 预览最终 projector 参数、预算、训练参数和测试命令
@@ -85,7 +85,7 @@ bash scripts/Exp_VQA/vqa_avgpool3d.sh --check-data --ratios 128
 # 完整验收后按严格模式运行
 CUDA_VISIBLE_DEVICES=0 bash scripts/Exp_VQA/vqa_avgpool3d.sh \
   --preprocessing-version v2 --invalid-sample-policy strict --ratios 128 256 --run-tag main_v2_s42 \
-  --set training.projector_lr=2e-4 --set training.encoder_lr=2e-5 \
+  --set training.projector_lr=2e-4 --set training.encoder_lr=2e-4 \
   --set training.max_epochs=20 --set training.effective_batch_size=16
 
 # 扩展控制实验，每项使用同一 best checkpoint；分别保存结果
@@ -107,7 +107,19 @@ manifest 位于 `assets/data/NeuroQA_derived/`；缓存位于 `assets/preprocess
 
 默认冻结 Llama，训练 projector 和视觉 encoder LoRA。仅单模态可答的题固定使用允许模态，双模态题分配给有缺口的模态并随 epoch 轮换；`exact_balanced_repeat` 保持 epoch 和偶数累积窗口内 T1/T2 等量，必要时最少重复有效 QA。验证/测试按所有允许视图展开，不要求等量。有效 batch=16、microbatch=1；全量时最后 14 条按真实样本数平均。训练目标为每 QA 平均的 answer-only causal CE。验证集 closed accuracy 选 best，同准确率时比较 CE；早停 `min_delta=0.002` 是 accuracy 的绝对增量。
 
-默认最多 20 epochs，projector/encoder LR 为 2e-4/2e-5，LoRA rank=16、alpha=32、dropout=0.05。两段 warmup 各占总更新数 5%，cosine 下限 0.1，encoder 在 projector warmup 冻结；可用 shell 中的显式 `*_warmup_steps` 覆盖比例。未过滤的完整清单每 epoch 216 次更新；过滤后按实际保留数重新计算调度。当前 v1 skip 保留 3386 QA，每 epoch 212 次更新，20 epochs 共 4240 次，默认两段 warmup 各 212 次。小样本 joint_lora 需两段 warmup 和 cosine 各至少 2 次更新；`vqa_smoke.sh` 已配置为 2+2+2。`training_stage=a` 可做 projector-only 对照，建议同时设 `encoder_lr=0`。
+默认最多 20 epochs，projector/encoder LoRA 峰值 LR 均为 2e-4，LoRA rank=16、alpha=32、dropout=0.05。2026-11-01 起，正式方法入口及 VQA 配置均使用 `projector_warmup_steps=150`、`joint_warmup_steps=150`、`projector_hold_steps=0`、`joint_warmup_projector_mode=hold_peak`、`cosine_min_lr_ratio=1.0`；不再按总更新数的 5% 计算预热。配置保留 `*_warmup_ratio=0.05` 作为可选回退，只有显式把对应 `*_warmup_steps` 设为 `null` 时才生效。
+
+完整 3454 QA、有效 batch=16 时每 epoch 216 次更新，20 epochs 共 4320 次：
+
+| optimizer update（从 1 编号） | Projector LR | Encoder LoRA LR / 状态 |
+| --- | --- | --- |
+| 1–150 | 0 → 2e-4 | 冻结，LR=0 |
+| 151–300 | 恒定 2e-4 | 解冻，0 → 2e-4 |
+| 301–4320 | 恒定 2e-4 | 恒定 2e-4 |
+
+最后阶段共 4020 次更新。实现沿用 `joint_cosine` 阶段名，但下限系数 1.0 使实际 LR 恒定；预热端点包含 0 与峰值。过滤后总预算按实际采样数计算，两段预热仍各 150，不随样本数变为百分比。VQA 与 report 的 step 都表示一次 optimizer 更新，当前有效 batch 均为 16；VQA 的每 epoch 更新更多，不是一次 step 内有两次 optimizer 更新。本次按指定值使用 150，report 的 77 严格翻倍为 154。
+
+固定预热的 `joint_lora` 新实验需至少 302 次总更新。小样本工程入口 `vqa_smoke.sh` 继续使用 2+2+2 共 6 次更新，以检查阶段切换；峰值 LR 均改为 2e-4，末段同样恒定。`training_stage=a` 可做 projector-only 对照，建议同时设 `encoder_lr=0`；它使用原有的 `training.warmup_steps` / `training.warmup_ratio` 调度，不使用这里的 joint 分阶段配方。旧实验的 `--resume-run` 恢复原保存配方，不会套用新的 150+150 设置；使用新配方必须新建 run。
 
 GPU 编号使用物理编号，进程内统一为逻辑 `cuda:0`。这是单进程入口，不使用 torchrun/DDP。Concat 默认 CPU projector + 单张 GPU，保持完整宽度；CPU 内存和时间开销较大。若资源另行获准，双卡模式为 `CUDA_VISIBLE_DEVICES=0,1 ... --concat-device cuda:1`。其他方法设置一张卡。`PROJECTOR_PYTHON` 可覆盖 Python 路径。入口不自动合并报告任务的 `configs/local_paths.yaml`；更换模型路径用 `--set encoder.path=... --set decoder.path=...`。
 
@@ -137,7 +149,7 @@ VQA_INVALID_SAMPLE_POLICY=skip bash scripts/Exp_VQA/vqa_concat3d.sh --dry-run
 
 训练目录及测试结果目录各有 `data_preflight.json`、`skipped_samples.json`，保存病例、QA/view ID、原因、原始/保留数量及实际清单指纹。未完整验收或发生训练/验证过滤的完整训练标为 `filtered_training`；对应结果标为 `filtered_evaluation`，保存总体覆盖数。默认排行榜不混入这些结果；可用 `summarize_results.py --include-filtered` 明确纳入并保留范围列。
 
-新配置 `data.modality_sampling=dual_eligible` 实现上述只对双模态可答题的平衡。旧 checkpoint/launch 配置缺少此字段时按 `legacy_exact` 恢复原采样，不把旧实验中途改成新策略；采用新策略应新建 run。已保存的实际清单和影像内容指纹在续训时核对，修复病例导致清单变化会明确报错，要求新建实验。
+历史 `data.modality_sampling=dual_eligible` 仅对双模态可答题做平衡；当前 v2 默认及 Baseline A 使用本文开头的 `exact_balanced_repeat`，保证全局及偶数窗口的 T1/T2 等量。旧 checkpoint/launch 配置缺少此字段时按 `legacy_exact` 恢复原采样，不把旧实验中途改成新策略；采用新策略应新建 run。已保存的实际清单和影像内容指纹在续训时核对，修复病例导致清单变化会明确报错，要求新建实验。
 
 现在可以用固定已完成病例检验工程闭环：
 

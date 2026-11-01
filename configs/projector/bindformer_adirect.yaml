@@ -1,0 +1,20 @@
+# Same A4 parent/child geometry and G+L budgets. Local X is pooled before
+# any trainable transform, then uses the shared final LN/head with global.
+# Position/sequence additions below apply ONLY to the global branch.
+# global_fraction=0 uses M exact-count spatial mean cells, with no global branch.
+projector:
+  name: bindformer_adirect
+  hidden_size: 4096
+  bias: true
+  params:
+    global_fraction: 0.25
+    inner_dim: 768
+    num_heads: 8
+    ffn_expansion: 4
+    dropout: 0.0
+    checkpoint_blocks: true
+    head_type: mlp
+    position_mode: grid_fourier
+    position_frequencies: 8
+    sequence_condition: true
+    global_depth: 1

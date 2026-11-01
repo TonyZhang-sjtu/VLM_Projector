@@ -1,0 +1,63 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ADirect 下一轮结构设计：局部读取、代表 patch 与空间上下文</title>
+<style>body{margin:0;background:#eef2f7;color:#213247;font:16px/1.85 system-ui,sans-serif}main{max-width:1160px;margin:auto;background:white;padding:34px}h1{font-size:28px;line-height:1.4}p{margin:20px 0}.lead{padding:16px 20px;border-left:5px solid #238b83;background:#edf8f5}.note{background:#fcf7eb;padding:16px}table{border-collapse:collapse;width:100%;font-size:14px;line-height:1.7}td,th{border:1px solid #d0dbe6;padding:10px;text-align:left;vertical-align:top}th{background:#edf3fa}.scroll{overflow:auto}img{width:100%}pre{background:#13283f;color:#edf3ff;padding:20px;overflow:auto;font-size:14px;line-height:1.8}a{color:#16649a}hr{border:0;border-top:1px solid #d5dfea;margin:30px 0}.muted{color:#617184}</style>
+<main><h1>ADirect：从固定均值走向有选择的空间证据压缩</h1>
+<p class="muted">2026-11-01 · 基于正式 A/A4/ADirect 与 6 个外部 baseline 的本地结果、当前模型代码、既有负结果。本页是候选设计，不代表已完成训练实现。</p>
+<p class="lead"><b>ADirect 已经证明“原始局部特征直达”值得保留。脑区差距更可能涉及均值前后的信息选择、局部内容与空间位置的对应，以及解剖上下文的使用。</b> 单次局部残差读取是干净的机制对照，其优先级不等于已证明成功率最高。TokenSelect 与 Perceiver 提供了两条同样重要的替代路线：直接保留代表 patch，以及让空间 token 重新读取更广的原始视觉上下文。</p>
+<p><a href="bindformer_adirect_localread_overview_projector.pdf">Overview PDF</a> · <a href="bindformer_adirect_localread_operator_detail.pdf">算子细节 PDF</a> · <a href="proposal_spec.json">精确候选规格</a> · <a href="../../../results/A4_ADirect_localization_20261101/report.html">完整实验错误分析</a></p>
+<img src="bindformer_adirect_localread_overview_projector_preview.png" alt="ADirect 加单次局部残差读取的候选结构">
+
+<p><b>同样 CE 为什么不等于同样的信息学习能力。</b> CE 通过各自不同的前向结构和梯度路径训练 projector 与视觉 LoRA。只看 ADirect 的局部支路，μr=mean(Xr)，因此同一区域每个 patch 获得的直接梯度都是 (1/nr)·∂L/∂μr；全局支路和 encoder 内部还会提供其他梯度，不能说整个模型每个 patch 梯度都相同。学习到的内容读取允许不同 patch 的梯度、聚合权重随当前输入变化，改变了同一 CE 可利用的信息与优化路径。</p>
+<p>以当前 8775 patch 网格为例，ADirect-256 的 28 个 local token 每个平均 313.4 个 patch，最小 228、最大 560；128× 的 52 个 local token 每个平均 168.75 个 patch。256× child 的物理范围沿 D/H/W 分别约为 76–80 / 48–64 / 48–112 mm。这些是几何 box 而不是脑区。encoder patch 已有上下文感受野，但 projector 的直接聚合仍把大量不同位置内容合成单个均值。少量异常细节或边界关系可以在这种压缩中被弱化；这是结构风险，并未用病灶体素干预证明是本次全部错误的原因。</p>
+<p>侧别与脑区需要的区分粒度不同。保住左右半球的粗差异，未必同时保住额叶/顶叶/颞叶的局部外观、位置和邻接关系。参考脑区也可能复杂、多部位，报告 CE 未要求额外标签；较强 baseline 同样未显式获得 atlas 脑区标签。因此不能把“没有医学知识模块”当作当前差距的直接解释。</p>
+
+<div class="scroll"><table><tr><th>本地 baseline 的真实结构</th><th>它保留/处理的信息</th><th>ADirect 目前的差别</th><th>证据边界</th></tr>
+<tr><td>Perceiver_NV：全部 69/35 个 learned queries，6 个 QueryBlock，每层全图读取 + FFN + residual</td><td>所有输出 token 可在压缩过程中多轮访问同一份原始 encoder memory，按输入内容调整读取</td><td>大多数 local token 只固定平均一次；只有 17/7 个 global query 做一次全图读取，且 memory 经过 InputAdapter</td><td>当前实现没有 Perceiver_Flamingo 的 latent K/V，也没有独立的 latent self-attention。不能把论文中未实现的组件归入本地模型。参数约 62.45M vs ADirect 27.65M（256×），训练最佳步数也不同。</td></tr>
+<tr><td>LocalPacker：每格视觉均值作为 query，区域内一层 QueryBlock，带 attention 与 FFN 残差</td><td>均值是底座，还能从原始区域 memory 补充非均匀内容</td><td>ADirect 没有这种区域内部再读取，且 local 区域数更少</td><td>LocalPacker 同时改变了分区、global/local 分配和 FFN；256× 联合定位并未超过 ADirect，不能归因成“加 attention 必然更好”。</td></tr>
+<tr><td>TokenSelect：单位化特征的 greedy max-min diversity selection，保留原始 patch 后接 MLP</td><td>选中的特征未先经过空间平均；相似背景不容易占据所有保留名额</td><td>ADirect 的所有 local 输出都是均值，global 输出是注意力混合，没有专门保留的单 patch 证据</td><td>选择依据是特征差异而非病灶标签，也可能选到背景或伪影。路由 detach，选择不等于可学习病灶检测。</td></tr>
+<tr><td>Concat：局部 d/h/w 排列进入通道，再接 MLP</td><td>不同组内位置可拥有不同投影权重</td><td>均值对已编码向量在本 child 内重排不敏感</td><td>encoder 已含空间信息，不能据此称 ADirect 完全无位置；Concat 最后仍降维，且参数达 834.67M（256×）。</td></tr>
+<tr><td>AdaptiveMerge：六邻接图、特征相似性的 Ward 合并，再对所得连通区域求均值</td><td>避免一开始就强迫外观差异大的相邻内容落入同一固定 box</td><td>ADirect 的分区仅依赖几何，不看当前患者内容</td><td>仍会平均，且 Ward 不理解脑区/病灶；有 CPU 路由成本与跨样本区域身份不固定的问题。</td></tr>
+<tr><td>AvgPool：全部预算用于固定网格的原始均值 + MLP</td><td>结构简单，全部输出有直接空间覆盖；72/36 个空间 token</td><td>ADirect 只有 52/28 个 local token，并额外使用 global、final LN；分区几何也不同</td><td>提示检查预算分配，不能仅凭结果认定 global 无用或 final LN 有害。</td></tr>
+</table></div>
+<p><b>Perceiver 的结果不能被概括为“它只多了残差”。</b> 原始 Perceiver 论文强调迭代压缩读取，但当前比较以本地实现为准：<a href="../../../src/models/projectors/resampler.py">resampler.py</a>、<a href="../../../src/models/projectors/common.py">QueryBlock</a>、<a href="../../../configs/projector/perceiver_nv.yaml">depth=6 配置</a>。论文背景见 <a href="https://proceedings.mlr.press/v139/jaegle21a.html">Perceiver, ICML 2021</a>。本地各模型的视觉 LoRA 已分别协同训练，结果不是固定 encoder 下单独 projector 的因果消融。</p>
+
+<hr><p><b>单次局部残差读取的准确含义。</b> r 是 A4/ADirect 的一个空间 child；μr 保留原样，同时产生当前区域自己的 query。原始 patch 在计算均值后仍保留下来，作为 K/V memory。</p>
+<pre>μr = masked_mean(Xr)
+Qr = Wq LNq(μr)
+Kr = Wk LNx(Xr)
+Vr = Wv LNx(Xr)
+Ar = softmax(Qr Krᵀ / √96 + padding_mask)       # 每个 head
+δr = Wo concat_heads(Ar Vr)
+ur = μr + α δr
+Z  = head(final_LN(concat(global, all ur)))</pre>
+<p>此版明确限定：768 维、8 heads、1 次 attention、没有 local FFN；Q/K/V/O 无 bias；两个 affine LN；全体 child 共用参数和单个可学习 α，α 初始化 0.1。0.1 是候选起点，不是调出的最优值。新增 2,362,369 参数，总参数约 30.023M/30.016M，总 token 仍为 69/35。残差不是人工提供的“正确误差”，而是 CE 学出的特征修正。图中 query 来自区域视觉均值，没有角色 query、UMLS 或脑区标签。</p>
+<img src="bindformer_adirect_localread_operator_detail_preview.png" alt="局部残差读取的 Q/K/V 与原始均值旁路">
+<p><b>预期收益来自“重新看到未平均的 patch 并选择其内容”。</b> 假设一个 child 有 300 个 patch，只有少数 patch 携带区分某个脑区的边界/病变特征，均值给每个 patch 同样的权重；attention 可以按内容赋予不同权重，让这些信息更容易影响最终 token。μr 的直通保留现有粗内容，避免所有证据都必须通过新 reader。但 residual、LN 和 head 都可以改变最终输出，保留旁路不保证准确率不会下降。</p>
+<p>这个思路与 <a href="https://arxiv.org/abs/2407.02392">TokenPacker 的 coarse-to-fine 区域注入</a>有联系。论文还使用多层特征；本候选只读取当前 encoder 最后一层，不能把论文的全部收益视作本实验依据。</p>
+<p><b>为什么优先：变量少，失败也能缩小问题范围。</b> 它保留相同 child、G/L、head 和训练目标，检验内容自适应聚合是否优于固定均值。LocalPacker-128 的脑区/联合是 47.8%/38.4%，ADirect 为 37.2%/26.8%，提供动机；但 LocalPacker-256 的联合 31.3% 与 ADirect 32.1% 接近，而且其分区/预算不同，这不是单层 attention 的因果证据。</p>
+<p class="note"><b>局限必须写进预期：</b> 不显式加入坐标的 mean-query attention，对同一区域内已经编码好的向量排列仍不敏感；它不会凭空恢复精确空间顺序。硬局部 support 也没有补充跨 child 的原始解剖上下文。权重可能接近均匀，或者选择与脑区无关的内容。若主要瓶颈在区域边界、跨区关系或组内位置，此版可能收益很小。</p>
+<p>既有负结果也不能忽略：旧 AvgPool warm-start 的内容加权、空间一阶矩、八子区残差，在冻结 encoder 的 96 步实验中均无稳定联合收益。旧内容 scorer 是共享线性标量，读取归一化 patch，未用当前区域视觉均值作 query；此版多头内容 query、完整训练/视觉 LoRA 的条件不同，所以旧结果不能直接否决它，也足以阻止把收益说成必然。来源：<a href="../../../experiments/isolated_20261031_spatial_projectors/interpretation.json">既有空间候选实验</a>。</p>
+
+<hr><p><b>除局部残差之外，最值得尝试的结构路线。</b> 以下每一行都是独立实验，不建议一次性堆叠。</p>
+<div class="scroll"><table><tr><th>候选</th><th>具体怎么改</th><th>针对的缺陷 / baseline 启发</th><th>优先级与不确定性</th></tr>
+<tr><td>覆盖均值 + 代表 patch</td><td>保留 52/28 个 local 均值，用 17/7 个 diversity-selected 原始 patch 替换原 global 输出；selected 按原网格索引排序；维持总 69/35 与共享最终 LN/head</td><td>TokenSelect-256 的脑区 50.4%、联合 45.5%，高于 ADirect 41.6%/32.1%，且仅约 19.93M 参数。检验未平均细节是否比 global 混合摘要更有价值</td><td>高；与 LocalRead 并列的替代路线。可能漏病灶、选背景，少量 selected 也可能不够。原 global 被替换，结论是这两种预算用途之比较。</td></tr>
+<tr><td>空间 query 读取邻接原始 patch</td><td>仍以 μr 为 query，扩大 K/V 为当前 child 加相邻 child 的原始 memory；可单独比较同 support / 邻域 support；随后单独加入相对位置 bias</td><td>借鉴 Perceiver 的较广 memory 访问，补足病变与脑沟/脑室/边界的邻接关系；保留当前 child 的输出身份</td><td>对脑区问题尤其值得重视。读取范围不是越大越好；需要限制跨半球混入和共享模板化。encoder 已有上下文，额外读取是否必要仍需检验。</td></tr>
+<tr><td>全部 token 作为空间锚点</td><td>以确切 M=69/35 分区，输出 M 个直接空间 token；先和原 G+L 比均值底座，再决定是否加 reader</td><td>Avg/Local 全部预算用于空间覆盖；ADirect 的 25% 左右预算给 global，local 为 52/28。减少每个空间 token 的压缩负担</td><td>高，适合低成本几何/预算机制对照。真正 all-local 要新预算器，不能把当前 global_fraction=0 的余数 global 误当全部移除。</td></tr>
+<tr><td>有序低秩打包</td><td>对每个 patch 先降通道，再按固定 d/h/w 顺序打包到一个 token；保留均值旁路。变量长度要有固定槽位和有效性 mask</td><td>借鉴 Concat，让不同组内位置有不同权重；避免纯集合式聚合丢掉可利用的空间排列</td><td>中高；比直接上 834M head 更可控，但并非无损。旧八子区均值残差无稳定收益，应明确它和直接 patch 打包/完整训练的差别。</td></tr>
+<tr><td>内容自适应连通分区</td><td>先合并相邻且特征相似的区域，将更多独立 token 留给异质内容；再求均值或读出</td><td>AdaptiveMerge 脑区 49.6%、联合 39.3%（256×），提示固定 box 边界并不必然最好</td><td>中；语义支持随患者变化、离散路由、背景差异与运行时间都是代价。聚类本身不会获得解剖语义。</td></tr>
+<tr><td>少层迭代读取</td><td>在同一已选结构上比较 1→2 层读取，query 随上一轮更新；保留原始 memory</td><td>检验 Perceiver 的多轮条件化读取能力，而不把其 6 层和全部参数一次照搬</td><td>中；先判断一层到底选到了什么。单纯加深可能增加容量而不修复压缩问题。</td></tr>
+<tr><td>坐标影响读取权重</td><td>在 logits 上加入方向一致的相对位置 bias，或将坐标用于 K/Q；V 继续承载视觉内容</td><td>补强“哪个位置的哪种内容”共同决定聚合，而不只是池化后追加中心坐标</td><td>中；与 reader 分开验证。位置 bias 不是 atlas，视野/方向归一化也不等于脑区标签。</td></tr>
+<tr><td>左右配对、双 head、更多 PE/角色/知识查询</td><td>分别作为后续特定假设测试；不组成当前主架构</td><td>左右配对主要针对侧别，双 head 针对 global/local 分布差异；恢复角色/UMLS 尚无新正证据</td><td>较低。当前最大残差是脑区；Perceiver 同样只有共享最终 LN/head。不能因为存在这些组件就预期定位改善。</td></tr>
+</table></div>
+<p>以 256× 为例，覆盖 + 代表 patch 可以直接比较 <b>28 均值 + 7 global</b> 与 <b>28 均值 + 7 selected raw patch</b>；这比额外增加 token 更便于解释。若后续叠加局部 reader，应先证明两个独立替换各自有效。</p>
+
+<p><b>如果完全重做，建议探索“空间锚定读出”。</b> 用 M 个有固定空间身份的区域均值初始化 queries，各 query 先读当前/邻接区域的原始 patch，通过一次带相对位置偏置的读取得到 M 个输出，再接现有 head。这一候选将全部输出预算用于可追踪的空间锚点，又借鉴 Perceiver 的内容选择和较广的 memory 访问。它仍不需要脑区标签或新 loss。</p>
+<pre>固定 M 个空间锚点 → μr
+ur = μr + α Attention(Q(μr), K(X_neighborhood), V(X_neighborhood), position_bias)
+Z  = shared_head(final_LN([u1, ..., uM]))</pre>
+<p>这是最终候选方向，不能把全部差异与 ADirect 一次比较就归因于 attention：要分别检查 all-local 预算、同区 vs 邻域 support、位置 bias。若固定区域覆盖本身不够，可以将覆盖 + 代表 patch 作为另一条独立路线，而非把全部模块都堆到这个候选上。</p>
+
+<hr><p><b>建议下一轮用少量实验回答明确问题。</b> 先做 ADirect、ADirect+LocalRead、ADirect 的 global→selected 替换三组；如果愿意增加一组，则加同 M 的 all-local 均值。所有模型沿用原 report CE、相同预训练 encoder/LLM 起点、视觉 LoRA 策略、训练数据和 best-val-CE 规则，记录实际最佳更新步数。保持测试集仅作探索性核查，结构与超参数选择使用患者独立验证集。</p>
+<p>验收不仅看 GREEN：同时要求脑区和联合位置有所改善、侧别不出现明显回退、遗漏 finding 不恶化。对 reader 记录 ||αδ||/||μ||、关闭分支后的生成/位置变化；attention 熵降低不能单独证明选择了有效证据。对 selected 记录空间覆盖和跨患者的稳定性，不把“特征差异大”称为“病灶概率高”。若多次有效细节读取仍无法改善脑区，再把跨区域上下文或有序压缩提高优先级；本阶段不引入泛化的额外损失或外部解剖标注。</p>
+<p><b>解释边界。</b> 此次证据能定位值得测试的信息处理差别，还不能给出“缺一个组件”的唯一因果答案。模型参数量、early stopping 步数、encoder LoRA 协同适配和单 seed 波动都存在；CE 相同只固定了训练目标，没有固定最终学到的表征。</p>
+</main></html>

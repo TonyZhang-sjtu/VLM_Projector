@@ -1,0 +1,17 @@
+\caption{\textbf{Proposed ADirect projector with one local residual read.}
+The global input adapter, global cross-attention branch, deterministic spatial
+children, output order, and final shared layer normalization and MLP follow
+ADirect. For each child $r$, its raw encoder mean $\mu_r$ is retained as a
+residual and also supplies a content-derived query. A single eight-head
+cross-attention operation reads keys and values projected from the raw
+encoder patches of the same child. The update is
+$u_r=\mu_r+\alpha\delta_r$, with a single shared learnable scalar $\alpha$
+initialized to $0.1$ as a proposed starting value. Separate pre-normalizations
+are used for the query and key/value memory; no local FFN, additional local
+position encoding, sequence embedding, anatomical labels, or auxiliary loss
+is included. The hard support is geometric, and the validity mask excludes
+packed padding. The visual budget remains $17+52=69$ tokens at nominal
+$128\times$ and $7+28=35$ tokens at nominal $256\times$ compression.
+The specified reader adds 2,362,369 parameters. This is an untrained design
+proposal, not a measured improvement or a registered implementation.}
+\label{fig:adirect-localread-proposal}

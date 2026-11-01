@@ -17,7 +17,9 @@ NEUROQA_GRIDS = {16: (6, 8, 13), 32: (9, 8, 4), 64: (6, 5, 5),
 DEFAULT_RATIOS = (4, 8, 16, 32)
 SUPPORTED_RATIOS = (*DEFAULT_RATIOS, 64, 128, 256)
 GRID_METHODS = frozenset(('avgpool3d', 'convpool3d', 'mixer3d', 'local_packer3d'))
-EXACT_METHODS = frozenset(('bindformer3d', 'attention_pool', 'perceiver_nv', 'perceiver_flamingo',
+EXACT_METHODS = frozenset(('bindformer3d', 'bindformer_a4', 'bindformer_adirect',
+                           'bindformer_adirect_localread', 'bindformer_adirect_detail',
+                           'attention_pool', 'perceiver_nv', 'perceiver_flamingo',
                            'adaptive_merge3d', 'token_select3d'))
 CONCAT_GROUPS = {4: (4, 1, 1), 8: (8, 1, 1), 16: (6, 1, 3), 32: (6, 2, 3),
                  64: (6, 3, 4), 128: (13, 2, 5), 256: (13, 4, 5)}
@@ -98,6 +100,15 @@ def derive_budget(name, ratio, grid, extent, params=None, protocol=None):
         from src.models.projectors.bindformer.budget import allocate_tokens, role_counts
         allocation = allocate_tokens(actual, (params or {}).get('global_fraction', 0.25),
                                      role_query_counts=role_counts((params or {}).get('role_query_counts')))
+    elif name == 'bindformer_a4':
+        from src.models.projectors.bindformer_a4.config import allocate_a4_tokens
+        allocation = allocate_a4_tokens(actual, (params or {}).get('global_fraction', 0.25))
+    elif name in ('bindformer_adirect', 'bindformer_adirect_localread'):
+        from src.models.projectors.bindformer_adirect.config import allocate_adirect_tokens
+        allocation = allocate_adirect_tokens(actual, (params or {}).get('global_fraction', 0.25))
+    elif name == 'bindformer_adirect_detail':
+        from src.models.projectors.bindformer_adirect_detail.config import allocate_detail_tokens
+        allocation = allocate_detail_tokens(actual, (params or {}).get('detail_fraction', 0.25))
     return {'version': protocol or VERSION, 'method': name, 'kind': kind, 'target_ratio': ratio,
             'input_grid_dhw': list(grid), 'input_extent_mm_dhw': list(extent),
             'input_tokens': n, 'raw_num_tokens': raw, 'expected_output_tokens': actual,

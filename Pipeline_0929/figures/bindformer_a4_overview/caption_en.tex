@@ -1,0 +1,17 @@
+\caption{\textbf{A4 projector for 3D MRI report generation.}
+An input adapter adds direction-aware grid Fourier position encoding and MRI
+sequence conditioning to the patch features. A single global cross-attention
+block retains learned global queries. The local branch partitions the same
+parent regions used by fixed-region Baseline A into four disjoint spatial
+children each. Every child yields one mean of transformed visual values,
+followed by a shared output projection and residual feed-forward network.
+The global and local tokens are concatenated and mapped to the frozen LLM
+embedding space using a final layer normalization and MLP.
+The budget is $M=G+4K$: 69 tokens at nominal $128\times$ compression and
+35 tokens at nominal $256\times$ compression for $N=8775$ input patches.
+The local slot updates, semantic-role queries, UMLS retrieval and local
+query/key attention are absent. Child colors denote spatial subdivisions,
+not semantic roles or anatomical labels. All projector weights are initialized
+afresh for the matched training runs; the schematic does not assert an
+improvement in localization accuracy.}
+\label{fig:a4-projector}

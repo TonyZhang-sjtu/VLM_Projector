@@ -10,8 +10,16 @@ from src.models.projectors.selection import TokenSelect3D
 from src.models.projectors.common import StructuredProjector
 from src.models.projectors.specs import resolve_projector_config, DEFAULTS
 from src.models.projectors.bindformer.projector import BindFormer3D
+from src.models.projectors.bindformer_a4.projector import BindFormerA4
+from src.models.projectors.bindformer_adirect.projector import BindFormerADirect
+from src.models.projectors.bindformer_adirect_localread.projector import BindFormerADirectLocalRead
+from src.models.projectors.bindformer_adirect_detail.projector import BindFormerADirectDetail
 
-PROJECTORS = {'bindformer3d': BindFormer3D, 'mlp2x_gelu': MLPProjector, 'avgpool3d': AveragePool3D,
+PROJECTORS = {'bindformer3d': BindFormer3D, 'bindformer_a4': BindFormerA4,
+              'bindformer_adirect': BindFormerADirect,
+              'bindformer_adirect_localread': BindFormerADirectLocalRead,
+              'bindformer_adirect_detail': BindFormerADirectDetail,
+              'mlp2x_gelu': MLPProjector, 'avgpool3d': AveragePool3D,
               'concat3d': ConcatAdapter3D, 'convpool3d': ConvPool3D,
               'mixer3d': Mixer3D, 'local_packer3d': LocalPacker3D,
               'attention_pool': QueryResampler, 'perceiver_nv': QueryResampler,

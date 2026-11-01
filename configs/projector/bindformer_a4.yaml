@@ -1,0 +1,19 @@
+# A4: same total/global/local budgets as fixed-region Baseline A.
+# Each of A's parent regions is split into four disjoint spatial children.
+# No semantic roles, slot updates, concept bank, local Q/K or auxiliary heads.
+projector:
+  name: bindformer_a4
+  hidden_size: 4096
+  bias: true
+  params:
+    global_fraction: 0.25
+    inner_dim: 768
+    num_heads: 8
+    ffn_expansion: 4
+    dropout: 0.0
+    checkpoint_blocks: true
+    head_type: mlp
+    position_mode: grid_fourier
+    position_frequencies: 8
+    sequence_condition: true
+    global_depth: 1

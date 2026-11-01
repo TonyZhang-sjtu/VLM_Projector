@@ -1,0 +1,18 @@
+\caption{\textbf{ADirect projector for 3D MRI report generation.}
+The encoder patch features $X$ split into two paths before the input adapter.
+The global path retains A4's input adapter with direction-aware grid Fourier
+position encoding and MRI sequence conditioning, followed by one global
+cross-attention block with learned queries. The direct local path uses the
+same deterministic spatial partition as A4: $K$ parent regions, each divided
+into four disjoint children. Each child produces the arithmetic mean of its
+raw encoder features, with no local learned transformation or additional
+projector-side position or sequence embedding. The resulting local tokens
+are ordered by parent and child, then concatenated after the global tokens.
+A shared, token-wise final layer normalization and MLP map all tokens to
+the frozen LLM embedding space. For $N=8775$ input patches, nominal
+$128\times$ compression gives $17+52=69$ tokens and nominal $256\times$
+compression gives $7+28=35$ tokens. The corresponding trainable projector
+parameter counts are 27.661M and 27.653M. Child colors denote spatial
+subdivisions, not semantic roles or anatomical labels. This diagram describes
+the implemented architecture and does not imply measured performance gains.}
+\label{fig:adirect-projector}

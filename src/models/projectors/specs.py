@@ -3,6 +3,10 @@ from copy import deepcopy
 import math
 from omegaconf import OmegaConf
 from src.models.projectors.bindformer.config import DEFAULTS as BIND_DEFAULTS, validate_params
+from src.models.projectors.bindformer_a4.config import DEFAULTS as A4_DEFAULTS, validate_params as validate_a4
+from src.models.projectors.bindformer_adirect.config import DEFAULTS as ADIRECT_DEFAULTS, validate_params as validate_adirect
+from src.models.projectors.bindformer_adirect_localread.config import DEFAULTS as LOCALREAD_DEFAULTS, validate_params as validate_localread
+from src.models.projectors.bindformer_adirect_detail.config import DEFAULTS as DETAIL_DEFAULTS, validate_params as validate_detail
 
 
 GRID = {'num_tokens': 256, 'budget_policy': 'nearest'}
@@ -11,6 +15,10 @@ QUERY = {'num_tokens': 256, 'inner_dim': None, 'num_heads': 8,
          'ffn_expansion': 4, 'dropout': 0.0, 'checkpoint_blocks': False, **HEAD}
 DEFAULTS = {
     'bindformer3d': {**QUERY, **BIND_DEFAULTS},
+    'bindformer_a4': {**QUERY, **A4_DEFAULTS},
+    'bindformer_adirect': {**QUERY, **ADIRECT_DEFAULTS},
+    'bindformer_adirect_localread': {**QUERY, **LOCALREAD_DEFAULTS},
+    'bindformer_adirect_detail': {'num_tokens': 256, 'checkpoint_blocks': False, **HEAD, **DETAIL_DEFAULTS},
     'mlp2x_gelu': {},
     'avgpool3d': {**GRID, **HEAD},
     'concat3d': {'group_size': [2, 2, 2], **HEAD},
@@ -107,6 +115,14 @@ def resolve_projector_config(config):
             raise ValueError('inner_dim must be divisible by num_heads')
     if name == 'bindformer3d':
         validate_params(params)
+    elif name == 'bindformer_a4':
+        validate_a4(params)
+    elif name == 'bindformer_adirect':
+        validate_adirect(params)
+    elif name == 'bindformer_adirect_localread':
+        validate_localread(params)
+    elif name == 'bindformer_adirect_detail':
+        validate_detail(params)
     config.params = OmegaConf.create(params)
     if resolved:
         validate_resolved(config)

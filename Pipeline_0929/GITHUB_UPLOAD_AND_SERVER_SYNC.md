@@ -1,6 +1,6 @@
 # GitHub 上传与两台服务器同步流程
 
-> 最新发布：`sync-20261031-vqa`（VQA、报告训练更新和显著性分析）；目标机 prompt 与本轮检查范围见文末第十三节。本节覆盖旧章节中本轮不适用的全量资产校验和旧版计划数量要求；此前标签仅供查阅历史版本。
+> 最新发布：`sync-20261101`（新增 BindFormer 变体及 VQA 训练配方更新）；本轮同步说明见文末第十四节。此前标签和旧章节仅用于查阅历史版本，旧版计划数量及训练参数不代表当前设置。
 
 本轮日期：2026-10-26。源仓库：`/mnt/sda/jyzhang/VLM_Projector`。
 GitHub 私有仓库：[TonyZhang-sjtu/VLM_Projector](https://github.com/TonyZhang-sjtu/VLM_Projector)，分支 `main`，本轮固定发布标签 `sync-20261026`。
@@ -593,3 +593,13 @@ https://github.com/TonyZhang-sjtu/VLM_Projector.git 的固定版本：
 ```
 
 源机本轮检查：报告预处理版本和兼容链接核对，train/val/test 各抽样一个报告缓存命中并验证；报告预处理及 joint 训练 CPU 测试 47 项通过。VQA 14 个 shell 的 47 项默认计划 dry-run 和小样本数据预检通过；VQA 测试 147 项通过；共享训练及启动相关组合回归 215 项通过、4 项跳过。未因本次同步启动正式训练。旧实验日志的 GPU smoke 可以作为历史证据，但不能代替目标机运行时验证。
+
+## 十四、2026-11-01：新增 BindFormer 变体与 VQA 配方
+
+发布标签 `sync-20261101`，完整 SHA 以源服务器发布回复和远端标签为准。包括 A4、ADirect、ADirect_LocalRead、ADirect_Detail 的 projector 源码、配置、预算注册、report 训练入口、回归测试和相关架构图。ADirect 的全局部变体由参数配置实现；`run01.sh` 依次调度 LocalRead、Detail、全局部三种方法的 128× 和 256×。新 VQA 配方将 projector/encoder LoRA 的峰值 LR 均设为 2e-4，projector/joint warmup 分别固定为 150 步，之后恒定 LR；当前入口的具体默认设置以对应 shell 和 `scripts/Exp_VQA/README.md` 为准。旧版第十三节关于 VQA 2e-5、5% warmup 和 cosine 下限 0.1 的描述仅适用于旧标签，不能套用于本版本。
+
+用户确认上传三组架构图及不含逐病例内容的架构审查材料；旧 `experiments/architecture_review_20261031/` 包含病例级报告、预测及指标，继续留在本机。数据、checkpoint、输出、isolated 实验快照及本地配置仍不进 Git。部分设计文档引用本机路径或本地实验记录，不能当成目标机现成资产。
+
+目标机同步仍沿第十三节的备份、fetch、核对标签 SHA、快进或审阅 merge、保留本机 local overlay 和解释器等流程执行，但应改为本节标签，且以当前源码和本节为准。不能因路径不同而复用源机绝对路径；运行 report 时显式设置 `PROJECTOR_PYTHON` 和 `PROJECTOR_LOCAL_CONFIG`，VQA 则使用自己独立的模型及 manifest/cache 路径配置。report 的 preprocessing 旧版本哈希目录与新名称目录的兼容链接仍按第十三节检查。
+
+运行 `scripts/Exp1026/README.md` 的单方法 dry-run 时注意：17 个单方法入口对应 43 个默认实验；`run01.sh` 是额外的六项批量调度器，参数接口不同，应按 README 单独预检。旧 `SYNC_EXP1026_20261027.json` 不能用作现有入口的参考。做新实验应新建 run；`--resume-run` 恢复旧训练配方而不会套用本次 VQA 设置。目标机不必重新逐一哈希所有数据，除非用户另行要求；训练程序自身的必要预检不能绕过。

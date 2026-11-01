@@ -28,12 +28,15 @@ training:
   effective_batch_size: 16
   microbatch_per_device: 1
   projector_lr: 2.0e-4
-  encoder_lr: 2.0e-5
+  encoder_lr: 2.0e-4
   max_epochs: 20
   warmup_ratio: 0
-  projector_warmup_ratio: 0.05
-  joint_warmup_ratio: 0.05
-  cosine_min_lr_ratio: 0.1
+  projector_warmup_steps: 150
+  projector_hold_steps: 0
+  joint_warmup_steps: 150
+  projector_warmup_ratio: 0.05  # Fallback only when explicit steps is null.
+  joint_warmup_ratio: 0.05      # Fixed 150-step warmups take precedence.
+  cosine_min_lr_ratio: 1.0     # Constant LR after both warmups.
   joint_warmup_projector_mode: hold_peak
   early_stopping_min_delta: 0.002
   early_stopping_patience: 3

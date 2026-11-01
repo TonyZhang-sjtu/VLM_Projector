@@ -1,0 +1,11 @@
+# Replace the original 17/7 global tokens by diversity-selected raw patch tokens.
+# Keep the same 52/28 local children, their means, and the shared final LN/head.
+projector:
+  name: bindformer_adirect_detail
+  hidden_size: 4096
+  bias: true
+  params:
+    detail_fraction: 0.25
+    inner_dim: 768
+    checkpoint_blocks: true
+    head_type: mlp

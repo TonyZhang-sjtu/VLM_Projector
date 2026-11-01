@@ -149,6 +149,11 @@ def test_all_mni_projector_budgets_forward_backward_roundtrip(name, ratio, expec
     if name == 'bindformer3d':
         overrides += ['projector.params.knowledge_mode=none', 'projector.params.sequence_condition=false',
                       'projector.params.position_mode=none', 'projector.params.inner_dim=16']
+    elif name in ('bindformer_a4', 'bindformer_adirect', 'bindformer_adirect_localread'):
+        overrides += ['projector.params.sequence_condition=false', 'projector.params.position_mode=none',
+                      'projector.params.inner_dim=8']
+    elif name == 'bindformer_adirect_detail':
+        overrides += ['projector.params.inner_dim=8']
     c = qa_config(*overrides)
     budget = resolve_budget(c.projector, [49,15,13], [196,240,208])
     assert budget['expected_output_tokens'] == expected

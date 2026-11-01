@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADirect 实现与保持报告 CE 的 Projector 结构路线</title>
+<style>body{margin:0;background:#f1f4f8;color:#172437;font:16px/1.85 system-ui,"Noto Sans CJK SC",sans-serif}main{max-width:1060px;margin:auto;padding:36px;background:white}h1{font-size:28px;line-height:1.4}p{margin:18px 0}a{color:#1857a2}table{border-collapse:collapse;width:100%;font-size:14px;line-height:1.65}th,td{border:1px solid #d7e0ec;padding:10px;text-align:left;vertical-align:top}th{background:#eaf0fa}.scroll{overflow:auto;margin:20px 0}.lead{background:#edf5ff;border-left:4px solid #2863a3;padding:14px 18px}.muted{color:#596b80}pre{background:#11243b;color:#e5efff;padding:18px;overflow:auto;line-height:1.7}hr{border:0;border-top:1px solid #d7e0ec;margin:32px 0}@media print{body{background:white}main{padding:0}table{font-size:12px}}</style>
+<main><h1>ADirect 已实现；后续主线限定为 Projector 结构</h1>
+<p class="muted">2026-11-01 · Asia/Shanghai。结合用户最新四项批注，更新研究边界。之前的2026-10-31报告保留为历史分析，不以其“优先改联合事实损失”的建议覆盖本轮要求。</p>
+<p class="lead"><b>本轮固定训练框架、输入信息和报告CE。先用ADirect验证局部直接通路；下一轮最值得测试的是“局部视觉均值残差读取”和“受控参数量的有序空间压缩”。</b> 额外事实损失、mask监督、LLM LoRA和多层encoder输入暂不进入主线。可迁移到其他方法并不使一个结构无效，关键是贡献是否发生在压缩与映射算子本身，而非共享训练技巧。</p>
+
+<p><b>已经交付的ADirect是什么。</b> 注册名称为 <code>bindformer_adirect</code>，从预训练encoder/LLM及全新projector、视觉LoRA开始。复用A4的父区与四子区划分、Global分支、输出顺序以及最终共享LN/head；删除local路径中的InputAdapter、V/out线性和局部FFN。Global仍使用原InputAdapter，其Fourier位置编码和序列条件保留。</p>
+<pre>encoder X[N,768]
+  ├─ Global: InputAdapter → learned queries + QueryBlock ─┐
+  └─ Local: same A4 children → mean(raw X in each child) ─┤
+                   concat(global, local) → shared LN → shared MLP → LLM
+
+z_local[r] = H(LN(mean(X_i, i ∈ child_r)))</pre>
+<div class="scroll"><table><tr><th>倍率</th><th>Global</th><th>Local</th><th>总token</th><th>A4参数</th><th>ADirect参数</th></tr>
+<tr><td>128×</td><td>17</td><td>52</td><td>69</td><td>33,566,208</td><td>27,661,056</td></tr>
+<tr><td>256×</td><td>7</td><td>28</td><td>35</td><td>33,558,528</td><td>27,653,376</td></tr></table></div>
+<p>每个倍率减少5,905,152参数，约17.6%。原始特征在局部聚合前不做学习变换，但最终LN/head仍然是可学习映射；不能把整个projector叫作“无损”或“恒等映射”。局部不再额外注入A的位置/序列向量，但固定空间顺序和encoder已有的空间信息仍在。测试约束了每个local token只依赖自己的子区；修改Global的InputAdapter不会改变local输出。</p>
+<p><b>这是局部子系统的整体替换。</b> ADirect变好能够支持保留直接通路、简化旧处理链，但不能证明某一个LN/FFN/位置项单独有害；变差也不能直接证明四角色必要。全局与局部还共享最终head，这个选择刻意保持与A4一致，不在本轮额外增加两套head或门控。</p>
+<pre>cd /mnt/sda/jyzhang/VLM_Projector
+
+# 已在当前机器通过的真实manifest/header预检
+CUDA_VISIBLE_DEVICES=3 bash scripts/Exp1026/run_baseline_adirect.sh --dry-run
+
+# 正式训练：128×训练及完整test结束后，再进行256×
+CUDA_VISIBLE_DEVICES=3 bash scripts/Exp1026/run_baseline_adirect.sh
+
+# 仅一个倍率
+CUDA_VISIBLE_DEVICES=3 bash scripts/Exp1026/run_baseline_adirect.sh --ratios 128</pre>
+<p>入口保持A/A4的2e-4 projector/视觉LoRA学习率、20 epoch上限、77+77步预热、batch16、视觉LoRA rank16/alpha32、冻结LLM、相同val CE早停及best选择，随后完整560报告测试与全部原有指标。默认物理GPU3，可覆盖CUDA_VISIBLE_DEVICES；本机解释器/路径沿用已有配置，可覆盖PROJECTOR_PYTHON与PROJECTOR_LOCAL_CONFIG。每次创建新run，不覆盖旧实验。</p>
+<p>验证完成：310项相关测试；8,775×768真实网格/通道宽度的CPU BF16 forward/backward（69×4096与35×4096输出）；全部参数及输入梯度有限；tiny真实Llama的loss/generation/checkpoint集成；三套真实数据预检中非projector配置、数据ID、训练计划一致。未启动正式训练或全量GPU模型推理，尚无质量提升结论。证据见<a href="../isolated_20261101_adirect_preflight/verification.json">verification.json</a>。</p>
+
+<hr><p><b>新的研究边界：找有效算子，而不是把所有可能提高分数的因素混入方法。</b></p>
+<div class="scroll"><table><tr><th>内容</th><th>本轮位置</th><th>原因</th></tr>
+<tr><td>原始均值残差、局部support、有序空间打包、位置条件聚合、token预算分配</td><td>主线候选</td><td>改变projector前向及信息保留方式，使用相同CE和输入</td></tr>
+<tr><td>左右配对、参数共享、固定覆盖、硬局部mask</td><td>可选结构约束</td><td>约束模型可表达的映射，无新增训练标签/损失；这里的mask指几何support，不是病灶标注</td></tr>
+<tr><td>局部重建、去相关、多样性、蒸馏、翻转一致性等辅助loss</td><td>暂不加入</td><td>即使没有新标注，也改变了优化目标；不是“局部”就自动免除公平性问题</td></tr>
+<tr><td>病灶mask、额外解剖标签、事实对比损失、LLM LoRA、多层特征</td><td>后续独立工作</td><td>改变监督、适配能力或信息访问，不能作为当前纯projector结论</td></tr></table></div>
+<p>严格保持当前框架时，没有一种额外“局部监督loss”可以同时被称为训练目标完全不变。可以做的是把先验写入结构：禁止跨区读取、保留原始证据残差、固定空间顺序、共享左右映射。已有CE仍然通过这些路径端到端学习；这属于结构归纳偏置。定位探针与局部替换可以只作诊断，不参与训练，也不改变当前val CE选best的规则。</p>
+
+<hr><p><b>最优先的后续对照：区域均值query＋局部残差读取。</b></p>
+<pre>μ_r = mean(X_r)
+δ_r = W_o Attention(W_q LN(μ_r), W_k LN(X_r), W_v LN(X_r))
+u_r = μ_r + α δ_r
+z_r = H(LN(u_r))
+# 是否加FFN另作一个变量，不与注意力、坐标和head拆分同时叠加。</pre>
+<p>它与原A的差别是query由当前区域视觉内容产生，且原始μ直接进入残差，不依赖slot/角色语义先成立。它与当前ADirect的差别只有区域内细化。仍需遵守硬support和一次读取；如果输出能读出局部异常，CE就有更短的梯度路径来利用它。<a href="https://arxiv.org/html/2407.02392v4">TokenPacker</a>提供了视觉生成query和局部细节注入的先例，但本地只使用同一encoder最后层，不能以论文的多层输入收益支持本实验。</p>
+<p>这首先是一个必要的机制对照，不能仅靠加入LocalPacker式attention就宣称新方法。若它比ADirect没有稳定收益，就应保留更简单的ADirect，拒绝“可学习模块一定更强”的假设。</p>
+
+<hr><p><b>如果完全重做架构，我更看重有序局部压缩，而非重新引入语义slot。</b></p>
+<p>核心问题是：一个输出区域里，病变出现在不同局部位置，压缩后的token能否区分？输入特征本身已有位置上下文，但均值会抹去部分组内排列。仅在池化结果后加区域中心，表达的是“这个cell在哪里”，未必表达“异常在cell内部哪里”。应优先让空间位置影响内容如何被压缩。</p>
+<pre>每个固定输出区域r，按d/h/w顺序取得K个patch（padding有有效性mask）
+μ_r = masked_mean(X_r)
+t_ri = valid_i · P(X_ri − μ_r)       # 共享低维映射：768 → d；空槽置零
+δ_r = W_pack vec([t_r1, …, t_rK])   # 顺序决定不同位置的权重
+u_r = μ_r + α δ_r
+z_r = H(LN(u_r))
+
+仅一个压缩机制；局部attention先作为对手，不同时加入。</pre>
+<p>这是带原始均值残差的因子化有序打包。相比全量Concat直接把K×768映射到4096，它先降低每个patch的残差通道，再保持有序压缩，减少参数。示例K=260、d=32：P及W_pack约6.41M参数（不含偏置），再接约19.93M的标准head；加Global时需另外计算。此数字只说明候选成本，不是已经实现的配置。最终维度压缩仍有信息损失，不能称为完全保真。</p>
+<p>关键对照：相同区域/总M的均值、原始Concat、参数受控的Concat、因子化有序打包、局部残差attention。要区分“位置顺序”“多参数”“更细分区”三种收益。这里也有公开技术背景，不能把低秩Concat本身作为未经查证的创新；真正可研究的是高压缩下的空间证据保留及其效果/成本权衡。</p>
+<p>另一种更轻的实现是将每个输出区域内部先池化为4或8个有序子格再打包。这会更早平均局部细节；之前Avg底座上的八子区残差短训已没有稳定优势，因此应保留这个负证据，不优先重复。若从头、联合视觉LoRA的新试验重新检验，需要清楚说明与旧warm-start短训的差别，而非换名字当成新收益。</p>
+
+<hr><p><b>更贴近脑MRI的结构候选：保留左右两侧的对应关系。</b></p>
+<p>在方向、视野和中线对应可靠的前提下，把固定区域组织为左右配对，使用共享映射读取两侧原始内容与有符号差异：</p>
+<pre>u_L = μ_L + F([μ_L, μ_L − μ_R])
+u_R = μ_R + F([μ_R, μ_R − μ_L])
+# F共享；左右两个输出身份/顺序仍各自保留。</pre>
+<p>该配对模块在交换输入左右时相应交换输出，可以在模块层面通过结构实现，无需额外翻转一致性loss。但整个encoder→LLM系统并不会因此自动具有翻转等变性。双侧/中线病变不能只用差分表达，所以保留两侧原始均值；不要强迫左右表征相等，更不能把绝对值差分当成侧别信息。</p>
+<p>这是针对侧别的较强归纳偏置，风险也更明确：方向正确不等于病人左右解剖已精确对应，肿瘤占位会改变对称关系，脑区语义也不能由差分直接得到。它应晚于直接通路和有序压缩，单独比较；若需要额外配准/atlas则已改变本轮输入条件，不能悄悄加入。当前A4树状区域并非严格左右配对，必须重新设计几何并使用相同新几何对照，不能只增加一个减法就归因。</p>
+
+<hr><p><b>Global与位置编码应如何取舍。</b> 当前ADirect先保留它们在Global里的原行为，以便检验局部路径。完全重做时，没有理由强制维持“约25% token给Global”；可以固定总M比较全空间token、少量Global＋空间token。需要说明69/35预算来自旧四子区整数规则，直接设global_fraction=0仍会因余数留下1/3个Global；真正all-local必须新建按M个区域划分的预算器，不能用错误配置冒充消融。</p>
+<p>位置注入应区分三件事：固定token顺序、区域中心编码、位置与视觉内容的联合压缩。前两项提供区域身份，第三项保留组内证据对应；它们不是互相替代的。单独给每个token一个独特位置ID可以降低余弦，却不保证患者事实更多，不能作为主要成功证据。也暂不扩更多head或做全局自注意力，以免再次把尚未验证的局部差异混平。</p>
+
+<hr><p><b>如何找出最有效组件，而不把实验变成大量堆叠。</b></p>
+<div class="scroll"><table><tr><th>阶段</th><th>比较</th><th>主要问题</th><th>解释边界</th></tr>
+<tr><td>当前</td><td>A4 vs ADirect</td><td>简化局部处理链是否有利</td><td>两者均从头训练；解释为整体局部替换</td></tr>
+<tr><td>下一步</td><td>ADirect vs 单次局部残差读取</td><td>内容选择是否有额外作用</td><td>同子区、同G/L、同head和CE</td></tr>
+<tr><td>替代路线</td><td>同几何下均值 / 有序打包 / 局部读取</td><td>高压缩时空间顺序还是内容选择更重要</td><td>报告参数/FLOPs/显存，匹配容量对照</td></tr>
+<tr><td>底座确定后</td><td>固定总M，重分Global与Local预算</td><td>额外全局token是否值得占空间预算</td><td>须重新训练，不能只在旧权重上删除</td></tr>
+<tr><td>更强先验</td><td>同一新分区，左右独立 vs 共享配对残差</td><td>结构化双侧比较是否改善侧别</td><td>中线/双侧与不同脑区分层检查，不能只看全体均值</td></tr></table></div>
+<p>当前运行保持原val CE早停和best选择；定位指标用于独立验收。除总指标，还检查同病灶侧别＋脑区、GREEN位置错误、漏报/幻觉，以及相反定位患者共享同一输出的情况。唯一字符串数不能替代事实准确。原始测试集已经多次查看，继续分析须标为探索性；所有新模型选择应使用患者独立验证，避免用同一测试反复挑结构。</p>
+<p>配对机制诊断可以不改训练：相同模型内替换局部区域或完整同序列患者视觉证据，观察具体位置是否正确跟随；在固定encoder条件下比较聚合前后小型读出器，随后做统一起点、联合视觉LoRA的正式比较。读出器只作分析，不能额外回传到projector再声称保持同样CE。不同方法的视觉LoRA会协同适配，现有系统差距不能全部归于孤立projector。</p>
+<p class="lead"><b>当前最值得推进的路线是：直接局部证据 → 验证一次局部细化 → 参数受控的有序空间压缩。</b> 左右配对可成为针对脑MRI的结构探索；监督增强留到下一项工作。最后保留哪些组件，要由相同训练框架下的定位与报告覆盖共同决定，而非由“看上去更有语义”决定。</p>
+
+<p>实现入口：<a href="../../scripts/Exp1026/run_baseline_adirect.sh">运行脚本</a> · <a href="../../configs/projector/bindformer_adirect.yaml">配置</a> · <a href="../../src/models/projectors/bindformer_adirect/projector.py">模型</a> · <a href="../../tests/test_bindformer_adirect.py">针对性测试</a> · <a href="../isolated_20261101_adirect_preflight/verification.json">验证结果</a> · <a href="../architecture_review_20261031/report.html">此前证据分析</a></p>
+</main></html>

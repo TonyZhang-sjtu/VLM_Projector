@@ -57,7 +57,9 @@ def exercise_projector(name, route, saca, device, full_width):
     if not full_width:
         overrides += ['projector.hidden_size=32']
         if 'inner_dim' in DEFAULTS[name]:
-            overrides += ['projector.params.inner_dim=16']
+            # Raw-evidence ADirect paths deliberately forbid an implicit channel adapter.
+            width = 8 if name.startswith('bindformer_adirect') else 16
+            overrides += [f'projector.params.inner_dim={width}']
         if 'num_heads' in DEFAULTS[name]:
             overrides += ['projector.params.num_heads=2']
     if name == 'bindformer3d':

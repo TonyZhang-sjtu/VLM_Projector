@@ -1,0 +1,153 @@
+{
+  "projector_name": "bindformer_adirect",
+  "class": "BindFormerADirect",
+  "initialization": "fresh projector; no trained A or A4 checkpoint",
+  "scope": "Projector only; encoder/LLM/vision LoRA excluded",
+  "local_feature_source": "raw encoder output X",
+  "local_transform_before_pooling": "none",
+  "local_position_encoding": "none added by projector",
+  "local_sequence_condition": false,
+  "local_token_order": "parent_major_child_major",
+  "shared_output_mapping": "per-token LN -> Linear -> GELU -> Linear",
+  "ratios": {
+    "128": {
+      "budget": {
+        "version": "method_native_ratio_v1",
+        "method": "bindformer_adirect",
+        "kind": "exact_count",
+        "target_ratio": 128,
+        "input_grid_dhw": [
+          39,
+          15,
+          15
+        ],
+        "input_extent_mm_dhw": [
+          156.0,
+          240.0,
+          240.0
+        ],
+        "input_tokens": 8775,
+        "raw_num_tokens": 69,
+        "expected_output_tokens": 69,
+        "output_grid_dhw": null,
+        "group_size": null,
+        "actual_ratio": 127.17391304347827,
+        "relative_error": 0.006453804347826053,
+        "max_relative_error": 0.05,
+        "allocation_version": "bindformer_adirect_nested4_v1",
+        "global_fraction": 0.25,
+        "global_tokens": 17,
+        "num_regions": 13,
+        "children_per_region": 4,
+        "local_tokens": 52,
+        "actual_global_fraction": 0.2463768115942029
+      },
+      "functional_groups": {
+        "1_global_input_adapter": 632832,
+        "2_global_branch": 7095552,
+        "3_local_branch": 0,
+        "4_output_mapping": 19932672,
+        "spatial_partition": 0
+      },
+      "top_level_modules": {
+        "input_adapter": 632832,
+        "global_layers": 7082496,
+        "final_norm": 1536,
+        "head": 19931136
+      },
+      "direct_parameters": {
+        "global_queries": 13056
+      },
+      "module_types": {
+        "BindFormerADirect": 1,
+        "InputAdapter": 1,
+        "LayerNorm": 5,
+        "Linear": 9,
+        "Embedding": 1,
+        "ModuleList": 1,
+        "QueryBlock": 1,
+        "Sequential": 2,
+        "GELU": 2
+      },
+      "trainable_projector_parameters": 27661056,
+      "output_mapping_parameter_fraction": 0.7206041591470694
+    },
+    "256": {
+      "budget": {
+        "version": "method_native_ratio_v1",
+        "method": "bindformer_adirect",
+        "kind": "exact_count",
+        "target_ratio": 256,
+        "input_grid_dhw": [
+          39,
+          15,
+          15
+        ],
+        "input_extent_mm_dhw": [
+          156.0,
+          240.0,
+          240.0
+        ],
+        "input_tokens": 8775,
+        "raw_num_tokens": 35,
+        "expected_output_tokens": 35,
+        "output_grid_dhw": null,
+        "group_size": null,
+        "actual_ratio": 250.71428571428572,
+        "relative_error": 0.020647321428571397,
+        "max_relative_error": 0.05,
+        "allocation_version": "bindformer_adirect_nested4_v1",
+        "global_fraction": 0.25,
+        "global_tokens": 7,
+        "num_regions": 7,
+        "children_per_region": 4,
+        "local_tokens": 28,
+        "actual_global_fraction": 0.2
+      },
+      "functional_groups": {
+        "1_global_input_adapter": 632832,
+        "2_global_branch": 7087872,
+        "3_local_branch": 0,
+        "4_output_mapping": 19932672,
+        "spatial_partition": 0
+      },
+      "top_level_modules": {
+        "input_adapter": 632832,
+        "global_layers": 7082496,
+        "final_norm": 1536,
+        "head": 19931136
+      },
+      "direct_parameters": {
+        "global_queries": 5376
+      },
+      "module_types": {
+        "BindFormerADirect": 1,
+        "InputAdapter": 1,
+        "LayerNorm": 5,
+        "Linear": 9,
+        "Embedding": 1,
+        "ModuleList": 1,
+        "QueryBlock": 1,
+        "Sequential": 2,
+        "GELU": 2
+      },
+      "trainable_projector_parameters": 27653376,
+      "output_mapping_parameter_fraction": 0.7208042880551004
+    }
+  },
+  "source_sha256": {
+    "Pipeline_0929/figures/bindformer_overview/render_overview.py": "8a2452ad6fda1da0b39e7cd75d2b497ee0eed974796de4c4863839d2517cd0f3",
+    "Pipeline_0929/figures/bindformer_adirect_overview/render_overview.py": "b25fe038c7fce8209369d88567e5bd537ef3effc9d6629eb35e35927a2da2dbc",
+    "configs/projector/bindformer_adirect.yaml": "6f56b02eace1aa6728a2d4a685075e84ff56ac5445de2dc91bb47a7d756d8417",
+    "src/models/projectors/registry.py": "511754bc7715e0eb6e9f0b02174950fb60291851a8f50aa462f75d1b91fa9243",
+    "src/models/projectors/specs.py": "d64dd3155c052a5b72bad1a8ad91fa74522bfc54492f4faa9f992f47ae36c779",
+    "src/models/projectors/budget.py": "10b333c313d0a28a75a5da9db4c3a0687c81cd13424c4e3b35bb1f90ce461bf4",
+    "src/models/projectors/common.py": "8c721500a69818177923eee0b58aeec622c2a978a4edf190493bea49e5c843f4",
+    "src/models/projectors/bindformer/input_adapter.py": "f4e804ed978870ac1346350e2ad869599b6b3ce548a71a5caa97535d0971d207",
+    "src/models/projectors/bindformer/regions.py": "1322aaf1802aad994f3980b46bab4187c1071229cfb5b4376a9448371c7dc46f",
+    "src/models/projectors/bindformer_adirect/projector.py": "e02ec8ba8604129aaa2447aadc19795ae579964795292a6136d730ced4823a55",
+    "src/models/projectors/bindformer_adirect/config.py": "b89e17b0638ce52932fa973ceb06663a095f6170b4fe062b3979c0effb3b6110",
+    "src/models/projectors/bindformer_a4/config.py": "2820690232c06d2454a925b409ee7180ab1d9ec4b0682d29a0cb780a390ab0a6",
+    "src/models/projectors/bindformer_a4/regions.py": "639091a0a390c1fcfa8053a05f924aed8db7f553bb3741c7af20bde24a3b0e77"
+  }
+}

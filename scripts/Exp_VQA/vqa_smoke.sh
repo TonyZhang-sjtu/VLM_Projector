@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Real encoder + Llama + production trainer; 6 updates, 6 val views, 6 test views.
 # Engineering coverage only. Short generations and subset training are not scores.
+# Inherit the production 2e-4/2e-4 constant-LR recipe; shorten only the warmups
+# to 2+2 updates so the six-update smoke still exercises all three phases.
 set -Eeuo pipefail
 vqa_script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 exec bash "$vqa_script_dir/vqa_avgpool3d.sh" \

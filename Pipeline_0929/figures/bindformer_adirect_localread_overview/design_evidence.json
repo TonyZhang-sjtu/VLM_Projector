@@ -1,0 +1,59 @@
+{
+  "status": "design_proposal_only",
+  "sources": {
+    "src/models/projectors/common.py": "8c721500a69818177923eee0b58aeec622c2a978a4edf190493bea49e5c843f4",
+    "src/models/projectors/resampler.py": "dc597f4376eb5ccaeab59f091300646411f2a906debe7537c13819a9f326f58a",
+    "src/models/projectors/local_packer.py": "a76ff9484de9f5ca3784e29613a282c0844a7c25b82262fc7ec0e61799e5d596",
+    "src/models/projectors/selection.py": "9315dd8f1706392fdbb02d02259a7d0d221af0004dfd17ba4c4fc2903fb98a8f",
+    "src/models/projectors/adaptive_merge.py": "44f9ebb39bd8ddb07e90b8d6e9925b354adf04ed2e4acd0400912e703c209384",
+    "src/models/projectors/concat.py": "1bc4433927d7a258995e01e49d25c8a5ad1a50533e91a0384258c0f28ae35d63",
+    "src/models/projectors/avgpool.py": "b84e18eae045aa01079116563a7e1bf432c492034de63b32e509515f56658017",
+    "src/models/projectors/bindformer_adirect/projector.py": "e02ec8ba8604129aaa2447aadc19795ae579964795292a6136d730ced4823a55",
+    "src/models/projectors/bindformer_a4/regions.py": "639091a0a390c1fcfa8053a05f924aed8db7f553bb3741c7af20bde24a3b0e77",
+    "configs/projector/perceiver_nv.yaml": "f144bb46a73fd3eee2305c2f5c3497db49b661440a6d3c35406d6a8e2d432f78",
+    "results/A4_ADirect_localization_20261101/analysis.json": "54b1e1d2c2eedd06ef117369923ac22900129c1bf1462a994cab7f8cc26338ea",
+    "experiments/isolated_20261031_spatial_projectors/interpretation.json": "434b8aa22b9fcc534a416a188f340c5b2d2bb0bb65d8923a72dcf727ffe439fe"
+  },
+  "geometry": {
+    "128": {
+      "local_regions": 52,
+      "patches_min": 108,
+      "patches_max": 320,
+      "patches_mean": 168.75,
+      "extent_mm_minmax_dhw": [
+        [
+          36,
+          80
+        ],
+        [
+          48,
+          64
+        ],
+        [
+          48,
+          64
+        ]
+      ]
+    },
+    "256": {
+      "local_regions": 28,
+      "patches_min": 228,
+      "patches_max": 560,
+      "patches_mean": 313.39285714285717,
+      "extent_mm_minmax_dhw": [
+        [
+          76,
+          80
+        ],
+        [
+          48,
+          64
+        ],
+        [
+          48,
+          112
+        ]
+      ]
+    }
+  }
+}

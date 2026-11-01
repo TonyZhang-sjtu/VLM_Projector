@@ -21,20 +21,20 @@ fi
 
 training_stage=joint_lora  # a: projector-only；joint_lora: projector + visual encoder LoRA
 projector_lr=2e-4
-encoder_lr=2e-5
+encoder_lr=2e-4  # 与 report generation 的视觉 LoRA 峰值 LR 一致
 projector_max_epochs=20
-projector_effective_batch_size=16  # 仅双模态可答题平衡，不要求总体 T1/T2 相等
+projector_effective_batch_size=16  # v2 每轮及每个偶数累积窗口内 T1/T2 严格 1:1
 projector_microbatch_per_device=1
 encoder_lora_rank=16
 encoder_lora_alpha=32
 encoder_lora_dropout=0.05
-projector_warmup_steps=null
-projector_warmup_ratio=0.05
+projector_warmup_steps=150    # 固定 optimizer 更新次数；不按总步数比例计算
+projector_warmup_ratio=0.05   # 仅显式将 steps 改为 null 时使用
 projector_hold_steps=0
-joint_warmup_steps=null
-joint_warmup_ratio=0.05
+joint_warmup_steps=150       # 固定 optimizer 更新次数
+joint_warmup_ratio=0.05      # 仅显式将 steps 改为 null 时使用
 joint_warmup_projector_mode=hold_peak
-cosine_min_lr_ratio=0.1
+cosine_min_lr_ratio=1.0      # 两段预热后保持恒定 LR，不衰减
 weight_decay=0.01
 grad_clip_norm=1.0
 early_stopping_enabled=true
