@@ -140,12 +140,17 @@ def test_transform_composition_resamples_image_and_mask_identically_and_crop_aff
     assert abs(brain.mean()) < 1e-5 and abs(brain.std()-1) < 1e-5
 
 
-@pytest.mark.parametrize('name', [n for n in PROJECTORS if n != 'mlp2x_gelu'])
+@pytest.mark.parametrize('name', [n for n in PROJECTORS if n != 'mlp2x_gelu'] + ['bindformer_adirect_alllocal'])
 @pytest.mark.parametrize('ratio,expected,grid,group', [
     (16,624,[6,8,13],[9,2,1]), (32,288,[9,8,4],[6,2,4]),
     (64,150,[6,5,5],[9,3,3]), (128,75,[3,5,5],[17,3,3]), (256,36,[3,4,3],[18,4,5])])
 def test_all_mni_projector_budgets_forward_backward_roundtrip(name, ratio, expected, grid, group):
+    all_local = name == 'bindformer_adirect_alllocal'
+    if all_local:
+        name = 'bindformer_adirect'
     overrides = [f'projector.name={name}', f'projector.target_compression_ratio={ratio}', 'projector.hidden_size=16']
+    if all_local:
+        overrides += ['projector.params.global_fraction=0']
     if name == 'bindformer3d':
         overrides += ['projector.params.knowledge_mode=none', 'projector.params.sequence_condition=false',
                       'projector.params.position_mode=none', 'projector.params.inner_dim=16']
@@ -166,9 +171,19 @@ def test_all_mni_projector_budgets_forward_backward_roundtrip(name, ratio, expec
     model = build_projector(c, 8, 12)
     out = model(x, coords, meta)
     assert out.embeddings.shape == (expected, 12)
+    if all_local:
+        assert model.global_queries is None and model.input_adapter is None and not model.requires_sequence
+        assert len(model.global_layers) == 0
+        assert budget['global_tokens'] == 0 and budget['local_tokens'] == expected
+        assert out.metadata['projector']['global_tokens'] == 0
+        assert out.metadata['projector']['local_tokens'] == expected
+        assert out.metadata['projector']['routing_mode'] == 'exact_raw_spatial_mean'
     out.embeddings.square().mean().backward()
     assert torch.isfinite(x.grad).all() and x.grad.abs().sum() > 0
     assert all(torch.isfinite(p.grad).all() for p in model.parameters() if p.grad is not None)
+    if all_local:
+        assert (x.grad.abs().sum(-1) > 0).all()
+        assert all(p.grad is not None for p in model.parameters())
     before = next(model.parameters()).detach().clone()
     torch.optim.SGD(model.parameters(), lr=.1).step()
     assert not torch.equal(before, next(model.parameters()))

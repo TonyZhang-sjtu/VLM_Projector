@@ -3,9 +3,11 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 from types import SimpleNamespace
 
 import pytest
+from omegaconf import OmegaConf
 
 from src.cli import vqa_sweep as sweep
 from src.config import ROOT, digest, load_config, save_config
@@ -56,7 +58,7 @@ def test_shells_forward_overrides_and_work_outside_repo(tmp_path):
     shim.write_text('#!/usr/bin/env python3\nimport json,sys,os\nprint(json.dumps({"args":sys.argv[1:],"cwd":os.getcwd(),"gpu":os.environ["CUDA_VISIBLE_DEVICES"]}))\n')
     shim.chmod(0o755)
     scripts = sorted((ROOT / 'scripts/Exp_VQA').glob('vqa_*.sh'))
-    assert len(scripts) == 14
+    assert len(scripts) == 18
     for script in scripts:
         subprocess.run(['bash', '-n', str(script)], check=True)
         result = subprocess.run(['bash', str(script), '--dry-run', '--ratios', '64', '--set', 'training.projector_lr=0.0003'],
@@ -69,6 +71,91 @@ def test_shells_forward_overrides_and_work_outside_repo(tmp_path):
         assert args.ratios == [64] and args.preprocessing_version == 'v2'
         assert args.overrides[-1] == 'training.projector_lr=0.0003'
         assert payload['cwd'] == str(ROOT) and payload['gpu'] == '0'
+
+
+@pytest.mark.parametrize('variant', ['adirect', 'adirect_localread', 'adirect_detail', 'adirect_alllocal'])
+def test_adirect_vqa_launchers_keep_report_architecture_and_shared_vqa_recipe(variant, tmp_path):
+    """The new wrappers change architecture only, and retain VQA's entire training/eval contract."""
+    capture = tmp_path / 'capture-python'
+    capture.write_text('#!' + sys.executable + '\nimport json,os,sys\n'
+                       'print(json.dumps({"args":sys.argv[1:],"gpu":os.environ["CUDA_VISIBLE_DEVICES"]}))\n')
+    capture.chmod(0o700)
+    local = tmp_path / 'local.yaml'
+    local.write_text('{}\n')
+    env = {**os.environ, 'PROJECTOR_PYTHON': str(capture), 'PROJECTOR_LOCAL_CONFIG': str(local),
+           'CUDA_VISIBLE_DEVICES': '0', 'VQA_PREPROCESSING_VERSION': 'v2',
+           'VQA_INVALID_SAMPLE_POLICY': 'include_unreviewed'}
+    env.pop('PROJECTOR_RUN_TAG', None)
+
+    def captured_args(folder, filename, parser, *extra):
+        proc = subprocess.run(['bash', str(ROOT / 'scripts' / folder / filename), '--dry-run', *extra],
+                              cwd=tmp_path, env=env, check=True, text=True, capture_output=True)
+        payload = json.loads(proc.stdout)
+        assert payload['gpu'] == '0'
+        return parser().parse_args(payload['args'][3:])
+
+    args = captured_args('Exp_VQA', f'vqa_baseline_{variant}.sh', sweep.parser)
+    assert args.ratios == [128, 256]
+    assert args.evaluate_test and args.eval_controls == ['normal']
+    assert args.eval_split == 'test' and args.eval_limit is None and args.eval_ids_file is None
+    assert args.bootstrap == 1000
+    expected_name = 'bindformer_adirect' if variant == 'adirect_alllocal' else f'bindformer_{variant}'
+    assert args.projector == expected_name
+    if variant == 'adirect_alllocal':
+        assert args.run_tag.startswith('baseline_adirect_alllocal_')
+
+    # Compare every nonprojector field against the existing production VQA baseline.
+    reference_args = captured_args('Exp_VQA', 'vqa_baseline_a.sh', sweep.parser)
+    reference = sweep.build_launches(reference_args)
+    launches = sweep.build_launches(args)
+    for (config, spec), (baseline, baseline_spec) in zip(launches, reference):
+        saved = tmp_path / f'{variant}_r{config.projector.target_compression_ratio}.yaml'
+        save_config(config, saved)
+        assert OmegaConf.to_container(load_config([saved]), resolve=True) == OmegaConf.to_container(config, resolve=True)
+        current = OmegaConf.to_container(config, resolve=True)
+        expected = OmegaConf.to_container(baseline, resolve=True)
+        for value in (current, expected):
+            value.pop('projector')
+            value['training'].pop('run_dir')
+        assert current == expected
+        assert config.training.init_checkpoint is None and config.training.resume is None
+        assert config.training.stage == 'joint_lora' and config.decoder.frozen
+        assert config.training.projector_lr == config.training.encoder_lr == 2e-4
+        assert config.training.projector_warmup_steps == config.training.joint_warmup_steps == 150
+        assert config.training.projector_hold_steps == 0
+        assert config.training.joint_warmup_projector_mode == 'hold_peak'
+        assert config.training.cosine_min_lr_ratio == 1
+        evaluation = {k: v for k, v in spec['evaluation'].items() if k != 'root'}
+        assert evaluation == {k: v for k, v in baseline_spec['evaluation'].items() if k != 'root'}
+        train, evaluations = sweep.commands(config, spec)
+        assert 'src.cli.vqa_train' in train and len(evaluations) == 1
+        command = evaluations[0][1]
+        assert command[command.index('--checkpoint') + 1] == str(Path(spec['run']) / 'train/checkpoints/best.pt')
+
+    # Report/VQA have different grids and budgets. All remaining projector settings must match.
+    from src.cli.baseline_sweep import parser as report_parser
+    report_args = captured_args('Exp1026', f'run_baseline_{variant}.sh', report_parser,
+                                '--ratios', '128', '256')
+    files = [ROOT / 'configs/training/joint_lora.yaml', ROOT / 'configs/training/deterministic.yaml',
+             ROOT / 'configs/preprocessing/native_grid.yaml',
+             ROOT / f'configs/projector/{report_args.projector}.yaml', *report_args.config]
+    report = load_config(files, report_args.overrides + ['projector.target_compression_ratio=128'])
+    vqa_projector, report_projector = launches[0][0].projector, report.projector
+    assert vqa_projector.name == report_projector.name
+    assert vqa_projector.hidden_size == report_projector.hidden_size and vqa_projector.bias == report_projector.bias
+    vqa_params, report_params = (OmegaConf.to_container(p.params, resolve=True)
+                                for p in (vqa_projector, report_projector))
+    for params in (vqa_params, report_params):
+        params.pop('num_tokens', None)
+    assert vqa_params == report_params
+
+    args.ratios = [16, 32, 64, 128, 256]
+    all_budgets = sweep.build_launches(args)
+    assert [c.projector.resolved_budget.expected_output_tokens for c, _ in all_budgets] == [624, 288, 150, 75, 36]
+    if variant == 'adirect_alllocal':
+        for c, _ in all_budgets:
+            assert c.projector.resolved_budget.global_tokens == 0
+            assert c.projector.resolved_budget.local_tokens == c.projector.resolved_budget.expected_output_tokens
 
 
 def test_placement_and_override_precedence():

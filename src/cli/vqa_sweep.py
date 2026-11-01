@@ -21,7 +21,9 @@ from src.models.projectors.budget import resolve_budget
 
 METHODS = ('avgpool3d', 'concat3d', 'convpool3d', 'mixer3d', 'local_packer3d',
            'attention_pool', 'perceiver_nv', 'perceiver_flamingo', 'adaptive_merge3d',
-           'token_select3d', 'bindformer3d', 'mlp2x_gelu')
+           'token_select3d', 'bindformer3d', 'mlp2x_gelu', 'bindformer_adirect',
+           'bindformer_adirect_localread', 'bindformer_adirect_detail')
+ADIRECT_METHODS = ('bindformer_adirect', 'bindformer_adirect_localread', 'bindformer_adirect_detail')
 VERSIONS = {'v1': ('mixed.yaml', 'neuroqa_mni1mm'), 'v2': ('mixed_v2.yaml', 'neuroqa_mni1mm_v2')}
 
 
@@ -102,6 +104,10 @@ def build_launches(args):
         raise ValueError('Evaluation limit must be positive and bootstrap nonnegative')
     tag = component(args.run_tag or datetime.now(ZoneInfo('Asia/Shanghai')).strftime('%Y%m%dT%H%M%S_') + uuid4().hex[:6])
     filename, adapter = VERSIONS[args.preprocessing_version]
+    # Reuse the report methods' architecture (including block checkpointing),
+    # while retaining the VQA data, optimizer, loss, and selection protocol.
+    architecture = ([ROOT / 'configs/projector' / f'{args.projector}.yaml']
+                    if args.projector in ADIRECT_METHODS else [])
     launches = []
     for ratio in args.ratios:
         overrides = [f'projector.name={args.projector}', f'projector.target_compression_ratio={ratio}', f'seed={args.seed}']
@@ -109,7 +115,8 @@ def build_launches(args):
             overrides.append(f'training.projector_device={args.concat_device}')
         if args.projector == 'bindformer3d':
             overrides.append('projector.params.knowledge_mode=none')
-        config = load_config([ROOT / 'configs/vqa/neuroqa' / filename, *map(absolute, args.config)], overrides + args.overrides)
+        config = load_config([ROOT / 'configs/vqa/neuroqa' / filename, *architecture,
+                              *map(absolute, args.config)], overrides + args.overrides)
         if args.invalid_sample_policy:
             config.data.invalid_sample_policy = args.invalid_sample_policy
         if config.task.name != 'neuroqa' or config.preprocessing.name != adapter:

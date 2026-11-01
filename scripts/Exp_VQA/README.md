@@ -40,6 +40,10 @@ CUDA_VISIBLE_DEVICES=0 bash scripts/Exp_VQA/vqa_avgpool3d.sh --ratios 128 256 --
 | `vqa_token_select3d.sh` | token_select3d | 全五档 |
 | `vqa_bindformer3d.sh` | bindformer3d，knowledge_mode=none | 全五档 |
 | `vqa_baseline_a.sh` | BindFormer Baseline A 视觉结构，knowledge_mode=none | 128、256 |
+| `vqa_baseline_adirect.sh` | bindformer_adirect，global + 原始特征局部均值 | 128、256 |
+| `vqa_baseline_adirect_localread.sh` | bindformer_adirect_localread，局部均值 + 同区域 attention residual | 128、256 |
+| `vqa_baseline_adirect_detail.sh` | bindformer_adirect_detail，diversity detail + 局部均值 | 128、256 |
+| `vqa_baseline_adirect_alllocal.sh` | bindformer_adirect，global_fraction=0，全局部均值 | 128、256 |
 | `vqa_mlp2x.sh` | mlp2x_gelu | 1，不压缩 |
 | `vqa_smoke.sh` | 默认 avgpool3d | 256，固定小题集 |
 
@@ -70,6 +74,48 @@ CUDA_VISIBLE_DEVICES=0 bash scripts/Exp_VQA/vqa_baseline_a.sh --preprocessing-ve
 ```
 
 默认 tag 以 `baseline_a_no_knowledge_` 开头，包含北京时间和随机后缀；模型目录仍为 `bindformer3d`，通过 tag 和保存的 `launch_config.yaml` 区分变体。`PROJECTOR_RUN_TAG` 或 `--run-tag` 可自定义（建议保留变体名）。原 `vqa_bindformer3d.sh` 保留原来的 competitive routing 配置。续训仍恢复保存的配置，不能通过此新脚本把旧实验中途转换成 Baseline A。
+
+### ADirect 四种方法（2026-11-01）
+
+四个 `vqa_baseline_adirect*.sh` 对应 `scripts/Exp1026/run_baseline_adirect*.sh` 的视觉结构，使用同一 VQA launcher。默认均为 GPU 0、v2、`include_unreviewed`、r128/r256，支持全部五档倍率；各倍率从新 projector 和新视觉 LoRA 开始训练，再用验证集 best checkpoint 做 normal test，不加载 report checkpoint。入口只自动合并对应的 `configs/projector/bindformer_adirect*.yaml` 架构配置（包括 `checkpoint_blocks=true`），训练、数据和评测继续采用本目录的 VQA 配方，不合并 report 的训练配置或本机路径配置。
+
+| 方法 | 视觉路径 |
+| --- | --- |
+| ADirect | 原始 encoder 特征按父区域内四个子区域取均值，直接进入共享 final LN / MLP head；另保留 global query 分支 |
+| ADirect LocalRead | 保留 ADirect 路径；每个局部均值额外读取同一子区域的原始特征，增加一层 attention residual，缩放系数初值 0.1，无局部 FFN |
+| ADirect Detail | 以 diversity 选择的原始 patch token 替代 global query 输出，保留相同局部均值；选点离散决策不反传，选中原始特征仍反传 |
+| ADirect AllLocal | `global_fraction=0`，移除 global 分支；划分恰好 M 个不重叠空间区域，每区域一个原始特征均值 |
+
+它们不使用 Baseline A 的概念库、语义角色 query 或辅助损失。ADirect / LocalRead 的位置及序列 embedding 仅作用于 global 分支；Detail / AllLocal 没有该分支。输入 N=9555、输出宽度 4096；局部原始特征宽度要求 `encoder hidden_size == inner_dim == 768`。
+
+| 倍率 | M | ADirect / LocalRead global | 三种 mixed 方法的父区域数 | 三种 mixed 方法 local tokens | Detail 的 detail tokens | AllLocal 区域 / tokens |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 16 | 624 | 156 | 117 | 468 | 156 | 624 |
+| 32 | 288 | 72 | 54 | 216 | 72 | 288 |
+| 64 | 150 | 38 | 28 | 112 | 38 | 150 |
+| 128 | 75 | 19 | 14 | 56 | 19 | 75 |
+| 256 | 36 | 8 | 7 | 28 | 8 | 36 |
+
+mixed 指 ADirect、LocalRead、Detail；每个父区域包含四个子区域，每个子区域输出一个 local token。上表是整数预算分配，不能把比例 0.25 直接乘 M 后自行取整，也不能将 pooling 的 DHW 网格当成这些方法的区域布局。AllLocal 使用自身的 exact-count 分区规则。四种方法均严格输出对应 M。
+
+训练参数与其他 VQA baseline 相同：冻结 Llama；视觉 LoRA rank/alpha/dropout=16/32/0.05；projector / encoder LR=2e-4 / 2e-4；warmup=150+150 updates，后续恒定 LR；最多 20 epochs；microbatch=1、有效 batch=16；T1/T2 严格平衡；逐 QA answer-only CE；val closed accuracy 选模、patience=3、min_delta=0.002。Report 脚本中的 77+77 warmup、report loss 选模及 GPU 默认值不复制到 VQA。
+
+```bash
+# 预览四种方法五档最终架构、预算和训练 / 测试命令
+for vqa_method in adirect adirect_localread adirect_detail adirect_alllocal; do
+  bash "scripts/Exp_VQA/vqa_baseline_${vqa_method}.sh" --dry-run --ratios 16 32 64 128 256
+done
+
+# 检查当前完整 VQA 清单，不加载 GPU 模型
+bash scripts/Exp_VQA/vqa_baseline_adirect.sh --check-data --ratios 128
+
+# 依次运行每种方法的 r128/r256；每个实验训练后自动评测 best.pt
+for vqa_method in adirect adirect_localread adirect_detail adirect_alllocal; do
+  CUDA_VISIBLE_DEVICES=0 bash "scripts/Exp_VQA/vqa_baseline_${vqa_method}.sh" --ratios 128 256
+done
+```
+
+AllLocal 仍注册为 `bindformer_adirect`，因此同 ADirect 使用 `<projector>/r<R>/s<seed>/` 父目录。默认 tag 为 `baseline_adirect_alllocal_<北京时间>_<随机后缀>`，另三种也使用各自的变体前缀；通过 tag、`launch_config.yaml` 与 checkpoint 保存的参数区分。自定义 `--run-tag` / `PROJECTOR_RUN_TAG` 时应保留变体名，避免目录及后续人工汇总混淆；已有目录仍拒绝覆盖。补测和断点续训使用下文共同 `--resume-run` 接口。
 
 ## 配置和运行
 
