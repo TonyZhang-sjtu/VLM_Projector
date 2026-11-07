@@ -7,6 +7,7 @@ from src.models.projectors.bindformer_a4.config import DEFAULTS as A4_DEFAULTS, 
 from src.models.projectors.bindformer_adirect.config import DEFAULTS as ADIRECT_DEFAULTS, validate_params as validate_adirect
 from src.models.projectors.bindformer_adirect_localread.config import DEFAULTS as LOCALREAD_DEFAULTS, validate_params as validate_localread
 from src.models.projectors.bindformer_adirect_detail.config import DEFAULTS as DETAIL_DEFAULTS, validate_params as validate_detail
+from src.models.projectors.anchorread3d_ablation.config import DEFAULTS as ABLATION_DEFAULTS, validate_params as validate_ablation
 
 
 GRID = {'num_tokens': 256, 'budget_policy': 'nearest'}
@@ -14,6 +15,7 @@ HEAD = {'head_type': 'mlp'}
 QUERY = {'num_tokens': 256, 'inner_dim': None, 'num_heads': 8,
          'ffn_expansion': 4, 'dropout': 0.0, 'checkpoint_blocks': False, **HEAD}
 DEFAULTS = {
+    **{name: {**QUERY, **params} for name, params in ABLATION_DEFAULTS.items()},
     'bindformer3d': {**QUERY, **BIND_DEFAULTS},
     'bindformer_a4': {**QUERY, **A4_DEFAULTS},
     'bindformer_adirect': {**QUERY, **ADIRECT_DEFAULTS},
@@ -123,6 +125,8 @@ def resolve_projector_config(config):
         validate_localread(params)
     elif name == 'bindformer_adirect_detail':
         validate_detail(params)
+    elif name in ABLATION_DEFAULTS:
+        validate_ablation(name, params)
     config.params = OmegaConf.create(params)
     if resolved:
         validate_resolved(config)

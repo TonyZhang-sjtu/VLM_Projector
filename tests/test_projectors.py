@@ -11,13 +11,14 @@ from src.models.projectors.specs import DEFAULTS
 from src.models.projectors.common import QueryBlock
 from src.models.projectors.geometry import grid_groups, partition
 from src.models.projectors.mixer import WindowMixerBlock
+from src.models.projectors.anchorread3d_ablation.budget import METHODS as ABLATION_METHODS, A1, A2
 from src.models.projectors.adaptive_merge import connected_ward
 
 
 def config(name, target=8, **params):
     overrides = [f'projector.name={name}', 'projector.hidden_size=16']
     defaults = DEFAULTS[name]
-    if name in ('bindformer3d', 'bindformer_a4', 'bindformer_adirect', 'bindformer_adirect_localread'):
+    if name in ('bindformer3d', 'bindformer_a4', 'bindformer_adirect', 'bindformer_adirect_localread', *ABLATION_METHODS):
         # Generic projector tests have no medical context; dedicated BindFormer
         # tests exercise real sequence/geometry/knowledge instead.
         params.setdefault('inner_dim',8)
@@ -45,7 +46,7 @@ def volume(grid=(3,4,2), channels=8):
 def test_gradients_update_and_state_roundtrip(name, target):
     torch.manual_seed(11)
     if name in ('bindformer3d', 'bindformer_a4', 'bindformer_adirect',
-                'bindformer_adirect_localread', 'bindformer_adirect_detail') and target<5:
+                'bindformer_adirect_localread', 'bindformer_adirect_detail', A1, A2) and target<5:
         with pytest.raises(ValueError,match='complete role bundle'):
             config(name,target)
         return

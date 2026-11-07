@@ -7,6 +7,7 @@ Concat heads during forward, and never changes a saved budget at evaluation.
 import math
 from collections import Counter
 from omegaconf import OmegaConf
+from src.models.projectors.anchorread3d_ablation.budget import METHODS as ABLATION_METHODS, allocate_ablation
 
 VERSION = 'method_native_ratio_v1'
 NEUROQA_VERSION = 'neuroqa_mni1mm_shared_m_v1'
@@ -22,7 +23,7 @@ GRID_METHODS = frozenset(('avgpool3d', 'convpool3d', 'mixer3d', 'local_packer3d'
 EXACT_METHODS = frozenset(('bindformer3d', 'bindformer_a4', 'bindformer_adirect',
                            'bindformer_adirect_localread', 'bindformer_adirect_detail',
                            'attention_pool', 'perceiver_nv', 'perceiver_flamingo',
-                           'adaptive_merge3d', 'token_select3d'))
+                           'adaptive_merge3d', 'token_select3d', *ABLATION_METHODS))
 CONCAT_GROUPS = {4: (4, 1, 1), 8: (8, 1, 1), 16: (6, 1, 3), 32: (6, 2, 3),
                  64: (6, 3, 4), 128: (13, 2, 5), 256: (13, 4, 5)}
 BRATS_FIXED_GRIDS = {64: (4, 6, 6), 128: (3, 4, 6), 256: (3, 4, 3)}
@@ -98,7 +99,9 @@ def derive_budget(name, ratio, grid, extent, params=None, protocol=None):
     if error > TOLERANCE + 1e-12:
         raise ValueError(f'Compression ratio deviation exceeds 5%: target={ratio}, N={n}, M={actual}, error={error:.4%}')
     allocation = {}
-    if name == 'bindformer3d':
+    if name in ABLATION_METHODS:
+        allocation = allocate_ablation(name, actual, (params or {}).get('global_fraction'))
+    elif name == 'bindformer3d':
         from src.models.projectors.bindformer.budget import allocate_tokens, role_counts
         allocation = allocate_tokens(actual, (params or {}).get('global_fraction', 0.25),
                                      role_query_counts=role_counts((params or {}).get('role_query_counts')))

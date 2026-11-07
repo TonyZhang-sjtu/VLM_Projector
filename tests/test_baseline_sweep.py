@@ -11,6 +11,7 @@ from src.cli import baseline_sweep as sweep
 from src.config import ROOT
 from src.models.projectors.budget import GRID_METHODS
 from src.models.projectors.specs import DEFAULTS
+from src.models.projectors.anchorread3d_ablation.budget import METHODS as ABLATION_METHODS
 
 
 @pytest.fixture
@@ -280,7 +281,8 @@ def test_load_resume_plan_rejects_wrong_projector(tmp_path, population):
 @pytest.mark.parametrize('method', DEFAULTS)
 def test_bash_entrypoints_from_another_working_directory(tmp_path, method):
     stem = 'mlp2x' if method == 'mlp2x_gelu' else method
-    script = ROOT / f'scripts/baselines/run_{stem}.sh'
+    script = (ROOT / f'scripts/ablation/rg_{method.removeprefix("anchorread3d_")}.sh'
+              if method in ABLATION_METHODS else ROOT / f'scripts/baselines/run_{stem}.sh')
     subprocess.run(['bash', '-n', str(script)], check=True)
     result = subprocess.run(['bash', str(script), '--help'], cwd=tmp_path,
                             text=True, capture_output=True, check=True)

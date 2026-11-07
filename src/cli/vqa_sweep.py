@@ -18,12 +18,13 @@ from src.config import ROOT, file_hash, load_config, save_config
 from src.data.neuroqa_manifest import write_json
 from src.data.neuroqa_preflight import inspect_data, training_scope, compact_report, save_data_report, ensure_same_selection
 from src.models.projectors.budget import resolve_budget
+from src.models.projectors.anchorread3d_ablation.budget import METHODS as ABLATION_METHODS
 
 METHODS = ('avgpool3d', 'concat3d', 'convpool3d', 'mixer3d', 'local_packer3d',
            'attention_pool', 'perceiver_nv', 'perceiver_flamingo', 'adaptive_merge3d',
            'token_select3d', 'bindformer3d', 'mlp2x_gelu', 'bindformer_adirect',
-           'bindformer_adirect_localread', 'bindformer_adirect_detail')
-ADIRECT_METHODS = ('bindformer_adirect', 'bindformer_adirect_localread', 'bindformer_adirect_detail')
+           'bindformer_adirect_localread', 'bindformer_adirect_detail', *ABLATION_METHODS)
+ADIRECT_METHODS = ('bindformer_adirect', 'bindformer_adirect_localread', 'bindformer_adirect_detail', *ABLATION_METHODS)
 VERSIONS = {'v1': ('mixed.yaml', 'neuroqa_mni1mm'), 'v2': ('mixed_v2.yaml', 'neuroqa_mni1mm_v2')}
 
 

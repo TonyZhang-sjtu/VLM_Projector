@@ -1,0 +1,17 @@
+# Controlled ablation; use scripts/ablation for the shared r16 training recipe.
+projector:
+  name: anchorread3d_a3_global_only
+  hidden_size: 4096
+  bias: true
+  params:
+    global_fraction: 1
+    inner_dim: 768
+    num_heads: 8
+    ffn_expansion: 4
+    dropout: 0.0
+    checkpoint_blocks: true
+    head_type: mlp
+    position_mode: grid_fourier
+    position_frequencies: 8
+    sequence_condition: true
+    global_depth: 1

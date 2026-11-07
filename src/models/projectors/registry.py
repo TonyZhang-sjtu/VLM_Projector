@@ -14,6 +14,7 @@ from src.models.projectors.bindformer_a4.projector import BindFormerA4
 from src.models.projectors.bindformer_adirect.projector import BindFormerADirect
 from src.models.projectors.bindformer_adirect_localread.projector import BindFormerADirectLocalRead
 from src.models.projectors.bindformer_adirect_detail.projector import BindFormerADirectDetail
+from src.models.projectors.anchorread3d_ablation.variants import PROJECTORS as ABLATION_PROJECTORS
 
 PROJECTORS = {'bindformer3d': BindFormer3D, 'bindformer_a4': BindFormerA4,
               'bindformer_adirect': BindFormerADirect,
@@ -25,6 +26,7 @@ PROJECTORS = {'bindformer3d': BindFormer3D, 'bindformer_a4': BindFormerA4,
               'attention_pool': QueryResampler, 'perceiver_nv': QueryResampler,
               'perceiver_flamingo': QueryResampler, 'adaptive_merge3d': AdaptiveMerge3D,
               'token_select3d': TokenSelect3D}
+PROJECTORS.update(ABLATION_PROJECTORS)
 
 
 def register_projector(name, factory, defaults=None):

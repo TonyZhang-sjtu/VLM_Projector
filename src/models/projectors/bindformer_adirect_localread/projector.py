@@ -27,7 +27,7 @@ class LocalResidualRead(nn.Module):
         self.to_out = nn.Linear(dim, dim, bias=False)
         self.alpha = nn.Parameter(torch.tensor(float(scale_init)))
 
-    def forward(self, means, visual, valid):
+    def forward(self, means, visual, valid, *, add_mean=True):
         batch, dim = means.shape
         q = self.to_q(self.norm_queries(means[:, None]))
         k, v = self.to_kv(self.norm_visual(visual)).chunk(2, -1)
@@ -41,7 +41,8 @@ class LocalResidualRead(nn.Module):
                 heads(q), heads(k), heads(v), attn_mask=valid[:, None, None, :],
                 dropout_p=self.dropout if self.training else 0.0)
         correction = self.to_out(attended.transpose(1, 2).reshape(batch, dim))
-        return means + self.alpha.to(correction.dtype) * correction
+        residual = self.alpha.to(correction.dtype) * correction
+        return means + residual if add_mean else residual
 
 
 class BindFormerADirectLocalRead(BindFormerADirect):

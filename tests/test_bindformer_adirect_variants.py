@@ -194,7 +194,7 @@ def test_variant_launchers_match_exp1026_entire_nonprojector_config(tmp_path):
     from src.cli.baseline_sweep import parser
     for variant in ('a4', *VARIANTS):
         name = 'run_baseline_a4_r128_r256.sh' if variant == 'a4' else f'run_baseline_adirect_{variant}.sh'
-        result = subprocess.run(['bash', str(ROOT/'scripts/Exp1026'/name), '--dry-run'],
+        result = subprocess.run(['bash', str(ROOT/'scripts/Exp1026'/name), '--dry-run', '--ratios', '128', '256'],
                                 cwd=tmp_path, env=env, capture_output=True, text=True, check=True)
         captured = json.loads(result.stdout)
         args = parser().parse_args(captured['args'][3:])
