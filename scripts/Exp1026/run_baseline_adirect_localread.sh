@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # ADirect_LocalRead: one local attention residual; original global path and CE.
-# Exp1026 recipe: fresh initialization; r128 train/full best-test, then r256.
+# Exp1026 recipe: fresh initialization; r32 then r64, each with full best-test.
 set -Eeuo pipefail
 
 export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-3}"
 export PROJECTOR_PYTHON="${PROJECTOR_PYTHON:-/mnt/sda/mingjie/conda_envs/projector/bin/python}"
 projector_method=bindformer_adirect_localread
-projector_ratios=(128 256)
+projector_ratios=(32 64)
 projector_lr=2e-4
 encoder_lr=2e-4  # Vision encoder LoRA only; the LLM stays frozen.
 projector_max_epochs=20

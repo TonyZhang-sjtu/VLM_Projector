@@ -10,9 +10,11 @@ from omegaconf import OmegaConf
 
 VERSION = 'method_native_ratio_v1'
 NEUROQA_VERSION = 'neuroqa_mni1mm_shared_m_v1'
-NEUROQA_GROUPS = {16: (9, 2, 1), 32: (6, 2, 4), 64: (9, 3, 3),
+# r8 keeps Concat's native 9x1x1 grouping and shares its 1170 output
+# tokens with all methods: 9555/1170 = 8.1667 (2.08% from the target).
+NEUROQA_GROUPS = {8: (9, 1, 1), 16: (9, 2, 1), 32: (6, 2, 4), 64: (9, 3, 3),
                   128: (17, 3, 3), 256: (18, 4, 5)}
-NEUROQA_GRIDS = {16: (6, 8, 13), 32: (9, 8, 4), 64: (6, 5, 5),
+NEUROQA_GRIDS = {8: (6, 15, 13), 16: (6, 8, 13), 32: (9, 8, 4), 64: (6, 5, 5),
                  128: (3, 5, 5), 256: (3, 4, 3)}
 DEFAULT_RATIOS = (4, 8, 16, 32)
 SUPPORTED_RATIOS = (*DEFAULT_RATIOS, 64, 128, 256)
@@ -56,7 +58,7 @@ def derive_budget(name, ratio, grid, extent, params=None, protocol=None):
     output_grid, group = None, None
     if protocol == NEUROQA_VERSION and name != 'mlp2x_gelu':
         if grid != (49, 15, 13) or extent != (196, 240, 208) or ratio not in NEUROQA_GRIDS:
-            raise ValueError('NeuroQA budgets require grid [49,15,13], extent [196,240,208] and r16/32/64/128/256')
+            raise ValueError('NeuroQA budgets require grid [49,15,13], extent [196,240,208] and r8/16/32/64/128/256')
         if name not in GRID_METHODS | EXACT_METHODS | {'concat3d'}:
             raise ValueError(f'Unknown NeuroQA budget method: {name}')
         actual = math.prod(NEUROQA_GRIDS[ratio])

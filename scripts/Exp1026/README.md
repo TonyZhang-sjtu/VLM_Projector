@@ -12,19 +12,22 @@
 | `run_baseline_a_r128_r256.sh` | BindFormer Baseline A | 128 / 256 | 0 |
 | `run_baseline_a4_r128_r256.sh` | A4 四子区均值 | 128 / 256 | 3 |
 | `run_baseline_adirect.sh` | ADirect 原始子区均值直通 | 32 / 64（当前顶部数组为 64 / 32，sweep 排序执行） | 0 |
-| `run_baseline_adirect_localread.sh` | ADirect_LocalRead：一次局部 attention 残差 | 128 / 256 | 3 |
+| `run_baseline_adirect_localread.sh` | ADirect_LocalRead：一次局部 attention 残差 | 32 / 64 | 3 |
+| `run_baseline_adirect_localread_r8.sh` | ADirect_LocalRead | 8 | 0 |
+| `run_baseline_adirect_localread_r16.sh` | ADirect_LocalRead | 16 | 1 |
+| `run_baseline_adirect_localread_r256.sh` | ADirect_LocalRead | 256 | 2 |
 | `run_baseline_adirect_detail.sh` | ADirect_Detail：代表性原始 patch 替换 Global 输出 | 128 / 256 | 3 |
 | `run_baseline_adirect_alllocal.sh` | ADirect：`global_fraction=0`，全局部均值 | 128 / 256 | 3 |
 | `run_concat3d_r128_r256.sh` | Concat | 128 / 256 | 0,1 |
-| `run_convpool3d.sh` | ConvPool | 4 / 8 / 16 / 32 | 3 |
+| `run_convpool3d.sh` | ConvPool | 128 | 1 |
 | `run_local_packer3d_r128_r256.sh` | LocalPacker | 128 / 256 | 2 |
 | `run_mixer3d.sh` | Mixer | 4 / 8 / 16 / 32 | 3 |
 | `run_mlp2x.sh` | MLP | 1 | 3 |
 | `run_perceiver_flamingo.sh` | Perceiver-Flamingo | 4 / 8 / 16 / 32 | 3 |
 | `run_perceiver_nv_r128_r256.sh` | Perceiver-NV | 128 / 256 | 3 |
-| `run_token_select3d.sh` | TokenSelect | 8 / 16 | 3 |
+| `run_token_select3d.sh` | TokenSelect | 256 | 3 |
 
-共17个单方法入口、43个默认实验；`run01.sh` 另将三个 ADirect 变体的 128×/256× 实验按顺序串联，不是新增模型方法。各入口内部依次执行所选倍率，每个倍率从预训练模型和全新 projector/LoRA/optimizer 初始化，训练结束后评测该次最低 validation CE 的 `best.pt`，再进行下一倍率。不要给所有脚本统一附加 `--ratios 128 256`；MLP只支持1×。
+共20个单方法入口、42个默认实验；`run01.sh` 另将三个 ADirect 变体的 128×/256× 实验按顺序串联，不是新增模型方法。各入口内部依次执行所选倍率，每个倍率从预训练模型和全新 projector/LoRA/optimizer 初始化，训练结束后评测该次最低 validation CE 的 `best.pt`，再进行下一倍率。不要给所有脚本统一附加 `--ratios 128 256`；MLP只支持1×。
 
 ## 统一训练配方
 
@@ -65,7 +68,7 @@ CUDA_VISIBLE_DEVICES=0 bash scripts/Exp1026/run_adaptive_merge3d.sh \
   --run-tag "adaptive_merge_exp1026_$(date -u +%Y%m%dT%H%M%S%NZ)"
 ```
 
-`CUDA_VISIBLE_DEVICES` 覆盖脚本中的物理卡默认值，模型内仍用逻辑 `cuda:0`。`PROJECTOR_OUTPUT_ROOT` 可映射到本机新输出目录。单方法入口可用CLI `--run-tag` 指定新名称；`run01.sh` 使用 `PROJECTOR_RUN_TAG` 设置批次前缀。不要依赖 `PROJECTOR_RUN_TAG` 对所有单方法脚本都生效。TokenSelect保留当前固定默认名称 `token_select_r8_r16`，重复运行应显式换新tag，不能覆盖已有结果。
+`CUDA_VISIBLE_DEVICES` 覆盖脚本中的物理卡默认值，模型内仍用逻辑 `cuda:0`。`PROJECTOR_OUTPUT_ROOT` 可映射到本机新输出目录。单方法入口可用CLI `--run-tag` 指定新名称；`run01.sh` 使用 `PROJECTOR_RUN_TAG` 设置批次前缀。不要依赖 `PROJECTOR_RUN_TAG` 对所有单方法脚本都生效。TokenSelect 当前默认自动生成 run tag。
 
 Concat 128/256 需要两张 24 GiB 卡：脚本中的 `CUDA_VISIBLE_DEVICES=0,1` 指定物理卡，Encoder 和冻结的 Llama 位于逻辑 `cuda:0`，完整宽度的 Concat3D 投影器及 AdamW 状态位于逻辑 `cuda:1`。两卡之间的特征和梯度经 CPU 中转，以避开本机不可靠的 GPU 间直接拷贝。该入口默认关闭只读的逐参数优化器诊断，以给 256× 投影器留出显存；训练损失、优化器和学习率配方不变。例如换用物理卡 2、3：
 
@@ -145,12 +148,12 @@ Detail 用 TokenSelect 已有的确定性 diversity 算法选择 17/7 个原始 
 
 ```bash
 # 任一入口加 --dry-run 可先完成真实 manifest/header 预检。
-CUDA_VISIBLE_DEVICES=3 bash scripts/Exp1026/run_baseline_adirect_localread.sh
+CUDA_VISIBLE_DEVICES=3 bash scripts/Exp1026/run_baseline_adirect_localread.sh --ratios 128 256
 CUDA_VISIBLE_DEVICES=3 bash scripts/Exp1026/run_baseline_adirect_detail.sh
 CUDA_VISIBLE_DEVICES=3 bash scripts/Exp1026/run_baseline_adirect_alllocal.sh
 ```
 
-每个入口依次完成 128× 训练、best.pt 全量 test / 全部指标，再启动 256×。
+以上命令依次完成 128× 训练、best.pt 全量 test / 全部指标，再启动 256×；LocalRead 的默认倍率为 32 / 64，示例中已显式覆盖。
 可加 `--ratios 256` 只跑一个倍率，或 `--run-tag NAME` 指定新输出名。
 全局部默认 run tag 含 `alllocal`，避免与标准 ADirect 混淆。
 仍支持 `PROJECTOR_PYTHON`、`PROJECTOR_LOCAL_CONFIG` 和 `PROJECTOR_OUTPUT_ROOT`。

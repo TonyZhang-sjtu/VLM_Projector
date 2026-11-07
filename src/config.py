@@ -206,16 +206,16 @@ def validate(c):
             raise ValueError('data.invalid_sample_policy must be skip, strict or include_unreviewed')
         if c.data.get('modality_sampling', 'legacy_exact') not in ('dual_eligible', 'legacy_exact', 'exact_balanced_repeat'):
             raise ValueError('Unknown NeuroQA modality sampling policy')
-        from src.models.projectors.budget import NEUROQA_VERSION
+        from src.models.projectors.budget import NEUROQA_VERSION, NEUROQA_GRIDS
         if (c.preprocessing.name not in ('neuroqa_mni1mm', 'neuroqa_mni1mm_v2') or c.preprocessing.spacing_policy != 'native_grid'
                 or c.preprocessing.throughplane_mm != 1 or c.preprocessing.inplane_mm != 1
                 or c.preprocessing.orientation != 'RPI' or c.preprocessing.boundary_policy != 'minimal_pad'):
             raise ValueError('NeuroQA v1 requires the fixed MNI 1 mm adapter with RPI/minimal padding')
         if c.projector.get('budget_protocol') != NEUROQA_VERSION:
             raise ValueError('NeuroQA requires its versioned shared-M budget')
-        allowed_ratios = (1,) if c.projector.name == 'mlp2x_gelu' else (16,32,64,128,256)
+        allowed_ratios = (1,) if c.projector.name == 'mlp2x_gelu' else tuple(NEUROQA_GRIDS)
         if ratio_value(c.projector) not in allowed_ratios:
-            raise ValueError('NeuroQA requires one of its five ratios, or r1 for uncompressed MLP')
+            raise ValueError('NeuroQA requires r8/16/32/64/128/256, or r1 for uncompressed MLP')
         if c.training.distributed != 'none':
             raise ValueError('NeuroQA supports single-process training')
         if c.data.get('modality_sampling', 'legacy_exact') in ('legacy_exact', 'exact_balanced_repeat') and c.training.effective_batch_size % 2:

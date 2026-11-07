@@ -67,3 +67,4 @@ tokens_for_*.txt
 *.pem
 *.key
 /configs/local*.yaml
+/scripts/marlowe/env.sh

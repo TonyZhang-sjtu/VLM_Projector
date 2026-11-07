@@ -18,12 +18,12 @@ from src.data.neuroqa_manifest import QASample, write_json
 @pytest.mark.parametrize('method', sweep.METHODS)
 @pytest.mark.parametrize('version', ['v1', 'v2'])
 def test_each_projector_version_and_all_supported_budgets(method, version):
-    ratios = [1] if method == 'mlp2x_gelu' else [16, 32, 64, 128, 256]
+    ratios = [1] if method == 'mlp2x_gelu' else [8, 16, 32, 64, 128, 256]
     args = sweep.parser().parse_args(['--projector', method, '--preprocessing-version', version,
                                     '--ratios', *map(str, ratios), '--run-tag', 'unit'])
     runs = sweep.build_launches(args)
     assert [c.projector.resolved_budget.expected_output_tokens for c, _ in runs] == (
-        [9555] if ratios == [1] else [624, 288, 150, 75, 36])
+        [9555] if ratios == [1] else [1170, 624, 288, 150, 75, 36])
     for c, spec in runs:
         assert c.preprocessing.cache_dir.endswith(f'neuroqa_mni1mm_{version}')
         assert c.data.manifest_dir.endswith('_mni_v2' if version == 'v2' else 'patient_guard_v1')
@@ -57,8 +57,9 @@ def test_shells_forward_overrides_and_work_outside_repo(tmp_path):
     shim = tmp_path / 'python-shim'
     shim.write_text('#!/usr/bin/env python3\nimport json,sys,os\nprint(json.dumps({"args":sys.argv[1:],"cwd":os.getcwd(),"gpu":os.environ["CUDA_VISIBLE_DEVICES"]}))\n')
     shim.chmod(0o755)
-    scripts = sorted((ROOT / 'scripts/Exp_VQA').glob('vqa_*.sh'))
-    assert len(scripts) == 18
+    scripts = sorted(p for p in (ROOT / 'scripts/Exp_VQA').glob('vqa_*.sh')
+                     if p.name not in ('vqa_run01.sh', 'vqa_run02.sh'))
+    assert len(scripts) == 21
     for script in scripts:
         subprocess.run(['bash', '-n', str(script)], check=True)
         result = subprocess.run(['bash', str(script), '--dry-run', '--ratios', '64', '--set', 'training.projector_lr=0.0003'],
@@ -95,7 +96,7 @@ def test_adirect_vqa_launchers_keep_report_architecture_and_shared_vqa_recipe(va
         return parser().parse_args(payload['args'][3:])
 
     args = captured_args('Exp_VQA', f'vqa_baseline_{variant}.sh', sweep.parser)
-    assert args.ratios == [128, 256]
+    assert args.ratios == ([16] if variant == 'adirect_localread' else [128, 256])
     assert args.evaluate_test and args.eval_controls == ['normal']
     assert args.eval_split == 'test' and args.eval_limit is None and args.eval_ids_file is None
     assert args.bootstrap == 1000
@@ -105,7 +106,8 @@ def test_adirect_vqa_launchers_keep_report_architecture_and_shared_vqa_recipe(va
         assert args.run_tag.startswith('baseline_adirect_alllocal_')
 
     # Compare every nonprojector field against the existing production VQA baseline.
-    reference_args = captured_args('Exp_VQA', 'vqa_baseline_a.sh', sweep.parser)
+    reference_args = captured_args('Exp_VQA', 'vqa_baseline_a.sh', sweep.parser,
+                                   '--ratios', *map(str, args.ratios))
     reference = sweep.build_launches(reference_args)
     launches = sweep.build_launches(args)
     for (config, spec), (baseline, baseline_spec) in zip(launches, reference):

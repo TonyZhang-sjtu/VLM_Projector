@@ -1,6 +1,6 @@
 # GitHub 上传与两台服务器同步流程
 
-> 最新发布：`sync-20261101-r2`（VQA ADirect 四种入口）；本轮同步说明见文末第十五节。此前标签和旧章节仅用于查阅历史版本，旧版计划数量及训练参数不代表当前设置。
+> 最新发布：`sync-20261107`（VQA 8×、并行入口、report 位置指标及集群脚本）；本轮同步说明见文末第十六节。此前标签和旧章节仅用于查阅历史版本，旧版计划数量及训练参数不代表当前设置。
 
 本轮日期：2026-10-26。源仓库：`/mnt/sda/jyzhang/VLM_Projector`。
 GitHub 私有仓库：[TonyZhang-sjtu/VLM_Projector](https://github.com/TonyZhang-sjtu/VLM_Projector)，分支 `main`，本轮固定发布标签 `sync-20261026`。
@@ -609,3 +609,11 @@ https://github.com/TonyZhang-sjtu/VLM_Projector.git 的固定版本：
 发布标签 `sync-20261101-r2`，完整 SHA 以源服务器回复及远端标签为准。本次在已有 ADirect projector 实现基础上增加四个 VQA 启动入口：ADirect、LocalRead、Detail、AllLocal；VQA sweep 按方法加载对应 projector 架构配置，并保留 VQA 数据、训练和评测配方。四个入口默认各运行 128× / 256×，各倍率独立初始化，验证选出的 best checkpoint 用于测试。详见 `scripts/Exp_VQA/README.md`。
 
 目标机参照第十三、十四节先备份、核对标签及提交、合并代码并保留本机 Python、模型、数据和缓存路径；报告任务和 VQA 各自的路径设置不同，不要把源机路径直接覆盖目标机。旧标签的 VQA 默认入口数量及计划不代表本版。本轮不上传本地诊断结果、病例级内容、实验快照、数据及本地配置，也不迁移旧 checkpoint。
+
+## 十六、2026-11-07：VQA 8×、并行入口与 report 位置指标
+
+发布标签 `sync-20261107`，完整 SHA 以源服务器发布回复及远端标签为准。本版新增 NeuroQA 8× 预算（输入 9555、输出 1170）、Concat 同卡放置、VQA 单卡并行入口、LocalRead 特定倍率入口及 report location 文本一致性指标，并保留本机各 shell 当前的 GPU 和倍率默认值。训练参数和默认倍率以对应脚本为准，目标机应通过本机配置、环境变量和 CLI 参数明确选择设备和实验范围。
+
+按用户确认包含 `scripts/marlowe/` 集群任务代码及测试；集群 account、partition、QoS 及资源要求需在目标集群核对，`scripts/marlowe/env.sh` 为本地配置，不进 Git，参见该目录 README。`.marlowe/`、`.marlowe-migration/`、logs、数据、模型、实验结果及本地配置不随本次提交。不要将机器路径或旧 checkpoint 作为同步代码的一部分恢复。
+
+目标机按第十三节先备份本机未提交内容和路径配置、获取并核对本节标签的完整 SHA，安全时快进，否则审阅合并；保留报告与 VQA 各自的模型、manifest、缓存和 Python 路径。特别检查 report 预处理缓存重命名后的哈希目录或兼容链接。仅进行所需的小样本/路径检查和代码回归，不需逐一读取全部数据内容。并行入口的资源设置针对特定 GPU 和环境，执行前先做 dry-run、核对显存和被调脚本，勿影响其他任务。

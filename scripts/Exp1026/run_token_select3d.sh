@@ -6,7 +6,7 @@ set -Eeuo pipefail
 export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-3}"
 export PROJECTOR_PYTHON="${PROJECTOR_PYTHON:-/mnt/sda/mingjie/conda_envs/projector/bin/python}"
 projector_method=token_select3d
-projector_ratios=(8 16)  # 支持 (64)、(32 64) 或原有倍率；也可用 --ratios 覆盖。
+projector_ratios=(256)  # 支持 (64)、(32 64) 或原有倍率；也可用 --ratios 覆盖。
 projector_lr=2e-4
 encoder_lr=2e-4  # Vision Encoder LoRA LR
 projector_max_epochs=20
@@ -23,7 +23,7 @@ cosine_min_lr_ratio=1.0  # 两段预热后保持恒定 LR，不衰减
 early_stopping_enabled=true
 early_stopping_patience=3
 early_stopping_min_delta=0.005  # 完整 validation answer CE
-projector_run_tag="token_select_r8_r16"      # 留空：自动生成时间戳名称；也可填 token_select_r8_r16
+projector_run_tag=""      # 留空：自动生成时间戳名称；也可填 token_select_r8_r16
 
 # 与 Baseline A 共用 constant_lr.yaml：AdamW、bf16、LoRA dropout=0.05，
 # weight_decay=0.01、grad_clip=1、固定数据划分及生成参数；机器路径来自 local_paths.yaml。

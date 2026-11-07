@@ -3,6 +3,7 @@ import numpy as np
 from sacrebleu.metrics import BLEU
 from rouge_score.rouge_scorer import RougeScorer
 from tqdm.auto import tqdm
+from src.evaluation.location import evaluate_locations
 
 
 def normalize(text):return ' '.join(text.split())
@@ -63,6 +64,7 @@ def evaluate_rows(rows,expected_ids,repeats=1000,seed=42,excluded_ids=()):
         for row,value in zip(rows,per_sample):groups.setdefault(row[field],[]).append(value)
         hierarchy[field]={'units':len(groups),'macro_rougeL':float(np.mean([np.mean(v) for v in groups.values()]))}
     result={'overall':overall,'strata':strata,'hierarchy':hierarchy,
+        'location':evaluate_locations(rows),
         'coverage':{'expected':len(expected_ids),'present':len(rows),
                     'empty':sum(not r['prediction'].strip() for r in rows),
                     'generation_limit':sum(r.get('hit_generation_limit',False) for r in rows)},

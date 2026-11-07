@@ -6,7 +6,7 @@ set -Eeuo pipefail
 export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0}"  # 物理 GPU 编号
 export PROJECTOR_PYTHON="${PROJECTOR_PYTHON:-/mnt/sda/mingjie/conda_envs/projector/bin/python}"
 projector_method=token_select3d
-projector_ratios=(16 32 64 128 256)  # 压缩方法支持 16 32 64 128 256；MLP 只支持 1
+projector_ratios=(128)  # 压缩方法支持 16 32 64 128 256；MLP 只支持 1
 vqa_preprocessing_version="${VQA_PREPROCESSING_VERSION:-v2}"  # v1 / v2，同时选择 manifest + adapter + cache
 vqa_invalid_sample_policy="${VQA_INVALID_SAMPLE_POLICY:-include_unreviewed}"  # include_unreviewed: 保留待复核病例；跳过损坏/缺失病例
 vqa_manifest_dir=""  # 自定义存储时，manifest 中影像路径必须对应下面的 cache

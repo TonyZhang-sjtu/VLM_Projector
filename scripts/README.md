@@ -128,6 +128,29 @@ configuration for resume/evaluation; use a fresh configuration for a new ratio.
 `--resolve-budget` previews parameters without loading model weights. The training
 run writes `budget_preflight.json` and records requested and actual compression.
 
+## Report location agreement
+
+Report evaluation also always computes location text agreement on CPU, including
+when `--metrics` selects only some of the clinical metrics. The shared default
+rule is `location_phrase_v2` in `src/evaluation/location.py`; it recognizes
+`abnormal signal focus` as a lesion anchor and normalizes both `cerebellum` and
+`cerebellar` to `cerebellum`. This is the primary rule for future evaluations of
+every projector and baseline, not an optional sensitivity analysis.
+
+The `location` object in `<output-dir>/metric.json`, `generation/metrics.json`
+and `scoring/metrics.json` records laterality, site and joint `side_site` accuracy,
+correct counts, eligible report/patient counts, unresolved/wrong predictions,
+rule versions and reference-label hashes. Reference eligibility retains the
+conservative historical single-lesion policy (267/113/112 eligible reports on
+the full 560-report BraTS test cohort). Missing/conflicting predictions count as
+incorrect; no eligible references gives `accuracy: null`. These are automatic
+text agreement labels, not manually verified or image-grounded localization.
+Checkpoint `--resume` also computes the current rule from the saved reports, so
+old generation metrics do not cause the final summary to omit location scores.
+Archived experiment snapshots retain their recorded historical protocols;
+compare newly scored models and baselines under the same location version and
+reference-label hash.
+
 ## BERTScore
 
 Omitting `--metrics` defaults to `all`, including BERTScore precision, recall

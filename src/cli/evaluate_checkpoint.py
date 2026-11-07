@@ -16,6 +16,7 @@ import subprocess
 import sys
 
 from src.evaluation.clinical import file_digest, read_jsonl, validate_rows, write_json
+from src.evaluation.location import evaluate_locations
 from src.data.datasets import ALL_DATASETS, normalize_datasets
 
 
@@ -322,6 +323,10 @@ def main():
         status = 'partial' if skipped or partial else 'complete'
         result = dict(plan, status=status, overall=overall, skipped_metrics=skipped,
                       partial_metrics=partial)
+        # Recompute this cheap, versioned text metric from saved reports even on
+        # --resume, which may reuse generation made before location scoring existed.
+        result['location'] = evaluate_locations(read_jsonl(
+            args.output_dir / 'generation/predictions.jsonl'))
         result.pop('commands')
         result['details'] = {'generation': 'generation/metrics.json',
                              'scoring': 'scoring/metrics.json' if scored else None,

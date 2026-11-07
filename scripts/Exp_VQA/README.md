@@ -31,26 +31,30 @@ CUDA_VISIBLE_DEVICES=0 bash scripts/Exp_VQA/vqa_avgpool3d.sh --ratios 128 256 --
 | `vqa_avgpool3d.sh` | avgpool3d | 128、256 |
 | `vqa_concat3d.sh` | concat3d | 128、256 |
 | `vqa_local_packer3d.sh` | local_packer3d | 128、256 |
+| `vqa_local_packer3d_r64.sh` | local_packer3d | 64 |
 | `vqa_perceiver_nv.sh` | perceiver_nv | 128、256 |
 | `vqa_convpool3d.sh` | convpool3d | 全五档 |
 | `vqa_mixer3d.sh` | mixer3d | 全五档 |
 | `vqa_attention_pool.sh` | attention_pool | 全五档 |
 | `vqa_perceiver_flamingo.sh` | perceiver_flamingo | 全五档 |
-| `vqa_adaptive_merge3d.sh` | adaptive_merge3d | 全五档 |
-| `vqa_token_select3d.sh` | token_select3d | 全五档 |
+| `vqa_adaptive_merge3d.sh` | adaptive_merge3d | 128 |
+| `vqa_token_select3d.sh` | token_select3d | 128 |
 | `vqa_bindformer3d.sh` | bindformer3d，knowledge_mode=none | 全五档 |
 | `vqa_baseline_a.sh` | BindFormer Baseline A 视觉结构，knowledge_mode=none | 128、256 |
 | `vqa_baseline_adirect.sh` | bindformer_adirect，global + 原始特征局部均值 | 128、256 |
-| `vqa_baseline_adirect_localread.sh` | bindformer_adirect_localread，局部均值 + 同区域 attention residual | 128、256 |
+| `vqa_baseline_adirect_localread.sh` | bindformer_adirect_localread，局部均值 + 同区域 attention residual | 16 |
+| `vqa_baseline_adirect_localread_r16.sh` | bindformer_adirect_localread | 16 |
+| `vqa_baseline_adirect_localread_r8.sh` | bindformer_adirect_localread | 8 |
 | `vqa_baseline_adirect_detail.sh` | bindformer_adirect_detail，diversity detail + 局部均值 | 128、256 |
 | `vqa_baseline_adirect_alllocal.sh` | bindformer_adirect，global_fraction=0，全局部均值 | 128、256 |
 | `vqa_mlp2x.sh` | mlp2x_gelu | 1，不压缩 |
 | `vqa_smoke.sh` | 默认 avgpool3d | 256，固定小题集 |
 
-所有压缩方法均支持 `--ratios 16 32 64 128 256`；默认值见表，也可编辑 shell 中的数组。当前两版模型输入都是 N=9555；后续若改变网格，必须修订预算协议，不能沿用这些数值。
+所有压缩方法均支持 `--ratios 8 16 32 64 128 256`；默认值见表，也可编辑 shell 中的数组。当前两版模型输入都是 N=9555；后续若改变网格，必须修订预算协议，不能沿用这些数值。`vqa_run01.sh` 和 `vqa_run02.sh` 是单卡并行调度入口，具有各自的 GPU、显存和倍率设置，使用前请先阅读脚本并用 `--dry-run` 预览。
 
 | 名义倍率 | 实际 M | 空间输出网格 DHW | Concat 分组 DHW |
 | --- | ---: | --- | --- |
+| 8 | 1170 | 6×15×13 | 9×1×1 |
 | 16 | 624 | 6×8×13 | 9×2×1 |
 | 32 | 288 | 9×8×4 | 6×2×4 |
 | 64 | 150 | 6×5×5 | 9×3×3 |
@@ -77,7 +81,7 @@ CUDA_VISIBLE_DEVICES=0 bash scripts/Exp_VQA/vqa_baseline_a.sh --preprocessing-ve
 
 ### ADirect 四种方法（2026-11-01）
 
-四个 `vqa_baseline_adirect*.sh` 对应 `scripts/Exp1026/run_baseline_adirect*.sh` 的视觉结构，使用同一 VQA launcher。默认均为 GPU 0、v2、`include_unreviewed`、r128/r256，支持全部五档倍率；各倍率从新 projector 和新视觉 LoRA 开始训练，再用验证集 best checkpoint 做 normal test，不加载 report checkpoint。入口只自动合并对应的 `configs/projector/bindformer_adirect*.yaml` 架构配置（包括 `checkpoint_blocks=true`），训练、数据和评测继续采用本目录的 VQA 配方，不合并 report 的训练配置或本机路径配置。
+四种 ADirect 方法对应 `scripts/Exp1026/run_baseline_adirect*.sh` 的视觉结构，使用同一 VQA launcher。默认均为 v2、`include_unreviewed`；LocalRead 默认 GPU 3、r16，其余三个入口默认 GPU 0、r128/r256。各倍率从新 projector 和新视觉 LoRA 开始训练，再用验证集 best checkpoint 做 normal test，不加载 report checkpoint。入口只自动合并对应的 `configs/projector/bindformer_adirect*.yaml` 架构配置（包括 `checkpoint_blocks=true`），训练、数据和评测继续采用本目录的 VQA 配方，不合并 report 的训练配置或本机路径配置。
 
 | 方法 | 视觉路径 |
 | --- | --- |

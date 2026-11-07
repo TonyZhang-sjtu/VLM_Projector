@@ -112,7 +112,10 @@ def build_launches(args):
     for ratio in args.ratios:
         overrides = [f'projector.name={args.projector}', f'projector.target_compression_ratio={ratio}', f'seed={args.seed}']
         if args.projector == 'concat3d':
-            overrides.append(f'training.projector_device={args.concat_device}')
+            # A single-GPU Concat needs ordinary model placement. A separate
+            # projector_device is reserved for CPU or a different logical GPU.
+            placement = 'null' if args.concat_device == 'cuda:0' else args.concat_device
+            overrides.append(f'training.projector_device={placement}')
         if args.projector == 'bindformer3d':
             overrides.append('projector.params.knowledge_mode=none')
         config = load_config([ROOT / 'configs/vqa/neuroqa' / filename, *architecture,

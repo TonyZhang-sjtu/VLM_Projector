@@ -3,10 +3,10 @@
 set -Eeuo pipefail
 
 # ===== 本次实验设置：可直接修改；命令行 --set / --ratios 可显式覆盖 =====
-export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-3}"
+export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-1}"
 export PROJECTOR_PYTHON="${PROJECTOR_PYTHON:-/mnt/sda/mingjie/conda_envs/projector/bin/python}"
 projector_method=convpool3d
-projector_ratios=(4 8 16 32)  # 支持 (64)、(32 64) 或原有倍率；也可用 --ratios 覆盖。
+projector_ratios=(128)  # 支持 (64)、(32 64) 或原有倍率；也可用 --ratios 覆盖。
 projector_lr=2e-4
 encoder_lr=2e-4  # Vision Encoder LoRA LR
 projector_max_epochs=20

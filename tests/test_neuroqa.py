@@ -142,6 +142,7 @@ def test_transform_composition_resamples_image_and_mask_identically_and_crop_aff
 
 @pytest.mark.parametrize('name', [n for n in PROJECTORS if n != 'mlp2x_gelu'] + ['bindformer_adirect_alllocal'])
 @pytest.mark.parametrize('ratio,expected,grid,group', [
+    (8,1170,[6,15,13],[9,1,1]),
     (16,624,[6,8,13],[9,2,1]), (32,288,[9,8,4],[6,2,4]),
     (64,150,[6,5,5],[9,3,3]), (128,75,[3,5,5],[17,3,3]), (256,36,[3,4,3],[18,4,5])])
 def test_all_mni_projector_budgets_forward_backward_roundtrip(name, ratio, expected, grid, group):
@@ -257,9 +258,9 @@ def test_canvas_qc_distinguishes_contact_from_actual_clipping():
 
 
 def test_vqa_cannot_silently_fall_back_to_manual_budget_or_report_knowledge():
-    with pytest.raises(ValueError, match='five ratios'):
+    with pytest.raises(ValueError, match='requires r8'):
         qa_config('projector.target_compression_ratio=null')
-    with pytest.raises(ValueError, match='five ratios'):
-        qa_config('projector.target_compression_ratio=8')
+    with pytest.raises(ValueError, match='requires r8'):
+        qa_config('projector.target_compression_ratio=4')
     with pytest.raises(ValueError, match='concept banks'):
         qa_config('projector.name=bindformer3d')

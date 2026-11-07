@@ -129,3 +129,42 @@ def test_saved_generation_is_reused_only_after_identity_validation(tmp_path):
     (tmp_path / 'generation/predictions.jsonl').write_text(json.dumps(row) + '\n')
     with pytest.raises(ValueError, match='checkpoint/manifest'):
         validate_saved_generation(tmp_path, 'abc', [sample])
+
+
+def test_resume_publishes_current_location_scores_from_legacy_generation(tmp_path, monkeypatch):
+    """Old generation files need no regeneration to receive the default rule."""
+    import sys
+    from omegaconf import OmegaConf
+    from src.cli import evaluate_checkpoint as cli
+    from src.evaluation.clinical import file_digest
+    from src.evaluation.location import VERSION
+
+    checkpoint = tmp_path / 'best.pt'
+    checkpoint.write_bytes(b'checkpoint identity only; model loading is mocked')
+    output = tmp_path / 'evaluation'
+    (output / 'generation').mkdir(parents=True)
+    (output / 'checkpoint.pt').write_bytes(checkpoint.read_bytes())
+    sample = SimpleNamespace(id='s1', patient_id='p1', case_id='c1', cohort='BraTS_GLI',
+                             sequence='T1W', split='test', finding='The lesion is in the left cerebellum.')
+    row = {k: getattr(sample, k) for k in ('id', 'patient_id', 'case_id', 'cohort', 'sequence', 'split')}
+    row.update(reference=sample.finding, prediction='An abnormal signal focus is in the left cerebellum.',
+               checkpoint_id=file_digest(checkpoint))
+    (output / 'generation/predictions.jsonl').write_text(json.dumps(row) + '\n')
+    (output / 'expected_ids.json').write_text('["s1"]')
+    legacy = {'status': 'complete', 'overall': {'bleu4': 12.}, 'bootstrap': {}}
+    (output / 'generation/metrics.json').write_text(json.dumps(legacy))
+    config = OmegaConf.create(dict(seed=42, training=dict(stage='joint_lora'),
+                                   data=dict(datasets=['brats']), evaluation=dict(datasets=None)))
+    monkeypatch.setattr(cli, 'checkpoint_config', lambda *args: config)
+    monkeypatch.setattr('src.data.manifest.load_manifests', lambda *args, **kwargs:
+                        ({'test': [sample]}, {'test': {'datasets': ['brats'], 'dataset_counts': {'brats': 1}}}))
+    monkeypatch.setattr(cli.subprocess, 'run', lambda *args, **kwargs: pytest.fail('Unexpected model subprocess'))
+    monkeypatch.setattr(sys, 'argv', ['evaluate_checkpoint', '--checkpoint', str(checkpoint),
+                                     '--output-dir', str(output), '--device', 'cuda:0',
+                                     '--resume', '--metrics', 'bleu4', '--repeats', '0'])
+    cli.main()
+    result = json.loads((output / 'metric.json').read_text())
+    assert result['status'] == 'complete' and result['overall'] == legacy['overall']
+    assert result['location']['version'] == VERSION
+    assert result['location']['overall']['side_site']['accuracy'] == 1.
+    assert json.loads((output / 'generation/metrics.json').read_text()) == legacy
