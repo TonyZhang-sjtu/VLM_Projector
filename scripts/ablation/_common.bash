@@ -10,7 +10,6 @@ run_anchorread_ablation() {
     echo 'Set CUDA_VISIBLE_DEVICES to one physical GPU index.' >&2
     return 2
   fi
-  ablation_recipe="$ablation_root/configs/experiments/anchorread3d_ablation/training.yaml"
   ablation_tag="${PROJECTOR_RUN_TAG:-${ablation_method}_s42_$(date -u +%Y%m%dT%H%M%S%NZ)}"
   export PYTHONNOUSERSITE=1 PYTHONUNBUFFERED=1 PYTHONUTF8=1 PYTHONIOENCODING=utf-8
   export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"
@@ -19,6 +18,7 @@ run_anchorread_ablation() {
   export OPENBLAS_NUM_THREADS="${OPENBLAS_NUM_THREADS:-4}"
   cd -- "$ablation_root"
   if [[ "$ablation_task" == rg ]]; then
+    ablation_recipe="$ablation_root/configs/experiments/anchorread3d_ablation/training.yaml"
     ablation_local="${PROJECTOR_LOCAL_CONFIG:-$ablation_root/configs/local_paths.yaml}"
     if [[ -f "$ablation_local" ]]; then
       ablation_paths=(--config "$ablation_local")
@@ -34,6 +34,7 @@ run_anchorread_ablation() {
       "$@" --projector "$ablation_method" \
       --eval-split test --metrics all --eval-sample-fraction 1.0 --require-full-test
   elif [[ "$ablation_task" == vqa ]]; then
+    ablation_recipe="$ablation_root/configs/experiments/anchorread3d_ablation/vqa_training.yaml"
     # The RG local overlay contains report manifests/cache. Only an explicitly
     # supplied VQA overlay is used here; the standard v2 preset supplies data.
     if [[ -n "${VQA_LOCAL_CONFIG:-}" ]]; then

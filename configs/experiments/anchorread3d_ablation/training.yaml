@@ -1,5 +1,6 @@
-# Shared by RG and VQA. Mirrors Exp1026/run_baseline_adirect_localread_r16.sh
+# RG only. Mirrors Exp1026/run_baseline_adirect_localread_r16.sh
 # and its constant_lr.yaml defaults. No data/preprocessing/task fields here.
+# VQA uses vqa_training.yaml to retain the original Exp_VQA recipe.
 seed: 42
 training:
   stage: joint_lora

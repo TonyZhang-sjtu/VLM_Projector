@@ -1,4 +1,4 @@
-# Controlled ablation; use scripts/ablation for the shared r16 training recipe.
+# Controlled ablation; scripts/ablation selects the original recipe for each task.
 projector:
   name: anchorread3d_a3_global_only
   hidden_size: 4096

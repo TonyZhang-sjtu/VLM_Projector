@@ -69,9 +69,10 @@ def test_joint_updates_task_loss_generation_and_checkpoint_resume(name, setting,
     torch.manual_seed(42)
     task, _, grid, extent, total, *_ = setting
     c = real_config(name, setting)
-    shared = load_config([ROOT/'configs/experiments/anchorread3d_ablation/training.yaml'])
-    c.training = copy.deepcopy(shared.training)
-    # Short-test schedule only; the eight production launchers retain 77/77.
+    recipe = 'training.yaml' if task == 'rg' else 'vqa_training.yaml'
+    task_recipe = load_config([ROOT/'configs/experiments/anchorread3d_ablation'/recipe])
+    c.training = copy.deepcopy(task_recipe.training)
+    # Short-test schedule only; production keeps RG 77/77 and VQA 150/150.
     c.training.projector_warmup_steps = c.training.joint_warmup_steps = 2
     c.training.max_steps = 6
     c.decoder.gradient_checkpointing = False

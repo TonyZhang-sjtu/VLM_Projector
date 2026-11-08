@@ -2,7 +2,8 @@
 
 日期：2026-11-08（Asia/Shanghai）。源目录：`/mnt/sda/jyzhang/VLM_Projector`。
 仓库：<https://github.com/TonyZhang-sjtu/VLM_Projector>。
-本次发布标签：`anchorread3d-ablation-20261108`；完整 commit SHA 以发布回复及远端标签解析结果为准。
+本次修订发布标签：`anchorread3d-ablation-20261108-r2`；完整 commit SHA 以发布回复及远端标签解析结果为准。
+**r2 修正：RG 沿用 RG 配方，VQA 对齐原 Exp_VQA 配方。初版 `anchorread3d-ablation-20261108` 将 RG 配方同时用于 VQA，不应再用于 VQA 主实验对齐的消融。** 四种 projector 算法、空间分区和预算没有改变。
 
 本次已实现 **A1–A4 × RG/VQA × 32×/256×，共 16 个独立实验配置**。
 新增独立 projector 名称、实现包、配置和八个 shell，复用原任务训练/评估流程。
@@ -48,7 +49,8 @@ A4 的局部 token 更多，空间粒度也随之改变，论文中不能把它�
 | `src/models/projectors/anchorread3d_ablation/regions.py` | A4 nested4-tail 分区、patch 索引及 padding mask；不改旧分区代码。 |
 | `src/models/projectors/anchorread3d_ablation/config.py` | 四个消融的默认参数和校验；不允许通过覆盖 global_fraction 偷换变体。 |
 | `configs/projector/anchorread3d_a*.yaml` | 每个变体的独立架构 preset，768 内部维度、8 heads、单层 global、共享 MLP head 等。 |
-| `configs/experiments/anchorread3d_ablation/training.yaml` | RG/VQA 共用的 r16 训练配方；不包含数据、预处理或 task 字段。 |
+| `configs/experiments/anchorread3d_ablation/training.yaml` | RG 专用，匹配 Exp1026 的 r16 配方；不包含数据、预处理或 task 字段。 |
+| `configs/experiments/anchorread3d_ablation/vqa_training.yaml` | VQA 专用，完整匹配 Exp_VQA 的 r16 配方；不加载 RG 训练配置。 |
 | `scripts/ablation/_common.bash` | 解释器/路径配置、独立输出位置、原任务 launcher 调用。 |
 | `scripts/ablation/{rg,vqa}_a*.sh` | 八个入口，各默认顺序运行 32×、256×。 |
 | `scripts/ablation/preflight.py` | 调用实际八个 shell 做 dry-run，保存 16 份解析配置、budgets.csv、summary.json。 |
@@ -77,24 +79,36 @@ RG 沿用当前原生预算协议；VQA 沿用 `neuroqa_mni1mm_shared_m_v1`，�
 名义 32/256 不等于精确 N/M，名义 global_fraction=0.25 也不等于取整后的精确 G/M。
 实际数值和 `allocation_version` 已写入 resolved_budget 和输出 metadata。
 
-训练完整参照 `scripts/Exp1026/run_baseline_adirect_localread_r16.sh`，只改变 projector 和压缩率：
+训练按任务分别对齐：RG 参照 `scripts/Exp1026/run_baseline_adirect_localread_r16.sh`；VQA 参照 `scripts/Exp_VQA/vqa_baseline_adirect_localread_r16.sh`。对比最终解析的完整非 projector 配置，而非只检查 shell 中显式列出的三个参数。
 
-| 项目 | 本次统一值 |
+| 共同项目 | 两个任务的值 |
 |---|---|
 | seed / stage | 42 / joint_lora |
 | LLM / encoder | LLM frozen；encoder 只训练 LoRA，rank16、alpha32、dropout0.05 |
 | 两组 LR | projector=2e-4，encoder=2e-4 |
-| batch / dtype | microbatch1，effective batch16，BF16，deterministic=true |
+| batch / dtype | microbatch1，effective batch16，BF16 |
 | epochs / cache | 最多20 epochs；feature_cache=false；不初始化/恢复旧 checkpoint |
-| warmup / hold | projector77、hold0、joint77；joint 阶段 projector hold_peak |
+| hold / joint mode | hold0；joint 阶段 projector hold_peak |
 | LR 下限 | cosine_min_lr_ratio=1.0，warmup 后恒定 LR |
-| early stopping | patience3，min_delta0.005 |
+| early stopping patience | 3 |
 | 其他 | AdamW wd0.01、betas[0.9,0.999]、eps1e-8、clip1.0；generation max_new_tokens192、greedy |
 
+| 按任务区分的参数 | RG | VQA（原 Exp_VQA） |
+|---|---:|---:|
+| projector_warmup_steps | 77 | 150 |
+| joint_warmup_steps | 77 | 150 |
+| early_stopping_min_delta | 0.005 | 0.002 |
+| projector_warmup_ratio | 0.0625 | 0.05 |
+| joint_warmup_ratio | 0.0625 | 0.05 |
+| save_every_steps | 0 | 50 |
+| deterministic | true | false |
+| log_optimizer_diagnostics | true | false |
+
+以上八项即初版消融与原 VQA 最终解析配置之间的全部训练差异。两项 warmup_ratio 仅在 steps=null 时生效；VQA deterministic=false 与原实验一致，随机 seed 仍为42。
 两个任务保留原有 loss、数据、采样、预处理和验证集选点协议；RG full test/all metrics；VQA test/normal、bootstrap1000、mixed_v2、include_unreviewed、exact_balanced_repeat。
 源机 VQA 数据检查按既有 include_unreviewed 策略通过，仍有 131 个待复核 QC case；没有将这些结果标成已完成全局 QC。
 
-旧 VQA A0 可能使用 150/150 warmup 和 min_delta0.002。制作消融表前必须核对 A0 的保存配置；不一致则使用本次统一配方补跑 A0。同步不应为迎合旧 A0 而改动 A1–A4 的训练配方。
+撤回初版“为匹配消融而补跑 VQA A0”的建议：消融应对齐已有 VQA 主实验。若初版 VQA 消融已经开始运行，不覆盖其记录，另起修正配方的 fresh run；旧 run 的 resume 使用保存配置，不会自动修正这八项。
 
 ## 4. Marlowe 需要适配的路径
 
@@ -147,7 +161,7 @@ decoder:
   path: /MARLOWE_MODELS/llama3.1-8b-instruct
 ```
 
-这些 overlay 只改路径，不夹带另一套训练超参数、task、预处理算法或 projector。RG/VQA 各自的 preset 先加载，路径 overlay 随后加载，本次共享训练 YAML 再加载；显式 CLI `--set` 仍可覆盖，因此必须审阅最终解析配置。
+这些 overlay 只改路径，不夹带另一套训练超参数、task、预处理算法或 projector。RG/VQA 各自的 preset 先加载，路径 overlay 随后加载，对应任务的消融训练 YAML 再加载；显式 CLI `--set` 仍可覆盖，因此必须审阅最终解析配置。
 
 工作树不含被忽略资产。可在新 checkout 建立到本机既有资产/依赖的必要链接，保留原目录不变。不要链接旧 `src/`，不要用旧 PYTHONPATH 或 editable install 导入另一份实现。临床依赖在独立评分子进程加载，不要把它的 NumPy overlay 全局加到训练环境。
 
@@ -217,7 +231,7 @@ exec bash "scripts/ablation/${task}_${variant}.sh" "$@"
 RG：`$ANCHORREAD_ABLATION_RUNS_ROOT/rg/<tag>/r{32,256}/`，含 training_config、joint_lora/checkpoints、evaluation/best_test。
 VQA：`$ANCHORREAD_ABLATION_RUNS_ROOT/vqa/<target>/v2/<scope>/mixed/<projector>/r<ratio>/s42/<tag>/`；预测/指标在 results 根对应 `/vqa_raw/.../test/normal/`。
 
-RG `--resume-run` 指向含 sweep_plan.json 的父目录，复用已完成训练再续评估/后续倍率；它不是任意 last.pt 中断恢复器。VQA `--resume-run` 指向单倍率 launch.json 所在目录，可从 last.pt 恢复，或配合 `--evaluate-only` 评估 best。恢复使用保存配置，不会自动套用新的 r16 配方；跨服务器旧 run 里有绝对路径，不作为本轮 fresh 实验复用。
+RG `--resume-run` 指向含 sweep_plan.json 的父目录，复用已完成训练再续评估/后续倍率；它不是任意 last.pt 中断恢复器。VQA `--resume-run` 指向单倍率 launch.json 所在目录，可从 last.pt 恢复，或配合 `--evaluate-only` 评估 best。恢复使用保存配置，不会自动套用修正后的任务配方；跨服务器旧 run 里有绝对路径，不作为本轮 fresh 实验复用。
 
 ```bash
 # 汇总工具自身不读取 shell 的输出根环境变量，必须显式传入。
@@ -230,8 +244,12 @@ RG `--resume-run` 指向含 sweep_plan.json 的父目录，复用已完成训练
 
 ## 7. 源机验证记录与上传范围
 
+r2 配方修正增加了对原 Exp_VQA shell 的完整非 projector 配置和 evaluation 设置比较，仅排除独立输出目录；检查所有 A1–A4、32×/256×。RG 仍对原 Exp1026 r16 shell 比较。修正后的 dry-run 和测试记录单独保存在 `experiments/anchorread3d_vqa_recipe_fix_20261108/`，不覆盖下面的初版历史记录。
+
+r2 验证：16 组启动 dry-run 通过；119 项结构/启动/结果回归与 16 项小型 backbone 训练集成测试通过，共 135 项。VQA 八组配置与原 LocalRead r16 入口的非 projector 配置/评估设置无剩余差异。另核对了九个原 VQA 入口的 18 份配置；Concat 的 CPU projector placement 是其原有专用设置，其余相关训练配置一致。
+
 - 两轮八个 shell/16 组 dry-run 全通过，预算记录完全一致；VQA 数据按既有 include_unreviewed 策略检查通过。
-- 相关测试去重后 698 项通过，未解决失败为 0。包含 16 组实际 N/M、768→4096 宽度 FP32 前向/反向/参数更新；16 组真实网格小宽度确定性 BF16/checkpointing；16 组小型 backbone 的 BF16 RG/VQA loss、LoRA 阶段、生成和生产 checkpoint 保存/恢复。
+- 初版相关测试去重后 698 项通过，未解决失败为 0，但当时配方对照错误地以 RG 为统一基准，不能作为 VQA 与主实验配方一致的证据。结构测试包含 16 组实际 N/M、768→4096 宽度 FP32 前向/反向/参数更新；16 组真实网格小宽度确定性 BF16/checkpointing；16 组小型 backbone 的 BF16 RG/VQA loss、LoRA 阶段、生成和生产 checkpoint 保存/恢复。
 - 另有 7 组完整宽度 BF16 检查通过后，因 AVX2 CPU 软件 BF16 耗时主动结束，没有出现测试失败。正式训练仍是 BF16。
 - 上述随机特征/小型 backbone 检查不等于真实 NeuroVFM + Llama 8B CUDA 端到端短训。源机全部 GPU 被已有任务占用，本轮没有进行该项，也没有启动正式实验。
 - 完整本地记录在 `experiments/anchorread3d_ablation_preflight_20261108/`。该目录含机器路径、配置及数据预检内容，保留源机，不整目录上传；本节为可随代码发布的验证摘要。
@@ -245,7 +263,7 @@ RG `--resume-run` 指向含 sweep_plan.json 的父目录，复用已完成训练
 ```text
 请把 Marlowe 上的 VLM_Projector 同步到本次 AnchorRead3D ablation 发布：
 仓库 https://github.com/TonyZhang-sjtu/VLM_Projector.git
-标签 anchorread3d-ablation-20261108
+标签 anchorread3d-ablation-20261108-r2
 RELEASE_COMMIT=<源机本次发布的完整 SHA>
 
 目标：准备 A1–A4 × RG/VQA × 32×/256× 共 16 个 fresh 实验的可运行代码、
@@ -281,13 +299,18 @@ A1/A2 固定原 G/L/分区；A3/A4 固定总 M，是预算分配对照。
 LocalResidualRead.forward 的 add_mean=True 默认参数（只有 A2 传False）。
 默认旧 A0 算法不变，原训练器/数据/评估不变。不要把这些变体改写成其他 baseline。
 
-统一训练 YAML 是 configs/experiments/anchorread3d_ablation/training.yaml，
-参照 Exp1026/run_baseline_adirect_localread_r16.sh：seed42、joint_lora、LLM冻结、
-两组LR2e-4、LoRA16/32/0.05、micro1/effective16、BF16 deterministic、20epochs、
-warmup77/hold0/joint77、hold_peak、cosine下限1.0、早停3/0.005。
+按任务使用 configs/experiments/anchorread3d_ablation/ 下的两个 YAML：
+RG用training.yaml，对齐Exp1026/run_baseline_adirect_localread_r16.sh；
+VQA用vqa_training.yaml，对齐Exp_VQA/vqa_baseline_adirect_localread_r16.sh。
+共同参数：seed42、joint_lora、LLM冻结、两组LR2e-4、LoRA16/32/0.05、
+micro1/effective16、BF16、20epochs、hold0、hold_peak、cosine下限1.0、早停patience3。
+RG：warmup77/77、fallback比例0.0625/0.0625、min_delta0.005、save_every_steps0、
+deterministic=true、log_optimizer_diagnostics=true。
+VQA：warmup150/150、fallback比例0.05/0.05、min_delta0.002、save_every_steps50、
+deterministic=false、log_optimizer_diagnostics=false，完整匹配原VQA实际配置。
 RG/VQA 各自的数据、loss、预处理、采样和验证选点不合并；VQA 保留 mixed_v2、
-include_unreviewed、exact_balanced_repeat。旧VQA A0若是150/150和0.002，
-记录其不匹配，后续应同配方补跑A0，不能悄悄改变消融配方。
+include_unreviewed、exact_balanced_repeat。不需为匹配初版错误配方重跑原VQA A0。
+如果已经用初版启动VQA消融，保留记录，另起新run；resume不会自动修正旧配方。
 
 路径适配：显式设置本机 PROJECTOR_PYTHON；RG 用 PROJECTOR_LOCAL_CONFIG，
 VQA 单独用 VQA_LOCAL_CONFIG。overlay只放本机模型、manifest、缓存等路径，
@@ -310,7 +333,7 @@ RG full test/all metrics，VQA test/normal/bootstrap1000。用独立run-tag和�
 先用本机解释器运行 scripts/ablation/preflight.py --output-dir <新目录>
 --check-vqa-data，检查16组：RG32 M275 G67/L208、RG256 M35 G7/L28；
 VQA32 M288 G72/L216、VQA256 M36 G8/L28（这些G/L是A1/A2；A3全G、A4全L）。
-核对实际N分别8775/9555、共享配方、任务数据、独立输出及fresh初始化。
+核对实际N分别8775/9555、各任务原实验配方、任务数据、独立输出及fresh初始化。
 运行 tests/test_anchorread3d_ablation.py、tests/test_anchorread3d_results.py；
 training测试的随机特征完整宽度部分不依赖真实权重，小backbone部分需要本机
 tokenizer和默认相对布局manifest，fixture不会自动读取shell的路径overlay。

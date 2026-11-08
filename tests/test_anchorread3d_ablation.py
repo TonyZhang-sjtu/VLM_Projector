@@ -206,7 +206,7 @@ def capture_shell(script, tmp_path):
     return json.loads(result.stdout)
 
 
-def test_eight_launchers_match_r16_recipe_and_keep_task_pipelines(tmp_path):
+def test_eight_launchers_match_their_task_reference_recipes(tmp_path):
     from src.cli.baseline_sweep import parser as rg_parser
     from src.cli.vqa_sweep import parser as vqa_parser, build_launches, commands
     reference_args = capture_shell(ROOT/'scripts/Exp1026/run_baseline_adirect_localread_r16.sh', tmp_path)
@@ -215,6 +215,10 @@ def test_eight_launchers_match_r16_recipe_and_keep_task_pipelines(tmp_path):
                   ROOT/'configs/preprocessing/native_grid.yaml']
     original = load_config([*base_files, ROOT/f'configs/projector/{reference.projector}.yaml',
                             *reference.config], reference.overrides)
+    vqa_reference_args = capture_shell(ROOT/'scripts/Exp_VQA/vqa_baseline_adirect_localread_r16.sh', tmp_path)
+    vqa_reference = vqa_parser().parse_args(vqa_reference_args[3:])
+    vqa_originals = {int(c.projector.target_compression_ratio): (c, s)
+                     for c, s in build_launches(vqa_reference)}
     for name in METHODS:
         suffix = name.removeprefix('anchorread3d_')
         for task in ('rg', 'vqa'):
@@ -240,10 +244,14 @@ def test_eight_launchers_match_r16_recipe_and_keep_task_pipelines(tmp_path):
                     train, evaluations = commands(c, spec)
                     assert 'src.cli.vqa_train' in train and len(evaluations) == 1
                     assert 'train/checkpoints/best.pt' in evaluations[0][1][evaluations[0][1].index('--checkpoint') + 1]
-                    got = OmegaConf.to_container(c.training)
-                    want = OmegaConf.to_container(original.training)
-                    # Disabled cache path and run location are task-specific bookkeeping.
+                    vqa_original, original_spec = vqa_originals[int(c.projector.target_compression_ratio)]
+                    # Compare the entire effective nonprojector config against the
+                    # actual Exp_VQA shell, not RG or a hand-written subset.
+                    got = OmegaConf.to_container(c, resolve=True)
+                    want = OmegaConf.to_container(vqa_original, resolve=True)
                     for value in (got, want):
-                        value.pop('run_dir'); value.pop('feature_cache_dir')
+                        value.pop('projector')
+                        value['training'].pop('run_dir')
                     assert got == want
-                    assert c.seed == original.seed and c.generation == original.generation
+                    assert {k: v for k, v in spec['evaluation'].items() if k != 'root'} == {
+                        k: v for k, v in original_spec['evaluation'].items() if k != 'root'}

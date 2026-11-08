@@ -65,8 +65,15 @@ def main():
                 ratio = int(p['target_compression_ratio'])
                 expected = {('rg', 32): 275, ('rg', 256): 35, ('vqa', 32): 288, ('vqa', 256): 36}[task, ratio]
                 assert b['expected_output_tokens'] == expected == b['global_tokens'] + b['local_tokens']
-                assert t['projector_warmup_steps'] == t['joint_warmup_steps'] == 77
-                assert t['early_stopping_min_delta'] == .005 and t['cosine_min_lr_ratio'] == 1
+                warmup, fallback, delta, save_steps, deterministic, diagnostics = (
+                    (77, .0625, .005, 0, True, True) if task == 'rg'
+                    else (150, .05, .002, 50, False, False))
+                assert t['projector_warmup_steps'] == t['joint_warmup_steps'] == warmup
+                assert t['projector_warmup_ratio'] == t['joint_warmup_ratio'] == fallback
+                assert t['early_stopping_min_delta'] == delta and t['cosine_min_lr_ratio'] == 1
+                assert t['save_every_steps'] == save_steps
+                assert t['deterministic'] is deterministic
+                assert t['log_optimizer_diagnostics'] is diagnostics
                 assert t['projector_lr'] == t['encoder_lr'] == 2e-4
                 assert t['effective_batch_size'] == 16 and t['microbatch_per_device'] == 1
                 (out/f'{stem}_r{ratio}.yaml').write_text(yaml.safe_dump(config, sort_keys=False))

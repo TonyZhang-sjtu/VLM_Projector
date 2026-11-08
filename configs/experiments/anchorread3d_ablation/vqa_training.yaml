@@ -1,0 +1,52 @@
+# VQA only. Matches the resolved Exp_VQA/vqa_baseline_adirect_localread_r16.sh
+# recipe, including defaults inherited from base.yaml and mixed_v2.yaml.
+# No data/preprocessing/task/projector fields here; use VQA_LOCAL_CONFIG for paths.
+seed: 42
+training:
+  stage: joint_lora
+  deterministic: false
+  distributed: none
+  microbatch_per_device: 1
+  effective_batch_size: 16
+  mixed_precision: bf16
+  projector_lr: 2.0e-4
+  encoder_lr: 2.0e-4
+  weight_decay: 0.01
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
+  grad_clip_norm: 1.0
+  warmup_ratio: 0.0
+  warmup_steps: null
+  projector_warmup_steps: 150
+  projector_hold_steps: 0
+  joint_warmup_steps: 150
+  projector_warmup_ratio: 0.05
+  joint_warmup_ratio: 0.05
+  joint_warmup_projector_mode: hold_peak
+  cosine_min_lr_ratio: 1.0
+  max_epochs: 20
+  max_steps: null
+  early_stopping_enabled: true
+  early_stopping_patience: 3
+  early_stopping_min_delta: 0.002
+  feature_cache: false
+  init_checkpoint: null
+  resume: null
+  train_limit: null
+  val_limit: null
+  train_ids_file: null
+  val_ids_file: null
+  num_workers: 0
+  validation_generation_samples: 14
+  save_every_steps: 50
+  checkpoint_epochs: []
+  log_optimizer_diagnostics: false
+  lora:
+    rank: 16
+    alpha: 32
+    dropout: 0.05
+    bias: none
+generation:
+  do_sample: false
+  num_beams: 1
+  max_new_tokens: 192

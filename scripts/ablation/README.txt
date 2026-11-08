@@ -39,23 +39,39 @@ VQA   256       9555  36   8,28        36,0    0,36     9×4
 实际 N/M、G/M、allocation_version、children_per_parent 写入保存配置与预算记录。
 A1/A2 的 global_fraction 固定 0.25，A3 固定 1，A4 固定 0；误覆盖会报错。
 
-统一训练配方
-------------
-configs/experiments/anchorread3d_ablation/training.yaml
-以 scripts/Exp1026/run_baseline_adirect_localread_r16.sh 为参考：
+按任务对齐原实验配方（2026-11-08 修正）
+--------------------------------------
+RG：configs/experiments/anchorread3d_ablation/training.yaml，参照
+scripts/Exp1026/run_baseline_adirect_localread_r16.sh。
+VQA：configs/experiments/anchorread3d_ablation/vqa_training.yaml，参照
+scripts/Exp_VQA/vqa_baseline_adirect_localread_r16.sh。
+两者共同使用：
 seed 42，joint_lora，冻结 LLM，encoder LoRA rank16/alpha32/dropout0.05；
 projector/encoder LR 都为 2e-4；BF16；microbatch 1、effective batch 16；
-20 epochs；projector warmup 77、hold 0、joint warmup 77；
+20 epochs；projector hold 0；
 joint warmup projector hold_peak；cosine_min_lr_ratio 1.0；
-early stopping patience 3、min_delta 0.005；其余优化参数也保持一致。
-RG 与 VQA 共用训练配方，不共用数据/预处理/loss/验证集选择协议。
+early stopping patience 3。
+
+参数                           RG          VQA（与原 Exp_VQA 一致）
+projector_warmup_steps          77          150
+joint_warmup_steps              77          150
+early_stopping_min_delta        0.005       0.002
+projector_warmup_ratio          0.0625      0.05
+joint_warmup_ratio              0.0625      0.05
+save_every_steps               0           50
+deterministic                  true        false
+log_optimizer_diagnostics      true        false
+
+两项 warmup_ratio 只在显式 warmup_steps=null 时作为备用值。
+deterministic=false 是原 VQA 实际解析的配置，seed 仍为 42。
+RG/VQA 的数据、预处理、loss、验证集选择协议继续各自保留。
 VQA 保留 mixed_v2、include_unreviewed、exact_balanced_repeat 和 QA task。
 VQA 的 unreviewed_training/evaluation 标签与 QC 选择记录如实保留。
 
-注意：旧 VQA 主实验脚本的 warmup=150/150、min_delta=0.002，
-与用户此次指定的 r16 配方不同。旧脚本未修改。
-比较 A0 与这些消融前，要核对 A0 的保存配置；不一致时应以同配方补跑 A0。
-不能直接把旧 ADirect 的分数当作同配方 A1，也不能仅凭方法名认定可复用。
+初版把 RG 配方也用于 VQA 是实现错误，本修订已纠正全部八个字段。
+不需要为了匹配初版错误配方而重跑已有 VQA A0。
+若曾用初版启动 VQA 消融，保留其记录并另起新 run；--resume-run 读取旧保存配置，
+不会自动切换到此次修正配方，不应混入与原 VQA 主实验对比的消融表。
 
 启动
 ----
@@ -127,7 +143,10 @@ RG 的临床指标 partial 状态也保留。
   /mnt/sda/mingjie/conda_envs/projector/bin/python scripts/ablation/preflight.py \
     --output-dir experiments/anchorread3d_ablation_preflight_new --check-vqa-data
 
-本次验证存于 experiments/anchorread3d_ablation_preflight_20261108/。
+初版验证存于 experiments/anchorread3d_ablation_preflight_20261108/；
+任务配方修正的记录存于 experiments/anchorread3d_vqa_recipe_fix_20261108/。
+启动配置回归逐项对比各任务原始 shell 的完整非 projector 配置和评估设置，
+只排除独立输出目录，防止把 RG 配方再次引入 VQA。
 tests/test_anchorread3d_ablation.py 覆盖：结构差异、A1 数值等价、A2 mean query、
 A3 原 global block 等价、A4 无丢弃/重叠/跨 cell 读取、16 组预算与 checkpoint。
 tests/test_anchorread3d_training.py 覆盖：
