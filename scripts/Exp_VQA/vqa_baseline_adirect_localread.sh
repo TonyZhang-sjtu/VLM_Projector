@@ -4,7 +4,7 @@
 set -Eeuo pipefail
 
 # ===== 可直接修改；命令行 --set / --ratios 等优先于下面的默认值 =====
-export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-3}"  # 物理 GPU 编号
+export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0}"  # 物理 GPU 编号
 export PROJECTOR_PYTHON="${PROJECTOR_PYTHON:-/mnt/sda/mingjie/conda_envs/projector/bin/python}"
 projector_method=bindformer_adirect_localread
 projector_ratios=(16)  # 压缩方法支持 16 32 64 128 256；MLP 只支持 1

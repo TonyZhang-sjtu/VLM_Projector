@@ -1,0 +1,53 @@
+目的
+2026-11-08 更新：实际执行入口和最新对照状态见同目录 COMPARISON.txt。
+新增官方 RadMatch 独立环境、真实 CPU RadGraph 压力测试及 protocol_v2；原 v1 核验包保留。
+基于已有 RadGraph-XL 的实体关系图生成脑 MRI 位置候选和复核表，整理 GREEN 位置错误，并准备 RadMatch 的固定试验输入。
+这是独立诊断协议的草稿，不是新指标的验证结果。原 location_phrase_v2、训练代码、原指标文件和 checkpoint 均不改动。
+
+生成本地核验包（在项目根目录）
+python -m experiments.brain_location_audit_v1.prepare
+可通过 --index 和 --output 指定绝对路径。输出目录必须尚不存在，以免覆盖人工标注。
+
+输出
+location_review_560.xlsx: 560 条参考预标注，全部 pending；360 对匿名模型输出人工复核；28 对合成测试。
+reference_candidates.jsonl: 自动候选、参考原文、文本和图哈希；不是 gold。
+draft_diagnostics_by_setting.csv: 57 个 RG 设置的自动图一致性草稿和 GREEN 位置错误计数。
+draft_graph_diagnostics/: 每条输出的位置关系候选及计分记录。
+pilot_identity_map.json: 独立保存匿名 ID 对应方法；不交给盲审者。
+radmatch_pilot/: 24 位患者各一个序列，15 个设置，相同病例；以及合成测试输入。
+manifest.json: 范围、输入身份、协议版本、候选覆盖和执行状态。
+
+标签原则
+只读取显式病灶 located_at 及其解剖 modify 关系，不将受压脑室、周围水肿或中线移位当成病灶位置。
+参考和预测使用同一套图归一化；未知不等于阴性、不等于双侧。
+阳性位置集合支持多脑区。联合关系保持侧别与脑区配对，不建立任意笛卡尔积。
+同一脑区的 left+right 规范化为 bilateral；左额叶+右颞叶保持两个不同位置。
+双侧与单侧严格不匹配；脑干不自动赋值中线。
+side/site/joint 分开评价，预测未写侧别不妨碍 site 得分。
+参考字段不完整时该字段的精确集合评价不适用；预测为空、否定或不确定不能改变分母。
+细粒度部位不自动提升为父脑区；coarse 映射仅为可选敏感性分析，不用于默认主分数。
+中线病灶与中线移位分别保存。没有明确方向的移位不能推断 left/right。
+多个同部位病灶只记录位置集合；当前不能评价物理病灶实例的一一对应或病灶计数。
+
+人工核验
+Reference_review 的 gold_* 字段初始为空。逐条核验阳性/阴性/不确定事实及证据，在字段完整性明确后填写 eligible。
+reference 未描述位置不能从 prediction 补标签；待复核的源文本必须先核查。
+Prediction_review 的方法身份已隐藏。先独立记录人工事实和差错，再与自动提取对照。
+自动图和人工有分歧需要记录提取错误，不能直接归罪于报告生成模型。
+两位标注者独立复核和争议裁决是发表前建议；当前没有任何临床专家核验已完成的声明。
+
+RadMatch
+查阅的公开版本为 0.2.2，要求 Python >=3.11；当前 projector 环境是 Python 3.10.14。
+新实验已从锁定 commit bc523a68c29b1807fe8e5c4c32d39cf4ce111e6c 安装到 runtime/venv，不升级训练环境。
+仅使用 PyPI 版本号不能保证提示词与本次审查 commit 相同。
+启动一个已有、空闲的本地 judge 服务后，设置 RADMATCH_LOCAL_BASE_URL、RADMATCH_BIN 和 RADMATCH_JUDGE。
+RADMATCH_JUDGE 必须是 local: 前缀；本脚本不调用付费远程 API，不启动 GPU 服务。
+默认 workers=1，避免同时发起大量推理。
+bash experiments/brain_location_audit_v1/run_radmatch_pilot.sh --dry-run
+bash experiments/brain_location_audit_v1/run_radmatch_pilot.sh
+跨服务器同步时通过 LOCATION_AUDIT_DIR 指向核验包路径；无需改训练配置。
+使用 --fewshot brain-mr。必须核对实际加载了该 bundle；上游在 bundle 缺失时可能回退为 zero-shot。
+保留 RadMatch failed_reports 和 degraded 状态；不能因模型输出难以判定而悄悄减少分母。
+截至本次更新，已验证官方实现及 brain-mr 演示的确定性计分，尚未执行患者报告的 RadMatch LLM 判分或部署 judge。
+
+研究与贡献定位见 research.json。现有方法已有细粒度位置和侧别评价；新的 F1/准确率命名不足以构成指标创新。

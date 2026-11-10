@@ -1,6 +1,6 @@
 # GitHub 上传与两台服务器同步流程
 
-> 最新发布：`sync-20261107`（VQA 8×、并行入口、report 位置指标及集群脚本）；本轮同步说明见文末第十六节。此前标签和旧章节仅用于查阅历史版本，旧版计划数量及训练参数不代表当前设置。
+> 最新发布：`sync-20261110`；本轮同步说明见文末第十七节。此前标签和旧章节仅用于查阅历史版本，旧版计划数量及训练参数不代表当前设置。
 
 本轮日期：2026-10-26。源仓库：`/mnt/sda/jyzhang/VLM_Projector`。
 GitHub 私有仓库：[TonyZhang-sjtu/VLM_Projector](https://github.com/TonyZhang-sjtu/VLM_Projector)，分支 `main`，本轮固定发布标签 `sync-20261026`。
@@ -617,3 +617,13 @@ https://github.com/TonyZhang-sjtu/VLM_Projector.git 的固定版本：
 按用户确认包含 `scripts/marlowe/` 集群任务代码及测试；集群 account、partition、QoS 及资源要求需在目标集群核对，`scripts/marlowe/env.sh` 为本地配置，不进 Git，参见该目录 README。`.marlowe/`、`.marlowe-migration/`、logs、数据、模型、实验结果及本地配置不随本次提交。不要将机器路径或旧 checkpoint 作为同步代码的一部分恢复。
 
 目标机按第十三节先备份本机未提交内容和路径配置、获取并核对本节标签的完整 SHA，安全时快进，否则审阅合并；保留报告与 VQA 各自的模型、manifest、缓存和 Python 路径。特别检查 report 预处理缓存重命名后的哈希目录或兼容链接。仅进行所需的小样本/路径检查和代码回归，不需逐一读取全部数据内容。并行入口的资源设置针对特定 GPU 和环境，执行前先做 dry-run、核对显存和被调脚本，勿影响其他任务。
+
+## 十七、2026-11-10：LocalRead 入口及分析工具同步
+
+发布标签 `sync-20261110`；完整 SHA 以源服务器的发布回复和远端标签为准。上一版之后的 AnchorRead3D 更新已包含在本次提交的历史中。此版保留当前 LocalRead 启动默认值：report 主入口为 GPU 0、r16，VQA 主入口为 GPU 0、r16，VQA r16 专用入口为 GPU 1、r16；可通过各自支持的环境变量和 CLI 调整。
+
+Marlowe 新增历史复现实验与完成结果传输工具。M18 的参考配置、传输清单和相关 checkpoint/结果是外部本机资产，不随 Git 上传；见 `scripts/marlowe/README.md`。目标机需要自行保留及核验路径和环境，不要用来源不明的文件代替。
+
+本版包含 AnchorRead3D 独立评测源码、位置评价 V1/V3 源码、相关测试和使用说明；它们引用的任务清单、模型、实验记录、逐病例报告及工作簿均不随代码同步。`GRAPH_V3_PAPER_ANALYSIS_1108.md` 是含实验结果的分析稿，留在源机。
+
+同步时参照第十三节：先检查任务、备份本地代码及路径配置，再获取本标签并核对源服务器发布的完整 SHA；安全时快进，否则审阅合并。保留目标机 Python、数据、模型、manifest 和缓存配置，并检查 report 预处理缓存的兼容路径。无需逐个校验所有数据内容；不自动启动正式训练或传输已有结果。

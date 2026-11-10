@@ -12,7 +12,7 @@
 | `run_baseline_a_r128_r256.sh` | BindFormer Baseline A | 128 / 256 | 0 |
 | `run_baseline_a4_r128_r256.sh` | A4 四子区均值 | 128 / 256 | 3 |
 | `run_baseline_adirect.sh` | ADirect 原始子区均值直通 | 32 / 64（当前顶部数组为 64 / 32，sweep 排序执行） | 0 |
-| `run_baseline_adirect_localread.sh` | ADirect_LocalRead：一次局部 attention 残差 | 32 / 64 | 3 |
+| `run_baseline_adirect_localread.sh` | ADirect_LocalRead：一次局部 attention 残差 | 16 | 0 |
 | `run_baseline_adirect_localread_r8.sh` | ADirect_LocalRead | 8 | 0 |
 | `run_baseline_adirect_localread_r16.sh` | ADirect_LocalRead | 16 | 1 |
 | `run_baseline_adirect_localread_r256.sh` | ADirect_LocalRead | 256 | 2 |
@@ -27,7 +27,7 @@
 | `run_perceiver_nv_r128_r256.sh` | Perceiver-NV | 128 / 256 | 3 |
 | `run_token_select3d.sh` | TokenSelect | 256 | 3 |
 
-共20个单方法入口、42个默认实验；`run01.sh` 另将三个 ADirect 变体的 128×/256× 实验按顺序串联，不是新增模型方法。各入口内部依次执行所选倍率，每个倍率从预训练模型和全新 projector/LoRA/optimizer 初始化，训练结束后评测该次最低 validation CE 的 `best.pt`，再进行下一倍率。不要给所有脚本统一附加 `--ratios 128 256`；MLP只支持1×。
+共20个单方法入口、41个默认实验；`run01.sh` 另将三个 ADirect 变体的 128×/256× 实验按顺序串联，不是新增模型方法。各入口内部依次执行所选倍率，每个倍率从预训练模型和全新 projector/LoRA/optimizer 初始化，训练结束后评测该次最低 validation CE 的 `best.pt`，再进行下一倍率。不要给所有脚本统一附加 `--ratios 128 256`；MLP只支持1×。
 
 ## 统一训练配方
 
@@ -153,7 +153,7 @@ CUDA_VISIBLE_DEVICES=3 bash scripts/Exp1026/run_baseline_adirect_detail.sh
 CUDA_VISIBLE_DEVICES=3 bash scripts/Exp1026/run_baseline_adirect_alllocal.sh
 ```
 
-以上命令依次完成 128× 训练、best.pt 全量 test / 全部指标，再启动 256×；LocalRead 的默认倍率为 32 / 64，示例中已显式覆盖。
+以上命令依次完成 128× 训练、best.pt 全量 test / 全部指标，再启动 256×；LocalRead 的默认倍率为 16，示例中已显式覆盖。
 可加 `--ratios 256` 只跑一个倍率，或 `--run-tag NAME` 指定新输出名。
 全局部默认 run tag 含 `alllocal`，避免与标准 ADirect 混淆。
 仍支持 `PROJECTOR_PYTHON`、`PROJECTOR_LOCAL_CONFIG` 和 `PROJECTOR_OUTPUT_ROOT`。

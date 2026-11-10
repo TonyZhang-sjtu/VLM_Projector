@@ -81,7 +81,7 @@ CUDA_VISIBLE_DEVICES=0 bash scripts/Exp_VQA/vqa_baseline_a.sh --preprocessing-ve
 
 ### ADirect 四种方法（2026-11-01）
 
-四种 ADirect 方法对应 `scripts/Exp1026/run_baseline_adirect*.sh` 的视觉结构，使用同一 VQA launcher。默认均为 v2、`include_unreviewed`；LocalRead 默认 GPU 3、r16，其余三个入口默认 GPU 0、r128/r256。各倍率从新 projector 和新视觉 LoRA 开始训练，再用验证集 best checkpoint 做 normal test，不加载 report checkpoint。入口只自动合并对应的 `configs/projector/bindformer_adirect*.yaml` 架构配置（包括 `checkpoint_blocks=true`），训练、数据和评测继续采用本目录的 VQA 配方，不合并 report 的训练配置或本机路径配置。
+四种 ADirect 方法对应 `scripts/Exp1026/run_baseline_adirect*.sh` 的视觉结构，使用同一 VQA launcher。默认均为 v2、`include_unreviewed`；LocalRead 主入口默认 GPU 0、r16，单倍率 r16 入口默认 GPU 1；其余三个方法入口默认 GPU 0、r128/r256。各倍率从新 projector 和新视觉 LoRA 开始训练，再用验证集 best checkpoint 做 normal test，不加载 report checkpoint。入口只自动合并对应的 `configs/projector/bindformer_adirect*.yaml` 架构配置（包括 `checkpoint_blocks=true`），训练、数据和评测继续采用本目录的 VQA 配方，不合并 report 的训练配置或本机路径配置。
 
 | 方法 | 视觉路径 |
 | --- | --- |

@@ -1,0 +1,79 @@
+RadMatch 与脑 MRI 病灶位置协议的对照（2026-11-08）
+
+目前状态
+RadMatch 官方代码已安装，commit bc523a68c29b1807fe8e5c4c32d39cf4ce111e6c，版本号 0.2.2。
+独立 Python 3.11 venv 位于本目录 runtime/venv，训练环境未修改。
+brain-mr 的 extraction、matching、attribute_errors 各加载 3 个官方示例。
+225 项官方单元/集成测试通过；官方示例的既有标签经过确定性评分器重放检查。
+这些示例是提示词演示，不能作为独立准确率测试，重放也不代表实际执行了 LLM。
+尚未配置可使用的 judge endpoint；实际患者报告 RadMatch 已评测数量为 0。
+本机 GPU 均已占用；已发现的 Ollama 服务属于其他用户，未提交推理请求、加载或卸载模型。
+
+已经固定的输入
+results/radmatch_comparison_1108/pilot_inputs：24 位患者各 1 个序列，15 个设置，360 对报告，另有 28 对合成测试。
+15 个设置：MLP 1x；A0/AvgPool3D/Perceiver_NV/A1/A2/A3/A4 的 32x 与 256x。
+results/radmatch_comparison_1108/full_inputs：140 位患者、560 条参考报告、57 个 RG 设置，共 31,920 对报告。
+主表/原生成文本/评测缓存相互核对；每份输入留 SHA256，运行前再次验证。
+全量输入准备完毕不等于已执行 31,920 对 RadMatch；应先检查 stress 和 pilot 的有效性及时间成本。
+VQA 不送入报告评价器。16x 等后续结果若替换，需要新输入版本，不能混入本次冻结输入。
+
+我们自己的协议：已实际执行的端到端检查
+使用原本 RadGraph-XL 权重、CPU 两线程，对 28 对文本进行真实实体关系提取；未只用手工构造的图来冒充提取效果。
+v1 在 23/28 对上，side/site/joint 的资格与 TP/FP/FN 均符合作者预设；这不是临床准确率。
+发现 4 对由同一病灶的包含关系连边重复计数导致，一个是 brain stem 漏 located_at。
+protocol_v2.py 只合并同一 finding、同一 assertion、解剖实体证据被包含且语义兼容的部分位置关系。
+不同病灶、独立解剖提及、冲突侧别或不同脑区不合并；原始关系和被合并关系都保留。
+同一批固定原图上 v2 达到 27/28 对预设计数一致；brain stem 漏关系仍存在并留作人工复核。
+这是依据本组开发案例修复后的回归检查，不能声称独立测试准确率为 96.4%。
+原 v1 代码、旧 Excel 与所有原结果保留；新版诊断仅在新 comparison_inputs 中计算。
+
+运行方法（项目根目录）
+export RADMATCH_LOCAL_BASE_URL=http://AVAILABLE_HOST:PORT/v1
+export RADMATCH_JUDGE=local:EXACT_SERVED_MODEL_NAME
+# 如 endpoint 要求认证，通过环境设置 RADMATCH_LOCAL_API_KEY，不写入结果文件。
+# 默认 worker=1；本地采样 temperature=0、seed=42。仍需检查实际服务是否支持这些参数与结构化 JSON。
+bash experiments/brain_location_audit_v1/run_radmatch_comparison.sh --dry-run
+bash experiments/brain_location_audit_v1/run_radmatch_comparison.sh stress
+bash experiments/brain_location_audit_v1/run_radmatch_comparison.sh run
+
+全量运行改用独立目录：
+export RADMATCH_INPUT_BUNDLE=/PATH/TO/VLM_Projector/results/radmatch_comparison_1108/full_inputs
+export RADMATCH_OUTPUT_DIR=/PATH/TO/VLM_Projector/results/radmatch_comparison_1108/full_results
+bash experiments/brain_location_audit_v1/run_radmatch_comparison.sh run
+
+代码与断点
+radmatch_compare.py prepare：冻结原始文本、方法身份、图诊断和哈希。
+radmatch_compare.py run：调用原版 radmatch.run_all，不修改提示词、示例、匹配或评分公式。
+所有患者方法复用同一份参考 findings；每个方法结束后核对完全一致，参考提取不全即停止。
+模型、endpoint 哈希、输入、reasoning、temperature、seed、token 上限、版本固定；不匹配时拒绝复用旧输出。
+官方缓存支持断点；failed/degraded 不改成零误差，不从输入集合中隐去。
+radmatch_compare.py collect：逐样本对齐、总覆盖率、临床错误数、location major/minor、MIS/SPU、原始 findings 和错误理由。
+blind_human_review.csv 不包含方法名或自动分数，且后续 collect 不覆盖已经存在的人工表。
+原 run_radmatch_pilot.sh 是早期准备版本；新实验使用 run_radmatch_comparison.sh。
+
+如何决定哪个更可靠
+不能用两指标互相一致、与 A0 排名一致、或“对我们更有利”作为准确性的证据。
+第一层：固定合成测试，检查 identity/同义表达、左右互换、脑区替换、病灶配对交换、缺少侧别、双侧过报、否定、不确定、多病灶漏报、脑干和中线。
+既检查总分，也检查 finding 提取、实例匹配、location 错误与最终计分；全局错误数变化不一定由目标侧别错误引起。
+第二层：560 条参考人工核验；360 对 pilot 预测先盲标，再查看自动结果。
+至少区分：参考标签错误、预测提取错误、病灶配对错误、字段判分错误、上游执行失败。
+在双方都覆盖的“阳性目标病灶空间信息”上报告错误检测 precision/recall/F1、漏侧别识别率、联合配对错误识别率；明确未知参考字段。
+RadMatch 的 location 还包括脑室/中线移位等其他 finding；不能直接与“仅病灶位置”的二分类标签比较。
+先核对错误所对应的 finding，再分目标病灶与非目标空间事实；病灶完全漏报要看 MIS，不能只看匹配后的 location。
+按患者 bootstrap，四序列不能当作独立患者；pilot 只 24 位患者，区间会宽，应如实报告。
+第三层：同 judge、同参数、独立输出目录重复 stress 和部分 pilot，检查输出/判分一致性；不复用缓存冒充重复推理。
+人工分歧裁决前不宣称某方法“更可靠”；这次尚无临床专家 gold。
+
+覆盖范围与论文用途（设计分析，不是本次实测优胜结论）
+RadMatch 更全面：clinical status、location、severity、morphology、certainty、comparison、measurement，以及漏报和新增事实。
+我们的协议更直接对应论文 claim：侧别、脑区、侧别+脑区绑定可分别计分，未注明侧别不影响脑区分数。
+RadMatch 的 location 诊断分母是已匹配 finding pairs，而非所有参考阳性病灶；缺少字段也可能不判 location error。
+因此不把 1-location_major_pct 命名为病灶定位准确率。
+建议候选组合是官方 RadMatch 临床事实评价 + 经人工核验的任务特定空间评价；待实际测试决定是否主表采用，不能提前宣称替代关系。
+两者都只能评价报告与参考的一致性；影像定位正确性仍需影像或可靠影像位置标签。
+
+公开来源
+https://github.com/raidium-med/RadMatch/tree/bc523a68c29b1807fe8e5c4c32d39cf4ce111e6c
+https://arxiv.org/abs/2609.01470
+https://github.com/raidium-med/RadMatch/blob/bc523a68c29b1807fe8e5c4c32d39cf4ce111e6c/src/radmatch/assets/prompts/prompt_attribute_errors.md
+https://github.com/raidium-med/RadMatch/blob/bc523a68c29b1807fe8e5c4c32d39cf4ce111e6c/src/radmatch/scoring/metrics.py

@@ -1,0 +1,30 @@
+{
+  "date": "2026-11-08",
+  "decision": "Existing methods cover the core scientific requirement. Prefer RadMatch with its brain-mr examples for finding-level adjudication; use existing RadGraph-XL graphs and GREEN category-c errors for an inexpensive local diagnostic layer. Do not claim the first laterality/location metric.",
+  "contribution_position": "A brain-MRI-specific, auditable spatial evaluation protocol and curated reference annotations can be a benchmark contribution after validation. Standard set F1/exact match and a new vocabulary alone do not establish a novel metric.",
+  "sources": [
+    {"name": "HeadCT-ONE", "year": 2024, "url": "https://arxiv.org/abs/2409.13038", "code": "https://github.com/rajpurkarlab/HeadCT-ONE", "relevance": "Ontology-normalized entities and relations; controllable weighted F1 for head CT. Strong prior art for normalized brain-anatomy evaluation. CT-specific extractor and ontology need checking on MRI."},
+    {"name": "RadMatch", "year": 2026, "status": "preprint; public implementation", "url": "https://arxiv.org/abs/2609.01470", "code": "https://github.com/raidium-med/RadMatch", "relevance": "Persists atomic findings, matching, and attribute-level errors; location includes laterality and sub-anatomy. Public implementation has a brain-mr few-shot bundle. Best candidate for a small, independently reviewed pilot; not yet executed here."},
+    {"name": "RadSEM", "year": 2026, "status": "preprint", "url": "https://arxiv.org/abs/2606.17062", "code": "https://github.com/jdh-algo/RadSEM", "relevance": "Atomic propositions and contradiction-constrained matching. Its published convention expands unspecified paired-organ laterality into two sides, which conflicts with this project's unknown-does-not-mean-bilateral protocol. Do not adopt that convention unchanged."},
+    {"name": "Fine-grained phrasal grounding / RQ", "year": 2024, "url": "https://arxiv.org/abs/2412.01031", "relevance": "Explicit finding, anatomy, laterality, and severity patterns; textual pattern P/R/F1 plus image grounding. Direct prior art against claiming first location/laterality-aware measure. Chest X-ray grounding cannot be transferred unchanged to 3D brain MRI."},
+    {"name": "Rad-SpatialNet", "year": 2020, "url": "https://aclanthology.org/2020.lrec-1.274/", "relevance": "Spatial relationship annotation/extraction resource with brain MRI reports; not itself a turnkey generated-report score."},
+    {"name": "RadFact", "year": 2024, "url": "https://github.com/microsoft/RadFact", "relevance": "Bidirectional finding-sentence entailment precision/recall. Useful independent factuality evidence; separate side/site tables still require a task-specific breakdown."},
+    {"name": "FineRadScore", "year": 2024, "url": "https://arxiv.org/abs/2405.20613", "relevance": "Line-level corrections and error severity. Useful for auditing discrepancies, but not an out-of-the-box fixed brain-region accuracy table."}
+  ],
+  "radmatch_checked_version": "0.2.2",
+  "radmatch_requires_python": ">=3.11",
+  "current_project_python": "3.10.14",
+  "repository_files_checked": {
+    "RadMatch README.md blob": "b772fc6490f1a1920b81f7bbe0b9374e0dc4a581",
+    "RadMatch fewshot README.md blob": "521a82702e72ababf12db0312c996de20b282a10",
+    "RadMatch pyproject.toml blob": "f099b754f6db43decd1504f03fcb65e3772a61cf"
+  },
+  "validation_required_before_publication": [
+    "Review all 560 reference reports without consulting candidate model predictions; document evidence and unknown fields.",
+    "Use one semantic definition for reference and prediction facts, independent of model identity.",
+    "Audit extractor accuracy separately from report-generation accuracy, including negation, uncertainty, side/site binding and spatial relation type.",
+    "Run the fixed stress pack and the same 24-patient pilot across all 15 selected settings; preserve failures and denominators.",
+    "Blind clinician review of sampled predictions, disagreement adjudication, and patient-cluster uncertainty intervals.",
+    "Use an independent validation set for a strong novel-metric claim; some current test texts have already been inspected during retrospective development."
+  ]
+}
